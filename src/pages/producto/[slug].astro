@@ -70,13 +70,18 @@ const enlaceBase = construirEnlaceWhatsApp({
 
 <script define:vars={{ enlaceBase }}>
   // Reescribe el enlace de WhatsApp con la talla elegida.
-  const boton = document.querySelector('[data-whatsapp]') as HTMLAnchorElement | null
+  // NOTA: define:vars obliga a Astro a emitir este bloque en modo is:inline,
+  // es decir, lo envia al navegador tal cual, sin pasar por el paso de
+  // esbuild que elimina la sintaxis de TypeScript. Cualquier `as Tipo` aqui
+  // llega como texto literal y rompe el parseo del script completo.
+  // Este archivo debe quedarse en JavaScript plano.
+  const boton = document.querySelector('[data-whatsapp]')
   const radios = document.querySelectorAll('input[name="talla"]')
   const [inicio, resto] = enlaceBase.split('?text=')
   const textoBase = decodeURIComponent(resto)
 
   function actualizar() {
-    const elegida = document.querySelector('input[name="talla"]:checked') as HTMLInputElement | null
+    const elegida = document.querySelector('input[name="talla"]:checked')
     if (!boton || !elegida) return
     const [linea1, linea2] = textoBase.split('\n')
     const texto = `${linea1} (talla ${elegida.value})\n${linea2}`
