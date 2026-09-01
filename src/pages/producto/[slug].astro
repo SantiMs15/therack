@@ -1,0 +1,128 @@
+---
+import { Image } from 'astro:assets'
+import Layout from '../../layouts/Layout.astro'
+import BotonWhatsApp from '../../components/BotonWhatsApp.astro'
+import { productos } from '../../data/productos'
+import { resolverImagen } from '../../lib/imagenes-productos'
+import { formatearPrecio } from '../../lib/formato'
+import { construirEnlaceWhatsApp } from '../../lib/whatsapp'
+import { CONFIG } from '../../config'
+
+export function getStaticPaths() {
+  return productos.map((producto) => ({
+    params: { slug: producto.slug },
+    props: { producto },
+  }))
+}
+
+const { producto } = Astro.props
+const imagenes = producto.imagenes.map((n) => ({ nombre: n, datos: resolverImagen(n) }))
+const url = new URL(`/producto/${producto.slug}`, CONFIG.dominio).href
+const enlaceBase = construirEnlaceWhatsApp({
+  telefono: CONFIG.telefono,
+  nombre: producto.nombre,
+  url,
+})
+---
+<Layout titulo={producto.nombre} descripcion={producto.descripcion}>
+  <div class="contenedor ficha">
+    <div class="galeria">
+      {imagenes.map((img, i) => (
+        <Image
+          src={img.datos}
+          alt={producto.nombre}
+          widths={[600, 900, 1200]}
+          sizes="(max-width: 767px) 100vw, 50vw"
+          loading={i === 0 ? 'eager' : 'lazy'}
+        />
+      ))}
+    </div>
+
+    <div class="detalle">
+      <h1>{producto.nombre}</h1>
+      <p class="precio">{formatearPrecio(producto.precio)}</p>
+      <p class="descripcion">{producto.descripcion}</p>
+
+      {producto.disponible ? (
+        <>
+          <fieldset class="tallas">
+            <legend>Talla</legend>
+            {producto.tallas.map((talla, i) => (
+              <label>
+                <input type="radio" name="talla" value={talla} checked={i === 0} />
+                <span>{talla}</span>
+              </label>
+            ))}
+          </fieldset>
+
+          <BotonWhatsApp href={enlaceBase}>Consultar por WhatsApp</BotonWhatsApp>
+
+          <p class="secundario">
+            O escribenos por <a href={`https://instagram.com/${CONFIG.instagram}`}>Instagram</a>
+          </p>
+        </>
+      ) : (
+        <p class="agotado-aviso">Agotado</p>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<script define:vars={{ enlaceBase }}>
+  // Reescribe el enlace de WhatsApp con la talla elegida.
+  const boton = document.querySelector('[data-whatsapp]') as HTMLAnchorElement | null
+  const radios = document.querySelectorAll('input[name="talla"]')
+  const [inicio, resto] = enlaceBase.split('?text=')
+  const textoBase = decodeURIComponent(resto)
+
+  function actualizar() {
+    const elegida = document.querySelector('input[name="talla"]:checked') as HTMLInputElement | null
+    if (!boton || !elegida) return
+    const [linea1, linea2] = textoBase.split('\n')
+    const texto = `${linea1} (talla ${elegida.value})\n${linea2}`
+    boton.href = `${inicio}?text=${encodeURIComponent(texto)}`
+  }
+
+  radios.forEach((r) => r.addEventListener('change', actualizar))
+  actualizar()
+</script>
+
+<style>
+  .ficha { display: grid; gap: var(--espacio-3); padding-block: var(--espacio-3); }
+  @media (min-width: 900px) {
+    .ficha { grid-template-columns: 1fr 1fr; gap: var(--espacio-4); align-items: start; }
+  }
+  .galeria { display: grid; gap: var(--espacio-1); }
+  .galeria :global(img) { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  .precio { font-size: 1.25rem; margin-block: var(--espacio-1) var(--espacio-2); }
+  .descripcion { color: var(--texto-suave); max-width: 55ch; }
+  .tallas { border: 0; padding: 0; margin-block: var(--espacio-3) var(--espacio-2); }
+  .tallas legend {
+    padding: 0;
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+    margin-bottom: var(--espacio-1);
+  }
+  .tallas label { display: inline-block; margin-inline-end: var(--espacio-1); }
+  .tallas input { position: absolute; opacity: 0; pointer-events: none; }
+  .tallas span {
+    display: inline-block;
+    border: 1px solid var(--linea);
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  .tallas input:checked + span { border-color: var(--texto); background: var(--texto); color: var(--fondo); }
+  .tallas input:focus-visible + span { outline: 2px solid var(--texto); outline-offset: 2px; }
+  .secundario { font-size: 0.875rem; color: var(--texto-suave); margin-top: var(--espacio-2); }
+  .secundario a { text-decoration: underline; }
+  .agotado-aviso {
+    margin-top: var(--espacio-3);
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+</style>
