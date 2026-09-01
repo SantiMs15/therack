@@ -103,8 +103,16 @@ const enlaceInicial = construirEnlaceWhatsApp({
 
 <style>
   .ficha { display: grid; gap: var(--espacio-3); padding-block: var(--espacio-3); }
+
+  /* En movil el bloque de compra va PRIMERO. Con la galeria delante, el precio
+     quedaba a 3,3 pantallas de scroll y el boton de WhatsApp a 3,5, medido a
+     375px con dos fotos. La galeria no contiene elementos enfocables, asi que
+     invertir el orden visual no altera el recorrido de tabulacion. */
+  .detalle { order: -1; }
+
   @media (min-width: 900px) {
     .ficha { grid-template-columns: 1fr 1fr; gap: var(--espacio-4); align-items: start; }
+    .detalle { order: 0; }
   }
   .galeria { display: grid; gap: var(--espacio-1); }
   .galeria :global(img) { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
