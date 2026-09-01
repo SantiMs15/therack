@@ -1,0 +1,31 @@
+---
+import Layout from '../layouts/Layout.astro'
+import { CONFIG } from '../config'
+---
+<Layout titulo="La tienda">
+  <div class="contenedor tienda">
+    <h1>La tienda</h1>
+    <dl>
+      <dt>Direccion</dt>
+      <dd>{CONFIG.direccion}, {CONFIG.ciudad}</dd>
+      <dt>Horarios</dt>
+      <dd>{CONFIG.horarios}</dd>
+      <dt>Instagram</dt>
+      <dd><a href={`https://instagram.com/${CONFIG.instagram}`}>@{CONFIG.instagram}</a></dd>
+    </dl>
+  </div>
+</Layout>
+
+<style>
+  .tienda { padding-block: var(--espacio-3) var(--espacio-4); max-width: 55ch; }
+  dl { margin-top: var(--espacio-3); }
+  dt {
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+    margin-top: var(--espacio-2);
+  }
+  dd { margin: 0; }
+  dd a { text-decoration: underline; }
+</style>
