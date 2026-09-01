@@ -1,8 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro'
+import RejillaProductos from '../components/RejillaProductos.astro'
+import { productos } from '../data/productos'
 ---
 <Layout titulo="Inicio">
   <div class="contenedor">
     <h1>The Rack store</h1>
+    <RejillaProductos productos={productos} />
   </div>
 </Layout>

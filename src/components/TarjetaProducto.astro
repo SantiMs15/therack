@@ -1,0 +1,60 @@
+---
+import { Image } from 'astro:assets'
+import type { Producto } from '../data/schema'
+import { resolverImagen } from '../lib/imagenes-productos'
+import { formatearPrecio } from '../lib/formato'
+
+interface Props { producto: Producto }
+const { producto } = Astro.props
+const imagen = resolverImagen(producto.imagenes[0])
+---
+<a class="tarjeta" href={`/producto/${producto.slug}`}>
+  <div class="marco">
+    <Image
+      src={imagen}
+      alt={producto.nombre}
+      widths={[300, 600, 900]}
+      sizes="(max-width: 767px) 50vw, 33vw"
+      loading="lazy"
+    />
+    {!producto.disponible && <span class="agotado">Agotado</span>}
+  </div>
+  <h3 class="nombre">{producto.nombre}</h3>
+  <p class="precio">{formatearPrecio(producto.precio)}</p>
+</a>
+
+<style>
+  .tarjeta { display: block; }
+  .marco {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background: var(--linea);
+  }
+  .marco :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 400ms ease;
+  }
+  .tarjeta:hover .marco :global(img) { transform: scale(1.03); }
+  .agotado {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: 0;
+    background: var(--texto);
+    color: var(--fondo);
+    text-align: center;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding-block: var(--espacio-1);
+  }
+  .nombre {
+    font-family: var(--fuente-ui);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    margin-block: var(--espacio-1) 0;
+  }
+  .precio { margin: 0; color: var(--texto-suave); font-size: 0.875rem; }
+</style>

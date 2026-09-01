@@ -1,0 +1,53 @@
+---
+import type { Producto } from '../data/schema'
+import TarjetaProducto from './TarjetaProducto.astro'
+
+interface Props { productos: Producto[] }
+const { productos } = Astro.props
+---
+{productos.length === 0 ? (
+  <p class="vacio">Todavia no hay prendas en esta categoria.</p>
+) : (
+  <ul class="rejilla">
+    {productos.map((producto) => (
+      <li><TarjetaProducto producto={producto} /></li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .rejilla {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--espacio-2);
+  }
+  @media (min-width: 768px) {
+    .rejilla {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--espacio-3);
+    }
+  }
+  .vacio { color: var(--texto-suave); }
+
+  /* Entrada suave al hacer scroll (spec §6).
+     CSS puro: animation-timeline no necesita JavaScript. Donde el
+     navegador no lo soporta, las tarjetas aparecen sin animacion,
+     que es la degradacion correcta. */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .rejilla li {
+        animation: aparecer linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 40%;
+      }
+    }
+  }
+
+  @keyframes aparecer {
+    from { opacity: 0; transform: translateY(1rem); }
+    to   { opacity: 1; transform: none; }
+  }
+</style>
