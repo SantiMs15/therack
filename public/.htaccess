@@ -1,0 +1,30 @@
+# Configuracion para hosting Apache (Hostinger).
+# Astro copia public/ tal cual a dist/, asi que este archivo viaja con el sitio.
+
+# Sirve la pagina 404 propia (con logo y salida al catalogo) en vez de la
+# generica del hosting.
+ErrorDocument 404 /404.html
+
+# Los archivos de /_astro/ llevan un hash en el nombre: si cambia el contenido
+# cambia el nombre, asi que cachearlos un ano es seguro. El HTML no se cachea,
+# para que un catalogo actualizado se vea al instante.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  <FilesMatch "\.(webp|avif|jpg|jpeg|png|svg|woff|woff2|css|js)$">
+    ExpiresDefault "access plus 1 year"
+  </FilesMatch>
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(webp|avif|jpg|jpeg|png|svg|woff|woff2|css|js)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
+</IfModule>
