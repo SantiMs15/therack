@@ -9,8 +9,8 @@ const { productos } = Astro.props
   <p class="vacio">Todavia no hay prendas en esta categoria.</p>
 ) : (
   <ul class="rejilla">
-    {productos.map((producto) => (
-      <li><TarjetaProducto producto={producto} /></li>
+    {productos.map((producto, i) => (
+      <li><TarjetaProducto producto={producto} prioridad={i < 3} /></li>
     ))}
   </ul>
 )}

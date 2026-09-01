@@ -4,8 +4,8 @@ import type { Producto } from '../data/schema'
 import { resolverImagen } from '../lib/imagenes-productos'
 import { formatearPrecio } from '../lib/formato'
 
-interface Props { producto: Producto }
-const { producto } = Astro.props
+interface Props { producto: Producto; prioridad?: boolean }
+const { producto, prioridad = false } = Astro.props
 const imagen = resolverImagen(producto.imagenes[0])
 ---
 <a class="tarjeta" href={`/producto/${producto.slug}`}>
@@ -15,7 +15,8 @@ const imagen = resolverImagen(producto.imagenes[0])
       alt={producto.nombre}
       widths={[300, 600, 900]}
       sizes="(max-width: 767px) 50vw, 33vw"
-      loading="lazy"
+      loading={prioridad ? 'eager' : 'lazy'}
+      fetchpriority={prioridad ? 'high' : undefined}
     />
     {!producto.disponible && <span class="agotado">Agotado</span>}
   </div>
