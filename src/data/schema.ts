@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const CATEGORIAS = ['mujer', 'hombre', 'calzado', 'accesorios'] as const
 export type Categoria = (typeof CATEGORIAS)[number]
 
-export const ProductoSchema = z.object({
+export const ProductoSchema = z.strictObject({
   slug: z
     .string()
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'slug: solo minusculas, numeros y guiones'),

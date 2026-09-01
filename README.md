@@ -23,7 +23,12 @@ deliberado: prefiere un despliegue que no sale a una tienda con fichas rotas.
 ## Pendiente antes de publicar
 
 Los valores marcados `PENDIENTE` en `src/config.ts`: telefono de WhatsApp,
-usuario de Instagram, dominio, direccion y horarios.
+usuario de Instagram, direccion, ciudad, horarios y el texto de "quienes
+somos" (`sobre`).
+
+El dominio **no** esta en `src/config.ts`: vive en el campo `site` de
+`astro.config.mjs`, y de ahi se construye el enlace del producto que va
+dentro de cada mensaje de WhatsApp. Cambialo ahi antes de publicar.
 
 ## Documentacion
 

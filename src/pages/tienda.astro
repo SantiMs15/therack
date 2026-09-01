@@ -1,23 +1,25 @@
 ---
 import Layout from '../layouts/Layout.astro'
-import { CONFIG } from '../config'
+import { CONFIG, INSTAGRAM_URL } from '../config'
 ---
 <Layout titulo="La tienda">
   <div class="contenedor tienda">
     <h1>La tienda</h1>
+    <p class="sobre">{CONFIG.sobre}</p>
     <dl>
       <dt>Direccion</dt>
       <dd>{CONFIG.direccion}, {CONFIG.ciudad}</dd>
       <dt>Horarios</dt>
       <dd>{CONFIG.horarios}</dd>
       <dt>Instagram</dt>
-      <dd><a href={`https://instagram.com/${CONFIG.instagram}`}>@{CONFIG.instagram}</a></dd>
+      <dd><a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">@{CONFIG.instagram}</a></dd>
     </dl>
   </div>
 </Layout>
 
 <style>
   .tienda { padding-block: var(--espacio-3) var(--espacio-4); max-width: 55ch; }
+  .sobre { color: var(--texto-suave); margin-top: var(--espacio-2); }
   dl { margin-top: var(--espacio-3); }
   dt {
     font-size: 0.8125rem;

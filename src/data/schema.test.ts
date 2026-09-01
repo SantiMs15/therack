@@ -54,6 +54,10 @@ describe('validarCatalogo', () => {
     expect(() => validarCatalogo([{ ...valido, slug: 'Blazer Lino' }])).toThrow(/slug/i)
   })
 
+  it('rompe si el producto trae una clave desconocida', () => {
+    expect(() => validarCatalogo([{ ...valido, colores: ['negro'] }])).toThrow()
+  })
+
   it('rompe si dos productos comparten slug', () => {
     expect(() => validarCatalogo([valido, { ...valido, nombre: 'Otro' }]))
       .toThrow(/duplicado/i)

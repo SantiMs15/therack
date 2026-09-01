@@ -4,7 +4,7 @@ import '@fontsource/instrument-serif'
 import '@fontsource-variable/geist'
 import '../styles/global.css'
 import logo from '../assets/logo-negro.png'
-import { CONFIG } from '../config'
+import { CONFIG, INSTAGRAM_URL } from '../config'
 
 interface Props {
   titulo: string
@@ -33,7 +33,7 @@ const enlaces = [
       <a href="/" aria-label={CONFIG.nombre}>
         <Image src={logo} alt={CONFIG.nombre} width={180} loading="eager" />
       </a>
-      <nav>
+      <nav aria-label="Principal">
         {enlaces.map((e) => <a href={e.href}>{e.texto}</a>)}
       </nav>
     </header>
@@ -42,7 +42,7 @@ const enlaces = [
 
     <footer class="pie contenedor">
       <p>{CONFIG.nombre} · {CONFIG.direccion}, {CONFIG.ciudad}</p>
-      <p><a href={`https://instagram.com/${CONFIG.instagram}`}>Instagram</a></p>
+      <p><a href={INSTAGRAM_URL}>Instagram</a></p>
     </footer>
   </body>
 </html>

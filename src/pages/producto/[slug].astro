@@ -6,7 +6,7 @@ import { productos } from '../../data/productos'
 import { resolverImagen } from '../../lib/imagenes-productos'
 import { formatearPrecio } from '../../lib/formato'
 import { construirEnlaceWhatsApp } from '../../lib/whatsapp'
-import { CONFIG } from '../../config'
+import { CONFIG, INSTAGRAM_URL } from '../../config'
 
 export function getStaticPaths() {
   return productos.map((producto) => ({
@@ -17,11 +17,20 @@ export function getStaticPaths() {
 
 const { producto } = Astro.props
 const imagenes = producto.imagenes.map((n) => ({ nombre: n, datos: resolverImagen(n) }))
-const url = new URL(`/producto/${producto.slug}`, CONFIG.dominio).href
+if (!Astro.site) {
+  throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
+}
+const url = new URL(`/producto/${producto.slug}`, Astro.site).href
 const enlaceBase = construirEnlaceWhatsApp({
   telefono: CONFIG.telefono,
   nombre: producto.nombre,
   url,
+})
+const enlaceInicial = construirEnlaceWhatsApp({
+  telefono: CONFIG.telefono,
+  nombre: producto.nombre,
+  url,
+  talla: producto.tallas[0],
 })
 ---
 <Layout titulo={producto.nombre} descripcion={producto.descripcion}>
@@ -55,10 +64,10 @@ const enlaceBase = construirEnlaceWhatsApp({
             ))}
           </fieldset>
 
-          <BotonWhatsApp href={enlaceBase}>Consultar por WhatsApp</BotonWhatsApp>
+          <BotonWhatsApp href={enlaceInicial}>Consultar por WhatsApp</BotonWhatsApp>
 
           <p class="secundario">
-            O escribenos por <a href={`https://instagram.com/${CONFIG.instagram}`}>Instagram</a>
+            O escribenos por <a href={INSTAGRAM_URL}>Instagram</a>
           </p>
         </>
       ) : (
@@ -110,7 +119,7 @@ const enlaceBase = construirEnlaceWhatsApp({
     color: var(--texto-suave);
     margin-bottom: var(--espacio-1);
   }
-  .tallas label { display: inline-block; margin-inline-end: var(--espacio-1); }
+  .tallas label { display: inline-block; position: relative; margin-inline-end: var(--espacio-1); }
   .tallas input { position: absolute; opacity: 0; pointer-events: none; }
   .tallas span {
     display: inline-block;
