@@ -18,6 +18,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "sharp": "^0.35.4",
     "vitest": "^4.1.11"
   }
 }
