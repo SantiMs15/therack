@@ -1,0 +1,25 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import RejillaProductos from '../../components/RejillaProductos.astro'
+import { productos } from '../../data/productos'
+import { CATEGORIAS, type Categoria } from '../../data/schema'
+
+export function getStaticPaths() {
+  return CATEGORIAS.map((categoria) => ({ params: { categoria } }))
+}
+
+const { categoria } = Astro.params as { categoria: Categoria }
+const deLaCategoria = productos.filter((p) => p.categoria === categoria)
+const titulos: Record<Categoria, string> = {
+  mujer: 'Mujer',
+  hombre: 'Hombre',
+  calzado: 'Calzado',
+  accesorios: 'Accesorios',
+}
+---
+<Layout titulo={titulos[categoria]}>
+  <div class="contenedor">
+    <h1>{titulos[categoria]}</h1>
+    <RejillaProductos productos={deLaCategoria} />
+  </div>
+</Layout>
