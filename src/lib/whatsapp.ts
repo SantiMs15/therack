@@ -16,8 +16,9 @@ export type OpcionesEnlace = {
  */
 export function construirEnlaceWhatsApp({ telefono, nombre, url, talla }: OpcionesEnlace): string {
   const digitos = telefono.replace(/\D/g, '')
-  if (digitos.length < 10) {
-    throw new Error(`Telefono invalido: "${telefono}". Necesita indicativo de pais y numero.`)
+  const tieneMas = telefono.trim().startsWith('+')
+  if (!tieneMas || digitos.length < 11 || digitos.length > 15) {
+    throw new Error(`Telefono invalido: "${telefono}". Necesita formato internacional con indicativo de pais, p.ej. +57 300 123 4567.`)
   }
   const detalle = talla ? ` (talla ${talla})` : ''
   const texto = `Hola! Me interesa el ${nombre}${detalle}\n${url}`

@@ -43,4 +43,14 @@ describe('construirEnlaceWhatsApp', () => {
     expect(() => construirEnlaceWhatsApp({ ...base, telefono: '300' }))
       .toThrow(/tel[eé]fono/i)
   })
+
+  it('rechaza un numero nacional sin indicativo ni signo mas', () => {
+    expect(() => construirEnlaceWhatsApp({ ...base, telefono: '3001234567' }))
+      .toThrow(/tel[eé]fono/i)
+  })
+
+  it('rechaza un numero con indicativo pero sin el signo mas', () => {
+    expect(() => construirEnlaceWhatsApp({ ...base, telefono: '57 300 123 4567' }))
+      .toThrow(/tel[eé]fono/i)
+  })
 })
