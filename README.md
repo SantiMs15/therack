@@ -34,3 +34,32 @@ dentro de cada mensaje de WhatsApp. Cambialo ahi antes de publicar.
 
 - Diseno: `docs/superpowers/specs/2026-08-31-the-rack-store-catalogo-design.md`
 - Plan: `docs/superpowers/plans/2026-08-31-the-rack-store-catalogo.md`
+
+## Despliegue
+
+Cada push a `master` construye el sitio y lo sincroniza con Hostinger por FTP.
+Trabajar en otra rama no publica nada.
+
+    npm run dev      revisar en local antes de confirmar
+    git push         publica (2-3 min)
+
+Si las pruebas o el build fallan, no se sube nada.
+
+### Secrets que necesita GitHub
+
+En el repo: Settings -> Secrets and variables -> Actions -> New repository secret
+
+| Secret | Valor |
+|---|---|
+| `FTP_SERVIDOR` | host FTP de hPanel (p.ej. `ftp.therackstore.shop`) |
+| `FTP_USUARIO` | usuario FTP |
+| `FTP_PASSWORD` | contrasena FTP |
+| `FTP_DIRECTORIO` | `./public_html/` o `./` — ver abajo |
+
+`FTP_DIRECTORIO` depende de donde aterrice la cuenta FTP al conectar:
+
+- si al entrar ves una carpeta `public_html` -> `./public_html/`
+- si al entrar ya ves `index.html` y `_astro` -> `./`
+
+Una equivocacion aqui publica el sitio en la carpeta incorrecta. Se corrige
+cambiando el secret y relanzando el workflow desde la pestana Actions.

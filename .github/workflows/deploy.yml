@@ -1,0 +1,54 @@
+# Construye el sitio y lo sincroniza con Hostinger por FTP.
+#
+# Solo se despliega desde master. Trabajar en otra rama no publica nada:
+# esa es la puerta de entrada, para poder revisar en local con `npm run dev`
+# antes de que ningun cambio llegue a produccion.
+name: Desplegar a Hostinger
+
+on:
+  push:
+    branches: [master]
+  # Permite lanzarlo a mano desde la pestana Actions de GitHub.
+  workflow_dispatch:
+
+# Si se empujan dos commits seguidos, cancela el despliegue anterior:
+# evita que una subida vieja pise a una nueva.
+concurrency:
+  group: deploy-hostinger
+  cancel-in-progress: true
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Pruebas
+        # Si un producto tiene datos invalidos o falta una foto, el build
+        # falla aqui y NO se sube nada. Es deliberado: preferimos no
+        # publicar a publicar una ficha rota.
+        run: npm test
+
+      - name: Construir
+        run: npm run build
+
+      - name: Subir por FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVIDOR }}
+          username: ${{ secrets.FTP_USUARIO }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Contenido de dist/, no la carpeta. La barra final importa.
+          local-dir: ./dist/
+          # Ajustar segun donde aterrice tu cuenta FTP: ver README.
+          server-dir: ${{ secrets.FTP_DIRECTORIO }}
