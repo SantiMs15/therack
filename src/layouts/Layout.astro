@@ -1,0 +1,69 @@
+---
+import { Image } from 'astro:assets'
+import '@fontsource/instrument-serif'
+import '@fontsource-variable/geist'
+import '../styles/global.css'
+import logo from '../assets/logo-negro.png'
+import { CONFIG } from '../config'
+
+interface Props {
+  titulo: string
+  descripcion?: string
+}
+
+const { titulo, descripcion = 'Tienda de ropa en ' + CONFIG.ciudad } = Astro.props
+const enlaces = [
+  { href: '/catalogo/mujer', texto: 'Mujer' },
+  { href: '/catalogo/hombre', texto: 'Hombre' },
+  { href: '/catalogo/calzado', texto: 'Calzado' },
+  { href: '/catalogo/accesorios', texto: 'Accesorios' },
+  { href: '/tienda', texto: 'Tienda' },
+]
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo} — {CONFIG.nombre}</title>
+    <meta name="description" content={descripcion} />
+  </head>
+  <body>
+    <header class="cabecera contenedor">
+      <a href="/" aria-label={CONFIG.nombre}>
+        <Image src={logo} alt={CONFIG.nombre} width={180} loading="eager" />
+      </a>
+      <nav>
+        {enlaces.map((e) => <a href={e.href}>{e.texto}</a>)}
+      </nav>
+    </header>
+
+    <main><slot /></main>
+
+    <footer class="pie contenedor">
+      <p>{CONFIG.nombre} · {CONFIG.direccion}, {CONFIG.ciudad}</p>
+      <p><a href={`https://instagram.com/${CONFIG.instagram}`}>Instagram</a></p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-2);
+    align-items: center;
+    justify-content: space-between;
+    padding-block: var(--espacio-3);
+  }
+  .cabecera nav { display: flex; gap: var(--espacio-2); flex-wrap: wrap; }
+  .cabecera nav a { font-size: 0.9375rem; }
+  .cabecera nav a:hover { text-decoration: underline; }
+  .pie {
+    border-top: 1px solid var(--linea);
+    margin-top: var(--espacio-4);
+    padding-block: var(--espacio-3);
+    color: var(--texto-suave);
+    font-size: 0.875rem;
+  }
+</style>
