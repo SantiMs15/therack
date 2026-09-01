@@ -2,51 +2,13 @@
 import Layout from '../layouts/Layout.astro'
 import RejillaProductos from '../components/RejillaProductos.astro'
 import { productos } from '../data/productos'
-
-const destacados = productos.filter((p) => p.destacado && p.disponible)
-const categorias = [
-  { slug: 'mujer', titulo: 'Mujer' },
-  { slug: 'hombre', titulo: 'Hombre' },
-  { slug: 'calzado', titulo: 'Calzado' },
-  { slug: 'accesorios', titulo: 'Accesorios' },
-]
 ---
 <Layout titulo="Inicio">
-  <section class="contenedor portada">
-    <h1>Ropa escogida<br />una prenda a la vez.</h1>
-  </section>
-
-  <nav class="contenedor categorias" aria-label="Categorias">
-    {categorias.map((c) => (
-      <a href={`/catalogo/${c.slug}`}>{c.titulo}</a>
-    ))}
-  </nav>
-
-  {destacados.length > 0 && (
-    <section class="contenedor">
-      <h2>Destacados</h2>
-      <RejillaProductos productos={destacados} />
-      <p class="ver-todo"><a href="/catalogo">Ver todo el catalogo</a></p>
-    </section>
-  )}
+  <div class="contenedor portada">
+    <RejillaProductos productos={productos} />
+  </div>
 </Layout>
 
 <style>
-  .portada { padding-block: var(--espacio-4) var(--espacio-3); }
-  .categorias {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--espacio-2);
-    padding-block: var(--espacio-2) var(--espacio-4);
-    border-bottom: 1px solid var(--linea);
-    margin-bottom: var(--espacio-4);
-  }
-  .categorias a {
-    border: 1px solid var(--linea);
-    padding: 0.625rem 1.25rem;
-    font-size: 0.9375rem;
-  }
-  .categorias a:hover { border-color: var(--texto); }
-  .ver-todo { margin-top: var(--espacio-3); }
-  .ver-todo a { text-decoration: underline; }
+  .portada { padding-block: var(--espacio-2) var(--espacio-4); }
 </style>
