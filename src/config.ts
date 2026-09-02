@@ -3,8 +3,8 @@
  */
 export const CONFIG = {
   nombre: 'The Rack store',
-  telefono: '+57 300 000 0000',        // PENDIENTE
-  instagram: 'therackstore',            // PENDIENTE
+  telefono: '+57 305 439 9454',
+  instagram: 'therack.st',
   // El dominio vive en astro.config.mjs (campo `site`) — PENDIENTE cambiarlo alli antes de publicar.
   direccion: 'Calle 00 #00-00',         // PENDIENTE
   ciudad: 'Bogota',                     // PENDIENTE
