@@ -110,9 +110,14 @@ const enlaces = [
     inset: 0;
     z-index: 20;
     visibility: hidden;
+    /* visibility no se interpola, asi que se retrasa hasta que termina la
+       salida. Sin este retardo el panel desaparecia de golpe y la animacion
+       de cierre no llegaba a verse. */
+    transition: visibility 0s linear 1000ms;
   }
   .menu[data-estado='abierto'] {
     visibility: visible;
+    transition: visibility 0s linear 0s;
   }
 
   .menu__velo {
@@ -204,11 +209,22 @@ const enlaces = [
   .menu__enlace:hover span { opacity: 0.55; }
   .menu__enlace:focus-visible { outline: 2px solid var(--texto); outline-offset: 4px; }
 
-  /* Al cerrar, el escalonado sobra: todo sale a la vez. */
-  .menu[data-estado='cerrado'] .menu__enlace span,
-  .menu[data-estado='cerrado'] .menu__capa {
-    transition-delay: 0ms;
-  }
+  /* --- Cierre: el reflejo de la apertura --- */
+  /* Al abrir entra primero el panel y despues los enlaces. Al cerrar se
+     invierte: salen los enlaces escalonados y solo entonces se retira el
+     panel, en vez de desvanecerse todo a la vez. */
+  .menu[data-estado='cerrado'] .menu__item:nth-child(1) .menu__enlace span { transition-delay: 240ms; }
+  .menu[data-estado='cerrado'] .menu__item:nth-child(2) .menu__enlace span { transition-delay: 180ms; }
+  .menu[data-estado='cerrado'] .menu__item:nth-child(3) .menu__enlace span { transition-delay: 120ms; }
+  .menu[data-estado='cerrado'] .menu__item:nth-child(4) .menu__enlace span { transition-delay: 60ms; }
+  .menu[data-estado='cerrado'] .menu__item:nth-child(5) .menu__enlace span { transition-delay: 0ms; }
+
+  /* El panel y sus capas esperan a que los enlaces hayan salido. */
+  .menu[data-estado='cerrado'] .menu__panel { transition-delay: 340ms; }
+  .menu[data-estado='cerrado'] .menu__capa:nth-child(1) { transition-delay: 460ms; }
+  .menu[data-estado='cerrado'] .menu__capa:nth-child(2) { transition-delay: 400ms; }
+  .menu[data-estado='cerrado'] .menu__capa:nth-child(3) { transition-delay: 340ms; }
+  .menu[data-estado='cerrado'] .menu__velo { transition-delay: 400ms; }
 </style>
 
 <script>

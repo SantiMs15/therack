@@ -30,12 +30,14 @@ const tarjetas = productos.flatMap((producto) =>
     padding: 0;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--espacio-2);
+    /* Mas aire vertical que horizontal: lo que separa una prenda de otra al
+       recorrer la rejilla son las filas. */
+    gap: var(--espacio-3) var(--espacio-2);
   }
   @media (min-width: 768px) {
     .rejilla {
       grid-template-columns: repeat(3, 1fr);
-      gap: var(--espacio-3);
+      gap: var(--espacio-4) var(--espacio-3);
     }
   }
 
