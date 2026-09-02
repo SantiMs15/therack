@@ -1,0 +1,243 @@
+---
+/**
+ * Menu a pantalla completa: boton en la cabecera que despliega un panel con
+ * los enlaces del sitio.
+ *
+ * Portado de un componente React + GSAP conservando su comportamiento (capas
+ * de fondo escalonadas, enlaces que suben rotando, icono que gira, texto del
+ * boton que cambia) pero resuelto con transiciones CSS. React y GSAP habrian
+ * anadido unos 70 KB comprimidos a cada pagina de un sitio que hoy no envia
+ * ningun archivo JavaScript; el escalonado se consigue con transition-delay.
+ *
+ * La paleta se pasa a la del sitio: el original usaba indigo, violeta y rosa,
+ * que el spec y el DESIGN.md del proyecto prohiben expresamente.
+ */
+const enlaces = [
+  { href: '/catalogo/mujer', texto: 'Mujer' },
+  { href: '/catalogo/hombre', texto: 'Hombre' },
+  { href: '/catalogo/calzado', texto: 'Calzado' },
+  { href: '/catalogo/accesorios', texto: 'Accesorios' },
+  { href: '/tienda', texto: 'Tienda' },
+]
+---
+
+<button
+  type="button"
+  class="boton-menu"
+  aria-expanded="false"
+  aria-controls="menu-pantalla-completa"
+  data-menu-boton
+>
+  <span class="boton-menu__textos">
+    <span>Menu</span>
+    <span>Cerrar</span>
+  </span>
+  <span class="boton-menu__icono" aria-hidden="true">
+    <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+      <path d="M7.33333 16L7.33333 0L8.66667 0L8.66667 16L7.33333 16Z" fill="currentColor" />
+      <path d="M16 8.66667L0 8.66667L0 7.33333L16 7.33333L16 8.66667Z" fill="currentColor" />
+    </svg>
+  </span>
+</button>
+
+<div class="menu" id="menu-pantalla-completa" data-menu data-estado="cerrado">
+  <div class="menu__velo" data-menu-cerrar></div>
+
+  <nav class="menu__panel" aria-label="Menu principal">
+    <span class="menu__capa" aria-hidden="true"></span>
+    <span class="menu__capa" aria-hidden="true"></span>
+    <span class="menu__capa" aria-hidden="true"></span>
+
+    <ul class="menu__lista">
+      {enlaces.map((e) => (
+        <li class="menu__item">
+          <a href={e.href} class="menu__enlace"><span>{e.texto}</span></a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</div>
+
+<style>
+  /* --- Boton --- */
+  .boton-menu {
+    /* El panel del menu es hijo de la cabecera y va posicionado; sin un
+       z-index propio el boton se pintaria por debajo de el y quedaria
+       intocable con el menu abierto. */
+    position: relative;
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-1);
+    background: none;
+    border: 0;
+    padding: 0.25rem 0;
+    color: var(--texto);
+    font: inherit;
+    font-size: 0.9375rem;
+    cursor: pointer;
+  }
+
+  /* Las dos palabras se apilan y el bloque sube una linea al abrir: se ve
+     "Menu" cerrado y "Cerrar" abierto, sin cambiar el texto por JavaScript. */
+  .boton-menu__textos {
+    display: block;
+    height: 1.5em;
+    overflow: hidden;
+    line-height: 1.5em;
+  }
+  .boton-menu__textos span {
+    display: block;
+    transition: transform 400ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  .boton-menu[aria-expanded='true'] .boton-menu__textos span {
+    transform: translateY(-100%);
+  }
+
+  .boton-menu__icono {
+    display: inline-flex;
+    transition: transform 500ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  /* 315 grados y no 45: la cruz gira dando casi una vuelta completa, que es
+     lo que hacia el original. */
+  .boton-menu[aria-expanded='true'] .boton-menu__icono {
+    transform: rotate(315deg);
+  }
+
+  /* --- Contenedor --- */
+  .menu {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    visibility: hidden;
+  }
+  .menu[data-estado='abierto'] {
+    visibility: visible;
+  }
+
+  .menu__velo {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 17, 17, 0.4);
+    opacity: 0;
+    transition: opacity 500ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  .menu[data-estado='abierto'] .menu__velo {
+    opacity: 1;
+  }
+
+  /* --- Panel --- */
+  .menu__panel {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    width: min(100%, 34rem);
+    display: flex;
+    align-items: center;
+    padding: var(--espacio-4) var(--espacio-3);
+    transform: translateX(101%);
+    transition: transform 575ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  .menu[data-estado='abierto'] .menu__panel {
+    transform: translateX(0);
+  }
+
+  /* Tres capas que entran escalonadas detras del panel. En el original eran
+     paneles de color; aqui son tonos del propio sistema, que es lo que deja
+     la sensacion de profundidad sin meter un color de acento. */
+  .menu__capa {
+    position: absolute;
+    inset: 0;
+    transform: translateX(101%);
+    transition: transform 575ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  .menu__capa:nth-child(1) { background: var(--linea); }
+  .menu__capa:nth-child(2) { background: #F0EFEE; transition-delay: 120ms; }
+  .menu__capa:nth-child(3) { background: var(--fondo); transition-delay: 240ms; }
+
+  .menu[data-estado='abierto'] .menu__capa {
+    transform: translateX(0);
+  }
+
+  /* --- Lista --- */
+  .menu__lista {
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  /* Cada enlace vive en una ventana que recorta: el texto sube desde abajo
+     rotando ligeramente, como en el original. */
+  .menu__item { overflow: hidden; }
+
+  .menu__enlace {
+    display: block;
+    font-family: var(--fuente-titular);
+    font-size: clamp(2rem, 7vw, 3.5rem);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    padding-block: 0.15em;
+  }
+  .menu__enlace span {
+    display: block;
+    transform: translateY(140%) rotate(10deg);
+    transition:
+      transform 700ms cubic-bezier(0.65, 0.01, 0.05, 0.99),
+      opacity 700ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+    opacity: 0;
+  }
+  .menu[data-estado='abierto'] .menu__enlace span {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+
+  /* Escalonado: cada enlace entra 60 ms despues del anterior, tras la entrada
+     del panel. */
+  .menu__item:nth-child(1) .menu__enlace span { transition-delay: 350ms; }
+  .menu__item:nth-child(2) .menu__enlace span { transition-delay: 410ms; }
+  .menu__item:nth-child(3) .menu__enlace span { transition-delay: 470ms; }
+  .menu__item:nth-child(4) .menu__enlace span { transition-delay: 530ms; }
+  .menu__item:nth-child(5) .menu__enlace span { transition-delay: 590ms; }
+
+  .menu__enlace:hover span { opacity: 0.55; }
+  .menu__enlace:focus-visible { outline: 2px solid var(--texto); outline-offset: 4px; }
+
+  /* Al cerrar, el escalonado sobra: todo sale a la vez. */
+  .menu[data-estado='cerrado'] .menu__enlace span,
+  .menu[data-estado='cerrado'] .menu__capa {
+    transition-delay: 0ms;
+  }
+</style>
+
+<script>
+  // Unico JavaScript de este componente: abrir, cerrar y devolver el foco.
+  // La animacion entera vive en CSS.
+  const menu = document.querySelector<HTMLElement>('[data-menu]')
+  const boton = document.querySelector<HTMLButtonElement>('[data-menu-boton]')
+  const velo = document.querySelector<HTMLElement>('[data-menu-cerrar]')
+
+  if (menu && boton) {
+    const enlaces = menu.querySelectorAll<HTMLAnchorElement>('.menu__enlace')
+
+    const abrir = (si: boolean) => {
+      menu.dataset.estado = si ? 'abierto' : 'cerrado'
+      boton.setAttribute('aria-expanded', String(si))
+      // Con el menu cerrado sus enlaces siguen en el DOM: sin esto, tabular
+      // los recorreria estando invisibles.
+      enlaces.forEach((a) => a.setAttribute('tabindex', si ? '0' : '-1'))
+      document.body.style.overflow = si ? 'hidden' : ''
+      if (si) enlaces[0]?.focus()
+      else boton.focus()
+    }
+
+    abrir(false)
+
+    boton.addEventListener('click', () => abrir(menu.dataset.estado !== 'abierto'))
+    velo?.addEventListener('click', () => abrir(false))
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menu.dataset.estado === 'abierto') abrir(false)
+    })
+  }
+</script>

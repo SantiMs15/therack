@@ -3,6 +3,7 @@ import '@fontsource/instrument-serif'
 import '@fontsource-variable/geist'
 import '../styles/global.css'
 import Logo from '../assets/logo-web.svg'
+import MenuPantallaCompleta from '../components/MenuPantallaCompleta.astro'
 import { CONFIG, INSTAGRAM_URL } from '../config'
 
 interface Props {
@@ -11,13 +12,6 @@ interface Props {
 }
 
 const { titulo, descripcion = 'Tienda de ropa en ' + CONFIG.ciudad } = Astro.props
-const enlaces = [
-  { href: '/catalogo/mujer', texto: 'Mujer' },
-  { href: '/catalogo/hombre', texto: 'Hombre' },
-  { href: '/catalogo/calzado', texto: 'Calzado' },
-  { href: '/catalogo/accesorios', texto: 'Accesorios' },
-  { href: '/tienda', texto: 'Tienda' },
-]
 ---
 <!doctype html>
 <html lang="es">
@@ -32,9 +26,7 @@ const enlaces = [
       <a href="/" aria-label={CONFIG.nombre}>
         <Logo width={200} aria-hidden="true" />
       </a>
-      <nav aria-label="Principal">
-        {enlaces.map((e) => <a href={e.href}>{e.texto}</a>)}
-      </nav>
+      <MenuPantallaCompleta />
     </header>
 
     <main><slot /></main>
@@ -48,6 +40,13 @@ const enlaces = [
 
 <style>
   .cabecera {
+    /* Pegajosa y por encima del menu (z-index 20) para que el boton siga
+       visible con el panel abierto: sin esto el panel lo tapaba y solo se
+       podia cerrar con Escape o clicando fuera. */
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--fondo);
     display: flex;
     flex-wrap: wrap;
     gap: var(--espacio-2);
