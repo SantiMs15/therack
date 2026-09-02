@@ -32,12 +32,15 @@ const tarjetas = productos.flatMap((producto) =>
     grid-template-columns: repeat(2, 1fr);
     /* Mas aire vertical que horizontal: lo que separa una prenda de otra al
        recorrer la rejilla son las filas. */
-    gap: var(--espacio-3) var(--espacio-2);
+    gap: var(--espacio-3) var(--espacio-3);
   }
   @media (min-width: 768px) {
     .rejilla {
       grid-template-columns: repeat(3, 1fr);
-      gap: var(--espacio-4) var(--espacio-3);
+      /* 6rem: por encima del token mas grande (--espacio-4, 4rem). A cuatro
+         columnas es lo que hace que cada prenda se lea aislada en vez de en
+         bloque, a costa de unos 25px de ancho por tarjeta. */
+      gap: 6rem;
     }
   }
 

@@ -17,7 +17,7 @@ import { validarCatalogo, type Producto } from './schema'
 const catalogo: unknown[] = [
   {
     slug: 'crew-neck-lacoste',
-    nombre: 'Camiseta Classic Printed Crew Neck',
+    nombre: 'Classic Printed Crew Neck',
     marca: 'Lacoste',
     categoria: 'hombre',
     // PENDIENTE: precio real en COP. El 1 es un marcador deliberado: se ve

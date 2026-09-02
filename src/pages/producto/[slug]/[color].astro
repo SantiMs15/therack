@@ -21,6 +21,10 @@ export function getStaticPaths() {
 }
 
 const { producto, variante } = Astro.props
+// El color se anade al MOSTRAR, no al dato: el mensaje de WhatsApp usa
+// producto.nombre y el color por separado, y concatenarlos en el dato lo
+// dejaria diciendo "Crew Neck - Verde (Verde, talla S)".
+const titulo = `${producto.nombre} - ${variante.color}`
 const imagenes = variante.imagenes.map((n) => ({ nombre: n, datos: resolverImagen(n) }))
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
@@ -40,7 +44,7 @@ const enlaceInicial = construirEnlaceWhatsApp({
   color: producto.variantes.length > 1 ? variante.color : undefined,
 })
 ---
-<Layout titulo={producto.nombre} descripcion={producto.descripcion}>
+<Layout titulo={titulo} descripcion={producto.descripcion}>
   <div class="contenedor ficha">
     <div class="galeria">
       {imagenes.map((img, i) => (
@@ -55,7 +59,7 @@ const enlaceInicial = construirEnlaceWhatsApp({
     </div>
 
     <div class="detalle">
-      <h1>{producto.nombre}</h1>
+      <h1>{titulo}</h1>
       <p class="precio">{formatearPrecio(producto.precio)}</p>
       <p class="descripcion">{producto.descripcion}</p>
 

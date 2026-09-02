@@ -20,7 +20,7 @@ const imagen = resolverImagen(variante.imagenes[0])
     />
     {!variante.disponible && <span class="agotado">Agotado</span>}
   </div>
-  <h3 class="nombre">{producto.nombre}</h3>
+  <h3 class="nombre">{producto.nombre} - {variante.color}</h3>
   {producto.marca && <p class="marca">{producto.marca}</p>}
   <p class="precio">{formatearPrecio(producto.precio)}</p>
 </a>
