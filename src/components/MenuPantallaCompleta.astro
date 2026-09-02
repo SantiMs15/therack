@@ -90,6 +90,11 @@ const enlaces = [
     display: block;
     transition: transform 400ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
   }
+  /* Con el menu abierto el boton queda sobre el panel oscuro: sin invertir
+     el color seria texto #111 sobre negro, ilegible. */
+  .boton-menu[aria-expanded='true'] {
+    color: var(--fondo);
+  }
   .boton-menu[aria-expanded='true'] .boton-menu__textos span {
     transform: translateY(-100%);
   }
@@ -156,9 +161,9 @@ const enlaces = [
     transform: translateX(101%);
     transition: transform 575ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
   }
-  .menu__capa:nth-child(1) { background: var(--linea); }
-  .menu__capa:nth-child(2) { background: #F0EFEE; transition-delay: 120ms; }
-  .menu__capa:nth-child(3) { background: var(--fondo); transition-delay: 240ms; }
+  .menu__capa:nth-child(1) { background: var(--texto-suave); }
+  .menu__capa:nth-child(2) { background: #2A2724; transition-delay: 120ms; }
+  .menu__capa:nth-child(3) { background: var(--texto); transition-delay: 240ms; }
 
   .menu[data-estado='abierto'] .menu__capa {
     transform: translateX(0);
@@ -179,6 +184,7 @@ const enlaces = [
 
   .menu__enlace {
     display: block;
+    color: var(--fondo);
     font-family: var(--fuente-titular);
     font-size: clamp(2rem, 7vw, 3.5rem);
     line-height: 1.25;
@@ -207,7 +213,7 @@ const enlaces = [
   .menu__item:nth-child(5) .menu__enlace span { transition-delay: 590ms; }
 
   .menu__enlace:hover span { opacity: 0.55; }
-  .menu__enlace:focus-visible { outline: 2px solid var(--texto); outline-offset: 4px; }
+  .menu__enlace:focus-visible { outline: 2px solid var(--fondo); outline-offset: 4px; }
 
   /* --- Cierre: el reflejo de la apertura --- */
   /* Al abrir entra primero el panel y despues los enlaces. Al cerrar se
@@ -239,6 +245,9 @@ const enlaces = [
 
     const abrir = (si: boolean) => {
       menu.dataset.estado = si ? 'abierto' : 'cerrado'
+      // La cabecera es un ancestro y CSS no puede seleccionar hacia arriba:
+      // se marca el estado en <body> para que pueda volverse transparente.
+      document.body.dataset.menu = si ? 'abierto' : 'cerrado'
       boton.setAttribute('aria-expanded', String(si))
       // Con el menu cerrado sus enlaces siguen en el DOM: sin esto, tabular
       // los recorreria estando invisibles.

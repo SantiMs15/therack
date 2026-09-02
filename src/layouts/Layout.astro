@@ -47,6 +47,9 @@ const { titulo, descripcion = 'Tienda de ropa en ' + CONFIG.ciudad } = Astro.pro
     top: 0;
     z-index: 30;
     background: var(--fondo);
+    /* Con el menu abierto la cabecera deja de pintar fondo: si no, dejaria
+       una franja clara cruzando el panel oscuro. */
+    transition: background 300ms ease;
     display: flex;
     flex-wrap: wrap;
     gap: var(--espacio-2);
@@ -54,8 +57,14 @@ const { titulo, descripcion = 'Tienda de ropa en ' + CONFIG.ciudad } = Astro.pro
     justify-content: space-between;
     padding-block: var(--espacio-3);
   }
+  :global(body[data-menu='abierto']) .cabecera { background: transparent; }
+
   .cabecera nav { display: flex; gap: var(--espacio-2); flex-wrap: wrap; }
+  :global(body[data-menu='abierto']) .cabecera { background: transparent; }
+
   .cabecera nav a { font-size: 0.9375rem; }
+  :global(body[data-menu='abierto']) .cabecera { background: transparent; }
+
   .cabecera nav a:hover { text-decoration: underline; }
   .pie {
     border-top: 1px solid var(--linea);
