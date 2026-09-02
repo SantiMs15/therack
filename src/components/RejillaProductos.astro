@@ -4,13 +4,21 @@ import TarjetaProducto from './TarjetaProducto.astro'
 
 interface Props { productos: Producto[] }
 const { productos } = Astro.props
+
+// Una tarjeta por COLOR, no por prenda: el cliente ve el negro y el verde
+// como dos piezas en la rejilla, que es como los mira en una tienda.
+const tarjetas = productos.flatMap((producto) =>
+  producto.variantes.map((variante) => ({ producto, variante }))
+)
 ---
-{productos.length === 0 ? (
+{tarjetas.length === 0 ? (
   <p class="vacio">Todavia no hay prendas en esta categoria.</p>
 ) : (
   <ul class="rejilla">
-    {productos.map((producto, i) => (
-      <li><TarjetaProducto producto={producto} prioridad={i < 3} /></li>
+    {tarjetas.map(({ producto, variante }, i) => (
+      <li>
+        <TarjetaProducto producto={producto} variante={variante} prioridad={i < 4} />
+      </li>
     ))}
   </ul>
 )}
