@@ -23,6 +23,8 @@ export type Variante = z.infer<typeof VarianteSchema>
 export const ProductoSchema = z.strictObject({
   slug: z.string().regex(SLUG, 'slug: solo minusculas, numeros y guiones'),
   nombre: z.string().min(1, 'nombre: no puede estar vacio'),
+  /** Opcional: no toda prenda de la tienda es de marca conocida. */
+  marca: z.string().min(1, 'marca: no puede estar vacia si se declara').optional(),
   categoria: z.enum(CATEGORIAS),
   precio: z.number().int('precio: debe ser entero').positive('precio: debe ser positivo'),
   tallas: z.array(z.string().min(1)).min(1, 'tallas: al menos una'),

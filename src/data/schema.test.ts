@@ -48,6 +48,15 @@ describe('validarCatalogo', () => {
     expect(() => validarCatalogo([sinFotos])).toThrow(/imagenes/i)
   })
 
+  it('acepta un producto sin marca', () => {
+    const { marca, ...sinMarca } = { ...valido, marca: 'Lacoste' }
+    expect(() => validarCatalogo([sinMarca])).not.toThrow()
+  })
+
+  it('rompe si la marca se declara vacia', () => {
+    expect(() => validarCatalogo([{ ...valido, marca: '' }])).toThrow(/marca/i)
+  })
+
   it('rompe si el producto no tiene ninguna variante', () => {
     expect(() => validarCatalogo([{ ...valido, variantes: [] }])).toThrow(/variantes/i)
   })
