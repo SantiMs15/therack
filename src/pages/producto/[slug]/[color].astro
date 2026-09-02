@@ -1,36 +1,43 @@
 ---
 import { Image } from 'astro:assets'
-import Layout from '../../layouts/Layout.astro'
-import BotonWhatsApp from '../../components/BotonWhatsApp.astro'
-import { productos } from '../../data/productos'
-import { resolverImagen } from '../../lib/imagenes-productos'
-import { formatearPrecio } from '../../lib/formato'
-import { construirEnlaceWhatsApp } from '../../lib/whatsapp'
-import { CONFIG, INSTAGRAM_URL } from '../../config'
+import Layout from '../../../layouts/Layout.astro'
+import BotonWhatsApp from '../../../components/BotonWhatsApp.astro'
+import { productos } from '../../../data/productos'
+import { resolverImagen } from '../../../lib/imagenes-productos'
+import { formatearPrecio } from '../../../lib/formato'
+import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
+import { CONFIG, INSTAGRAM_URL } from '../../../config'
 
 export function getStaticPaths() {
-  return productos.map((producto) => ({
-    params: { slug: producto.slug },
-    props: { producto },
-  }))
+  // Una pagina por cada color. Asi el enlace que viaja en el mensaje de
+  // WhatsApp lleva al color exacto que miraba el cliente, en vez de a una
+  // ficha generica donde tendria que volver a elegirlo.
+  return productos.flatMap((producto) =>
+    producto.variantes.map((variante) => ({
+      params: { slug: producto.slug, color: variante.slug },
+      props: { producto, variante },
+    }))
+  )
 }
 
-const { producto } = Astro.props
-const imagenes = producto.imagenes.map((n) => ({ nombre: n, datos: resolverImagen(n) }))
+const { producto, variante } = Astro.props
+const imagenes = variante.imagenes.map((n) => ({ nombre: n, datos: resolverImagen(n) }))
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
 }
-const url = new URL(`/producto/${producto.slug}`, Astro.site).href
+const url = new URL(`/producto/${producto.slug}/${variante.slug}`, Astro.site).href
 const enlaceBase = construirEnlaceWhatsApp({
   telefono: CONFIG.telefono,
   nombre: producto.nombre,
   url,
+  color: producto.variantes.length > 1 ? variante.color : undefined,
 })
 const enlaceInicial = construirEnlaceWhatsApp({
   telefono: CONFIG.telefono,
   nombre: producto.nombre,
   url,
   talla: producto.tallas[0],
+  color: producto.variantes.length > 1 ? variante.color : undefined,
 })
 ---
 <Layout titulo={producto.nombre} descripcion={producto.descripcion}>
@@ -52,9 +59,24 @@ const enlaceInicial = construirEnlaceWhatsApp({
       <p class="precio">{formatearPrecio(producto.precio)}</p>
       <p class="descripcion">{producto.descripcion}</p>
 
-      {producto.disponible ? (
+      {variante.disponible ? (
         <>
-          <fieldset class="tallas">
+          {producto.variantes.length > 1 && (
+        <div class="colores">
+          <span class="etiqueta">Color</span>
+          <div class="opciones">
+            {producto.variantes.map((v) => (
+              <a
+                href={`/producto/${producto.slug}/${v.slug}`}
+                class:list={['color', { activo: v.slug === variante.slug }]}
+                aria-current={v.slug === variante.slug ? 'page' : undefined}
+              >{v.color}</a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <fieldset class="tallas">
             <legend>Talla</legend>
             {producto.tallas.map((talla, i) => (
               <label>
@@ -118,6 +140,24 @@ const enlaceInicial = construirEnlaceWhatsApp({
   .galeria :global(img) { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
   .precio { font-size: 1.25rem; margin-block: var(--espacio-1) var(--espacio-2); }
   .descripcion { color: var(--texto-suave); max-width: 55ch; }
+  .colores { margin-block: var(--espacio-3) var(--espacio-2); }
+  .etiqueta {
+    display: block;
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+    margin-bottom: var(--espacio-1);
+  }
+  .opciones { display: flex; flex-wrap: wrap; gap: var(--espacio-1); }
+  .color {
+    border: 1px solid var(--linea);
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+  }
+  .color:hover { border-color: var(--texto); }
+  .color.activo { border-color: var(--texto); background: var(--texto); color: var(--fondo); }
+
   .tallas { border: 0; padding: 0; margin-block: var(--espacio-3) var(--espacio-2); }
   .tallas legend {
     padding: 0;

@@ -8,9 +8,10 @@ const valido = {
   precio: 189000,
   tallas: ['S', 'M', 'L'],
   descripcion: 'Corte recto, forro interior.',
-  imagenes: ['blazer-lino-negro-1.jpg'],
+  variantes: [
+    { color: 'Negro', slug: 'negro', imagenes: ['blazer-lino-negro-1.jpg'], disponible: true },
+  ],
   destacado: true,
-  disponible: true,
 }
 
 describe('ProductoSchema', () => {
@@ -42,8 +43,21 @@ describe('validarCatalogo', () => {
     expect(() => validarCatalogo([{ ...valido, precio: -5 }])).toThrow(/precio/i)
   })
 
-  it('rompe si el producto no tiene imagenes', () => {
-    expect(() => validarCatalogo([{ ...valido, imagenes: [] }])).toThrow(/imagenes/i)
+  it('rompe si una variante no tiene imagenes', () => {
+    const sinFotos = { ...valido, variantes: [{ ...valido.variantes[0], imagenes: [] }] }
+    expect(() => validarCatalogo([sinFotos])).toThrow(/imagenes/i)
+  })
+
+  it('rompe si el producto no tiene ninguna variante', () => {
+    expect(() => validarCatalogo([{ ...valido, variantes: [] }])).toThrow(/variantes/i)
+  })
+
+  it('rompe si dos variantes del mismo producto comparten color', () => {
+    const repetido = {
+      ...valido,
+      variantes: [valido.variantes[0], { ...valido.variantes[0] }],
+    }
+    expect(() => validarCatalogo([repetido])).toThrow(/color duplicado/i)
   })
 
   it('rompe si el producto no tiene tallas', () => {

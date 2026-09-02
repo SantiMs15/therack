@@ -39,6 +39,22 @@ describe('construirEnlaceWhatsApp', () => {
     expect(construirEnlaceWhatsApp(base)).toContain('%0A')
   })
 
+  it('incluye el color cuando se indica', () => {
+    const enlace = construirEnlaceWhatsApp({ ...base, color: 'Negro' })
+    expect(decodeURIComponent(enlace)).toContain('(Negro)')
+  })
+
+  it('incluye color y talla juntos, en ese orden', () => {
+    const enlace = construirEnlaceWhatsApp({ ...base, color: 'Verde', talla: 'M' })
+    expect(decodeURIComponent(enlace)).toContain('(Verde, talla M)')
+  })
+
+  it('omite el color cuando no se indica', () => {
+    const enlace = construirEnlaceWhatsApp({ ...base, talla: 'M' })
+    expect(decodeURIComponent(enlace)).toContain('(talla M)')
+    expect(decodeURIComponent(enlace)).not.toContain(',')
+  })
+
   it('rechaza un telefono demasiado corto', () => {
     expect(() => construirEnlaceWhatsApp({ ...base, telefono: '300' }))
       .toThrow(/tel[eé]fono/i)

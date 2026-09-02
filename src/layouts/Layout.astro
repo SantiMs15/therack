@@ -1,9 +1,8 @@
 ---
-import { Image } from 'astro:assets'
 import '@fontsource/instrument-serif'
 import '@fontsource-variable/geist'
 import '../styles/global.css'
-import logo from '../assets/logo-negro.png'
+import Logo from '../assets/logo-web.svg'
 import { CONFIG, INSTAGRAM_URL } from '../config'
 
 interface Props {
@@ -31,7 +30,7 @@ const enlaces = [
   <body>
     <header class="cabecera contenedor">
       <a href="/" aria-label={CONFIG.nombre}>
-        <Image src={logo} alt={CONFIG.nombre} width={180} loading="eager" />
+        <Logo width={200} aria-hidden="true" />
       </a>
       <nav aria-label="Principal">
         {enlaces.map((e) => <a href={e.href}>{e.texto}</a>)}

@@ -6,9 +6,16 @@ import { formatearPrecio } from '../lib/formato'
 
 interface Props { producto: Producto; prioridad?: boolean }
 const { producto, prioridad = false } = Astro.props
-const imagen = resolverImagen(producto.imagenes[0])
+
+// La tarjeta muestra el primer color disponible: si el negro esta agotado
+// pero el verde no, la rejilla ensena el verde en vez de una prenda que no
+// se puede comprar. Si ninguno esta disponible, cae en el primero y la
+// tarjeta se marca como agotada.
+const variante = producto.variantes.find((v) => v.disponible) ?? producto.variantes[0]
+const hayStock = producto.variantes.some((v) => v.disponible)
+const imagen = resolverImagen(variante.imagenes[0])
 ---
-<a class="tarjeta" href={`/producto/${producto.slug}`}>
+<a class="tarjeta" href={`/producto/${producto.slug}/${variante.slug}`}>
   <div class="marco">
     <Image
       src={imagen}
@@ -18,7 +25,7 @@ const imagen = resolverImagen(producto.imagenes[0])
       loading={prioridad ? 'eager' : 'lazy'}
       fetchpriority={prioridad ? 'high' : undefined}
     />
-    {!producto.disponible && <span class="agotado">Agotado</span>}
+    {!hayStock && <span class="agotado">Agotado</span>}
   </div>
   <h3 class="nombre">{producto.nombre}</h3>
   <p class="precio">{formatearPrecio(producto.precio)}</p>

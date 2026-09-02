@@ -1,0 +1,7 @@
+{
+  // Live Server sirve desde dist/, no desde la raiz del proyecto.
+  // Astro genera rutas absolutas (/_astro/..., /producto/...); sirviendo
+  // desde la raiz esas rutas no resuelven y el sitio sale sin estilos.
+  "liveServer.settings.root": "/dist",
+  "liveServer.settings.file": "index.html"
+}

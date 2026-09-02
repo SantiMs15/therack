@@ -30,6 +30,13 @@ const { productos } = Astro.props
       gap: var(--espacio-3);
     }
   }
+
+  /* Cuatro por fila en escritorio. Con el contenedor de 1400px cada celda
+     ronda los 320px, suficiente para leer una foto 3:4. Por debajo se queda
+     en tres: cuatro columnas en tablet dejan las prendas demasiado pequenas. */
+  @media (min-width: 1100px) {
+    .rejilla { grid-template-columns: repeat(4, 1fr); }
+  }
   .vacio { color: var(--texto-suave); }
 
   /* Entrada suave al hacer scroll (spec §6).
