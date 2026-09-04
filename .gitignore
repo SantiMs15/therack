@@ -8,7 +8,8 @@ dist/
 .superpowers/
 therack-web.zip
 
-# Carpeta basura que aparece de forma intermitente en Windows: es una copia
-# de dist/. No se pudo reproducir con ningun comando aislado, asi que se
-# ignora para que no vuelva a entrar en un commit.
+# Carpetas basura que aparecen de forma intermitente en Windows: cada una es
+# una copia de dist/. No se pudo reproducir con ningun comando aislado, asi
+# que se ignoran para que no vuelvan a entrar en un commit.
 /1/
+/2/

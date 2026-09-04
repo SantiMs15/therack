@@ -6,52 +6,144 @@ import { formatearPrecio } from '../lib/formato'
 
 interface Props { producto: Producto; variante: Variante; prioridad?: boolean }
 const { producto, variante, prioridad = false } = Astro.props
-const imagen = resolverImagen(variante.imagenes[0])
+
+const alternativoPorDefecto = [producto.marca, producto.nombre, variante.color]
+  .filter(Boolean)
+  .join(' ')
+
+// Se pintan TODAS las fotos de la variante para poder rotarlas en la rejilla.
+// Sin alt propio se compone uno con marca y color: "Classic Printed Crew Neck"
+// repetido en las ocho tarjetas no dice nada ni a un lector de pantalla ni a
+// un buscador.
+const fotos = variante.imagenes.map((foto) => ({
+  datos: resolverImagen(foto.archivo),
+  alt: foto.alt ?? alternativoPorDefecto,
+}))
+
+// La rejilla puede abrir por una foto distinta a la que abre la ficha: hay
+// prendas que se venden por la espalda. Sin `portada` manda la primera.
+const indiceInicial = Math.max(0, variante.imagenes.findIndex((i) => i.portada))
+const enlace = `/producto/${producto.slug}/${variante.slug}`
 ---
-<a class="tarjeta" href={`/producto/${producto.slug}/${variante.slug}`}>
-  <div class="marco">
-    <Image
-      src={imagen}
-      alt={producto.nombre}
-      widths={[300, 600, 900]}
-      sizes="(max-width: 767px) 50vw, 33vw"
-      loading={prioridad ? 'eager' : 'lazy'}
-      fetchpriority={prioridad ? 'high' : undefined}
-    />
+<article class="tarjeta">
+  <div class="marco" data-galeria data-indice={indiceInicial}>
+    {fotos.map((foto, i) => (
+      <Image
+        class:list={['foto', { activa: i === indiceInicial }]}
+        src={foto.datos}
+        alt={foto.alt}
+        widths={[300, 600, 900]}
+        sizes="(max-width: 767px) 50vw, 33vw"
+        loading={prioridad && i === indiceInicial ? 'eager' : 'lazy'}
+        fetchpriority={prioridad && i === indiceInicial ? 'high' : undefined}
+      />
+    ))}
+
     {!variante.disponible && <span class="agotado">Agotado</span>}
+
+    {fotos.length > 1 && (
+      <>
+        <button type="button" class="flecha flecha--atras" data-galeria-paso="-1">
+          <span class="visualmente-oculto">Foto anterior de {producto.nombre} {variante.color}</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+            <path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+          </svg>
+        </button>
+        <button type="button" class="flecha flecha--adelante" data-galeria-paso="1">
+          <span class="visualmente-oculto">Foto siguiente de {producto.nombre} {variante.color}</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+            <path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+          </svg>
+        </button>
+      </>
+    )}
   </div>
-  <h3 class="nombre">{producto.nombre} - {variante.color}</h3>
+
+  <h3 class="nombre">
+    {/* El enlace envuelve solo el titulo, pero su ::after cubre la tarjeta
+        entera: asi toda la pieza es clicable sin meter los botones dentro de
+        un <a>, que ni es HTML valido ni dejaria pulsar las flechas. */}
+    <a class="enlace" href={enlace}>{producto.nombre} - {variante.color}</a>
+  </h3>
   {producto.marca && <p class="marca">{producto.marca}</p>}
   <p class="precio">{formatearPrecio(producto.precio)}</p>
-</a>
+</article>
 
 <style>
-  .tarjeta { display: block; }
+  .tarjeta { position: relative; display: block; }
+
   .marco {
     position: relative;
     aspect-ratio: 3 / 4;
     overflow: hidden;
     background: var(--linea);
+    /* El gesto horizontal sobre la foto es nuestro; el vertical se queda con
+       el navegador, que si no la rejilla no se podria recorrer con el dedo. */
+    touch-action: pan-y;
   }
-  .marco :global(img) {
+
+  /* Las fotos se apilan y se cruzan por opacidad. Apilarlas en vez de moverlas
+     evita reflow al rotar y deja el alto de la tarjeta fijo. */
+  .marco :global(.foto) {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 400ms ease;
+    opacity: 0;
+    transition: opacity 300ms ease, transform 400ms ease;
   }
-  .tarjeta:hover .marco :global(img) { transform: scale(1.03); }
+  .marco :global(.foto.activa) { opacity: 1; }
+  .tarjeta:hover .marco :global(.foto) { transform: scale(1.03); }
+
   .agotado {
     position: absolute;
     inset-block-end: 0;
     inset-inline: 0;
+    z-index: 2;
     background: var(--texto);
     color: var(--fondo);
     text-align: center;
     font-size: 0.75rem;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     padding-block: var(--espacio-1);
   }
+
+  /* --- Flechas --- */
+  /* z-index 3: por encima del ::after del enlace (1) y del aviso de agotado
+     (2), o el clic caeria en la ficha en vez de rotar la foto. */
+  .flecha {
+    position: absolute;
+    z-index: 3;
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 0;
+    background: color-mix(in srgb, var(--fondo) 88%, transparent);
+    color: var(--texto);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .flecha--atras { inset-inline-start: var(--espacio-1); }
+  .flecha--adelante { inset-inline-end: var(--espacio-1); }
+
+  .tarjeta:hover .flecha,
+  .flecha:focus-visible { opacity: 1; }
+  .flecha:hover { background: var(--fondo); }
+  .flecha:focus-visible { outline: 2px solid var(--texto); outline-offset: 2px; }
+
+  /* En tactil no hay flechas: la foto se cambia arrastrando el dedo, que es
+     el gesto que ya se espera sobre una foto en el movil. */
+  @media (hover: none) {
+    .flecha { display: none; }
+  }
+
   /* Nombre, marca y precio centrados bajo la foto. */
   .nombre,
   .marca,
@@ -61,8 +153,113 @@ const imagen = resolverImagen(variante.imagenes[0])
     font-family: var(--fuente-ui);
     font-size: 0.9375rem;
     font-weight: 400;
-    margin-block: var(--espacio-1) 0;
+    margin-block: var(--espacio-2) 0;
   }
-  .marca { margin: 0; color: var(--texto-suave); font-size: 0.8125rem; }
-  .precio { margin: 0; color: var(--texto-suave); font-size: 0.875rem; }
+  .enlace::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .marca {
+    font-family: var(--fuente-marca);
+    margin-block: 0.375rem 0;
+    color: var(--texto-suave);
+    font-size: 0.8125rem;
+  }
+  /* El precio cierra la tarjeta, asi que va mas grande que el nombre y con
+     mas aire por encima: es el dato que el cliente busca al recorrer la
+     rejilla. */
+  .precio {
+    margin-block: var(--espacio-1) 0;
+    color: var(--texto);
+    font-size: 1.0625rem;
+  }
+
+  .visualmente-oculto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 </style>
+
+<script>
+  // Por debajo de esto el dedo no queria pasar de foto, solo tocar la tarjeta.
+  const UMBRAL = 40
+
+  function rotar(marco: HTMLElement, paso: number) {
+    const fotos = marco.querySelectorAll<HTMLImageElement>('.foto')
+    if (fotos.length < 2) return
+
+    const actual = Number(marco.dataset.indice ?? 0)
+    // Modulo con correccion de signo: en JS -1 % 3 es -1, no 2.
+    const siguiente = (((actual + paso) % fotos.length) + fotos.length) % fotos.length
+
+    fotos[actual]?.classList.remove('activa')
+    fotos[siguiente]?.classList.add('activa')
+    marco.dataset.indice = String(siguiente)
+  }
+
+  // Delegacion en el documento: una sola escucha para todas las tarjetas de la
+  // rejilla, en vez de un par de listeners por tarjeta.
+  document.addEventListener('click', (evento) => {
+    const boton = (evento.target as HTMLElement).closest<HTMLButtonElement>('[data-galeria-paso]')
+    if (!boton) return
+
+    const marco = boton.closest<HTMLElement>('[data-galeria]')
+    if (!marco) return
+
+    rotar(marco, Number(boton.dataset.galeriaPaso))
+  })
+
+  // --- Deslizar con el dedo ---
+  // Sustituye a las flechas, que en tactil ya no se pintan. El raton se queda
+  // fuera a proposito: para eso tiene las flechas al pasar por encima.
+  let marcoActivo: HTMLElement | null = null
+  let inicioX = 0
+  let inicioY = 0
+  let ultimoDeslizamiento = 0
+
+  document.addEventListener('pointerdown', (evento) => {
+    if (evento.pointerType === 'mouse') return
+    marcoActivo = (evento.target as HTMLElement).closest<HTMLElement>('[data-galeria]')
+    inicioX = evento.clientX
+    inicioY = evento.clientY
+  })
+
+  document.addEventListener('pointerup', (evento) => {
+    const marco = marcoActivo
+    marcoActivo = null
+    if (!marco) return
+
+    const dx = evento.clientX - inicioX
+    const dy = evento.clientY - inicioY
+    // Corto, o mas vertical que horizontal: era un toque o un scroll.
+    if (Math.abs(dx) < UMBRAL || Math.abs(dx) <= Math.abs(dy)) return
+
+    // Arrastrar a la izquierda trae la foto siguiente, como pasar una hoja.
+    rotar(marco, dx < 0 ? 1 : -1)
+    ultimoDeslizamiento = Date.now()
+  })
+
+  // El navegador cancela el puntero en cuanto decide que el gesto es scroll.
+  document.addEventListener('pointercancel', () => { marcoActivo = null })
+
+  // El enlace de la tarjeta la cubre entera con su ::after, asi que al soltar
+  // el dedo se abriria tambien la ficha. Ese clic se traga en captura, antes
+  // de que llegue a nadie.
+  document.addEventListener(
+    'click',
+    (evento) => {
+      if (Date.now() - ultimoDeslizamiento > 400) return
+      evento.preventDefault()
+      evento.stopPropagation()
+    },
+    true
+  )
+</script>

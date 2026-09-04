@@ -1,4 +1,4 @@
-import { validarCatalogo, type Producto } from './schema'
+import { TALLAS_HOMBRE, TALLAS_MUJER, validarCatalogo, type Producto } from './schema'
 
 /**
  * FUENTE DE VERDAD DEL CATALOGO.
@@ -20,25 +20,37 @@ const catalogo: unknown[] = [
     nombre: 'Classic Printed Crew Neck',
     marca: 'Lacoste',
     categoria: 'hombre',
-    // PENDIENTE: precio real en COP. El 1 es un marcador deliberado: se ve
-    // como "$1" en la ficha, imposible de confundir con un precio real.
-    precio: 1,
-    tallas: ['S', 'M', 'L', 'XL'], // PENDIENTE: confirmar tallas disponibles
-    descripcion: 'PENDIENTE: descripcion del producto.',
+    precio: 290000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion: 'Buzo Lacoste en algodon, corte clasico, estampado frontal Classic Logo.',
     variantes: [
       {
         color: 'Negro',
         slug: 'negro',
-        imagenes: ['crew-neck-lacoste-negro-1.jpg', 'crew-neck-lacoste-negro-2.jpg'],
+        imagenes: [
+          {
+            archivo: 'lacoste-classic-printed-crew-neck-negro-frente.jpg',
+            alt: 'Buzo Lacoste Classic Printed Crew Neck negro, vista frontal con el cocodrilo estampado y el texto Lacoste Paris',
+          },
+          {
+            archivo: 'lacoste-classic-printed-crew-neck-negro-espalda.jpg',
+            alt: 'Buzo Lacoste Classic Printed Crew Neck negro, vista de espalda lisa sin estampado',
+          },
+        ],
         disponible: true,
       },
       {
         color: 'Verde',
         slug: 'verde',
         imagenes: [
-          'crew-neck-lacoste-verde-1.jpg',
-          'crew-neck-lacoste-verde-2.jpg',
-          'crew-neck-lacoste-verde-3.jpg',
+          {
+            archivo: 'lacoste-classic-printed-crew-neck-verde-frente.jpg',
+            alt: 'Buzo Lacoste Classic Printed Crew Neck verde oscuro, vista frontal con el cocodrilo estampado y el texto Lacoste Paris',
+          },
+          {
+            archivo: 'lacoste-classic-printed-crew-neck-verde-espalda.jpg',
+            alt: 'Buzo Lacoste Classic Printed Crew Neck verde oscuro, vista de espalda lisa sin estampado',
+          },
         ],
         disponible: true,
       },
@@ -46,57 +58,170 @@ const catalogo: unknown[] = [
     destacado: true,
   },
 
-  // --- DATOS SEMILLA: reemplazar por catalogo real ---
   {
-    slug: 'blazer-lino-negro',
-    nombre: 'Blazer de lino',
-    categoria: 'mujer',
-    precio: 189000,
-    tallas: ['S', 'M', 'L'],
-    descripcion: 'Corte recto en lino, forro interior y boton forrado.',
+    slug: 'multi-print-fleece-hoodie',
+    nombre: 'Multi Print Fleece Hoodie',
+    marca: 'Lacoste',
+    categoria: 'hombre',
+    precio: 295000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Hoodie Lacoste en tejido fleece, capucha ajustable, bolsillo canguro y estampado Jeu Set et Match en pecho y espalda.',
     variantes: [
       {
         color: 'Negro',
         slug: 'negro',
-        imagenes: ['blazer-lino-negro-1.jpg', 'blazer-lino-negro-2.jpg'],
+        imagenes: [
+          {
+            archivo: 'lacoste-multi-print-fleece-hoodie-negro-frente.jpg',
+            alt: 'Hoodie Lacoste Multi Print Fleece negro, vista frontal con capucha, bolsillo canguro y el logo Jeu Set et Match bordado en el pecho',
+          },
+          {
+            archivo: 'lacoste-multi-print-fleece-hoodie-negro-espalda.jpg',
+            alt: 'Hoodie Lacoste Multi Print Fleece negro, vista de espalda con el estampado grande Lacoste Jeu Set et Match y el cocodrilo en blanco',
+            // En el catalogo va la espalda: el estampado grande distingue esta
+            // prenda de un hoodie negro cualquiera, el frente no.
+            portada: true,
+          },
+        ],
         disponible: true,
       },
     ],
     destacado: true,
   },
+
   {
-    slug: 'camisa-oxford-blanca',
-    nombre: 'Camisa Oxford',
+    slug: 'striped-cable-knit-polo',
+    nombre: 'Striped Cable Knit Polo',
+    marca: 'Lacoste',
+    categoria: 'mujer',
+    precio: 285000,
+    // Toda la escala de mujer. La M sigue a la vista, tachada: que la prenda
+    // llegue de la XXS a la XXL importa aunque hoy falte una talla del medio.
+    tallas: TALLAS_MUJER.map((talla) => ({ talla, disponible: talla !== 'M' })),
+    descripcion:
+      'Polo Lacoste de punto trenzado en algodon, cuello y punos con ribete blanco en contraste, tres botones y cocodrilo bordado en el pecho.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'lacoste-striped-cable-knit-polo-azul-marino-frente.jpg',
+            alt: 'Polo Lacoste de punto trenzado azul marino, vista frontal de la prenda sola con el cuello ribeteado en blanco, tres botones y el cocodrilo bordado en el pecho',
+          },
+          {
+            archivo: 'lacoste-striped-cable-knit-polo-azul-marino-modelo-busto.jpg',
+            alt: 'Polo Lacoste de punto trenzado azul marino puesto, plano medio de una modelo que lo lleva con shorts vaqueros blancos',
+            // En la rejilla va esta foto: la prenda sola no deja ver como cae
+            // ni a que altura queda. La ficha abre por el frente, donde se
+            // aprecian el punto y el cocodrilo, y sigue por esta.
+            portada: true,
+          },
+          {
+            archivo: 'lacoste-striped-cable-knit-polo-azul-marino-espalda.jpg',
+            alt: 'Polo Lacoste de punto trenzado azul marino, vista de espalda de la prenda sola, lisa salvo el ribete blanco del cuello y de los punos',
+          },
+          {
+            archivo: 'lacoste-striped-cable-knit-polo-azul-marino-modelo-completo.jpg',
+            alt: 'Polo Lacoste de punto trenzado azul marino puesto, plano entero de una modelo con shorts vaqueros blancos y tenis blancos',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'intarsia-wool-sweater',
+    nombre: 'Intarsia Branded Wool Sweater',
+    marca: 'Lacoste',
     categoria: 'hombre',
-    precio: 129000,
-    tallas: ['M', 'L', 'XL'],
-    descripcion: 'Algodon Oxford, cuello button-down, corte regular.',
+    precio: 385000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Sueter Lacoste en lana, cuello redondo acanalado, mangas raglan y el nombre Lacoste Paris tejido en intarsia sobre el pecho.',
     variantes: [
       {
-        color: 'Blanco',
-        slug: 'blanco',
-        imagenes: ['camisa-oxford-blanca-1.jpg'],
+        color: 'Crudo',
+        slug: 'crudo',
+        imagenes: [
+          {
+            archivo: 'lacoste-intarsia-wool-sweater-crudo-frente.jpg',
+            alt: 'Sueter Lacoste de lana color crudo, vista frontal con el nombre Lacoste tejido en azul y verde y la palabra Paris en rosa debajo',
+          },
+          {
+            archivo: 'lacoste-intarsia-wool-sweater-crudo-espalda.jpg',
+            alt: 'Sueter Lacoste de lana color crudo, vista de espalda lisa, con las costuras raglan y el bajo acanalado a la vista',
+          },
+        ],
         disponible: true,
       },
     ],
     destacado: true,
   },
+
   {
-    slug: 'botin-cuero-cafe',
-    nombre: 'Botin de cuero',
-    categoria: 'calzado',
-    precio: 249000,
-    tallas: ['38', '39', '40', '41'],
-    descripcion: 'Cuero natural, suela de goma, cierre lateral.',
+    slug: 'classic-quarter-zip-sweater',
+    nombre: 'Classic Quarter-Zip Sweater',
+    marca: 'Tommy Hilfiger',
+    categoria: 'hombre',
+    precio: 290000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Sueter Tommy Hilfiger de algodon, cuello alto acanalado con cremallera hasta el pecho y bandera bordada en el costado.',
     variantes: [
       {
-        color: 'Cafe',
-        slug: 'cafe',
-        imagenes: ['botin-cuero-cafe-1.jpg'],
-        disponible: false,
+        color: 'Beige',
+        slug: 'beige',
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-beige-frente.jpg',
+            alt: 'Sueter Tommy Hilfiger beige, vista frontal de la prenda sola con la cremallera abierta hasta el pecho y la bandera bordada a la derecha',
+          },
+          {
+            archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-beige-espalda.jpg',
+            alt: 'Sueter Tommy Hilfiger beige, vista de espalda de la prenda sola, lisa, con la cinta a rayas asomando por el cuello',
+          },
+          {
+            archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-beige-modelo.jpg',
+            alt: 'Sueter Tommy Hilfiger beige puesto, plano medio de un modelo que lo lleva con una camiseta blanca debajo y pantalon chino',
+          },
+        ],
+        disponible: true,
       },
     ],
-    destacado: false,
+    destacado: true,
+  },
+
+  {
+    slug: 'quarter-zip-sweater',
+    nombre: 'Quarter-Zip Sweater',
+    marca: 'Tommy Hilfiger',
+    categoria: 'hombre',
+    precio: 380000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Sueter Tommy Hilfiger de punto texturizado en algodon, cuello alto con cremallera hasta el pecho y bandera bordada en el costado.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-quarter-zip-sweater-azul-marino-frente.jpg',
+            alt: 'Sueter Tommy Hilfiger azul marino, vista frontal de la prenda sola con la cremallera hasta el pecho y la bandera bordada a la derecha',
+          },
+          {
+            archivo: 'tommy-hilfiger-quarter-zip-sweater-azul-marino-espalda.jpg',
+            alt: 'Sueter Tommy Hilfiger azul marino, vista de espalda de la prenda sola, con el punto texturizado en los hombros y las mangas',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
   },
 ]
 

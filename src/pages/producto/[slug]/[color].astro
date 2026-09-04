@@ -25,7 +25,21 @@ const { producto, variante } = Astro.props
 // producto.nombre y el color por separado, y concatenarlos en el dato lo
 // dejaria diciendo "Crew Neck - Verde (Verde, talla S)".
 const titulo = `${producto.nombre} - ${variante.color}`
-const imagenes = variante.imagenes.map((n) => ({ nombre: n, datos: resolverImagen(n) }))
+// El alt describe cada foto por separado. Donde la variante no lo declara se
+// compone con marca y color, que es lo que distingue una ficha de otra.
+const alternativoPorDefecto = [producto.marca, producto.nombre, variante.color]
+  .filter(Boolean)
+  .join(' ')
+const imagenes = variante.imagenes.map((foto) => {
+  const datos = resolverImagen(foto.archivo)
+  // El visor pide la copia mas grande que exista. Astro no reescala hacia
+  // arriba, asi que pedir un ancho mayor que el original solo genera avisos:
+  // se acotan al tamano real del archivo.
+  const anchos = [...new Set([900, 1400, datos.width])]
+    .filter((w) => w <= datos.width)
+    .sort((a, b) => a - b)
+  return { datos, alt: foto.alt ?? alternativoPorDefecto, anchos }
+})
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
 }
@@ -36,30 +50,79 @@ const enlaceBase = construirEnlaceWhatsApp({
   url,
   color: producto.variantes.length > 1 ? variante.color : undefined,
 })
+// Sin talla: la ficha abre con ninguna elegida, asi que el mensaje no puede
+// nombrar todavia una que el cliente no ha escogido. El script la anade en
+// cuanto elige.
 const enlaceInicial = construirEnlaceWhatsApp({
   telefono: CONFIG.telefono,
   nombre: producto.nombre,
   url,
-  talla: producto.tallas[0],
   color: producto.variantes.length > 1 ? variante.color : undefined,
 })
 ---
 <Layout titulo={titulo} descripcion={producto.descripcion}>
+  <script is:inline>
+    // Se ejecuta antes de que la galeria se pinte: si venimos de un cambio de
+    // color, la pagina nueva debe aparecer ya tapada por las capas. Hacerlo
+    // desde el script diferido de abajo dejaria ver un fotograma sin tapar.
+    try {
+      if (sessionStorage.getItem('barrido-color')) {
+        document.documentElement.dataset.barrido = 'cubierto'
+        sessionStorage.removeItem('barrido-color')
+      }
+    } catch {}
+  </script>
   <div class="contenedor ficha">
-    <div class="galeria">
+    <div class="galeria" data-galeria-ficha data-indice="0">
+      <span class="barrido" aria-hidden="true">
+        <span class="barrido__capa"></span>
+        <span class="barrido__capa"></span>
+        <span class="barrido__capa"></span>
+      </span>
       {imagenes.map((img, i) => (
-        <Image
-          src={img.datos}
-          alt={producto.nombre}
-          widths={[600, 900, 1200]}
-          sizes="(max-width: 767px) 100vw, 50vw"
-          loading={i === 0 ? 'eager' : 'lazy'}
-        />
+        <button type="button" class:list={['lupa', { activa: i === 0 }]} data-visor-abrir={i}>
+          <span class="visualmente-oculto">Ampliar foto {i + 1} de {imagenes.length}</span>
+          <Image
+            src={img.datos}
+            alt={img.alt}
+            widths={[600, 900, 1200]}
+            sizes="(max-width: 767px) 100vw, 50vw"
+            loading={i === 0 ? 'eager' : 'lazy'}
+          />
+        </button>
       ))}
+
+      {/* Solo cuentan en movil: en dos columnas las fotos van en vertical y
+          estas flechas no se pintan. */}
+      {imagenes.length > 1 && (
+        <>
+          <button type="button" class="galeria__flecha galeria__flecha--atras" data-ficha-paso="-1">
+            <span class="visualmente-oculto">Foto anterior de {titulo}</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+              <path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+            </svg>
+          </button>
+          <button type="button" class="galeria__flecha galeria__flecha--adelante" data-ficha-paso="1">
+            <span class="visualmente-oculto">Foto siguiente de {titulo}</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+              <path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+            </svg>
+          </button>
+        </>
+      )}
     </div>
 
-    <div class="detalle">
-      <h1>{titulo}</h1>
+    {/* Nombre, marca y bloque de compra son una sola columna en escritorio.
+        En movil esta capa desaparece con display: contents y sus dos hijos
+        pasan a ser celdas de la ficha, que es lo que deja meter la foto
+        entre la marca y el precio. */}
+    <div class="columna">
+      <header class="encabezado">
+        <h1>{titulo}</h1>
+        {producto.marca && <p class="marca">{producto.marca}</p>}
+      </header>
+
+      <div class="detalle">
       <p class="precio">{formatearPrecio(producto.precio)}</p>
       <p class="descripcion">{producto.descripcion}</p>
 
@@ -81,11 +144,22 @@ const enlaceInicial = construirEnlaceWhatsApp({
       )}
 
       <fieldset class="tallas">
-            <legend>Talla</legend>
-            {producto.tallas.map((talla, i) => (
+            <legend>
+              Talla
+              {/* Nace vacio: el estado contesta a una eleccion, no la adelanta. */}
+              <span class="tallas__estado" data-talla-estado aria-live="polite"></span>
+            </legend>
+            {producto.tallas.map(({ talla, disponible }) => (
               <label>
-                <input type="radio" name="talla" value={talla} checked={i === 0} />
+                {/* Deshabilitada: la agotada no se puede elegir. El clic sobre
+                    la etiqueta si llega al script, que es lo que permite
+                    contestar "Agotado" en vez de no hacer nada. */}
+                <input type="radio" name="talla" value={talla} disabled={!disponible} />
                 <span>{talla}</span>
+                {/* El tachado no lo lee un lector de pantalla, y el radio
+                    deshabilitado tampoco recibe el foco: sin esto la talla
+                    agotada seria indistinguible al oido. */}
+                {!disponible && <span class="visualmente-oculto"> (agotada)</span>}
               </label>
             ))}
           </fieldset>
@@ -99,8 +173,52 @@ const enlaceInicial = construirEnlaceWhatsApp({
       ) : (
         <p class="agotado-aviso">Agotado</p>
       )}
+      </div>
     </div>
   </div>
+
+  {/* <dialog> nativo: aporta modal, foco atrapado, inerte el resto de la
+      pagina y cierre con Escape sin escribir nada de eso a mano. */}
+  <dialog class="visor" data-visor aria-label={`Fotos de ${titulo}`}>
+    <div class="visor__lienzo" data-visor-lienzo>
+      {imagenes.map((img, i) => (
+        <Image
+          class:list={['visor__foto', { activa: i === 0 }]}
+          src={img.datos}
+          alt={img.alt}
+          widths={img.anchos}
+          sizes="100vw"
+          loading="lazy"
+          draggable={false}
+        />
+      ))}
+    </div>
+
+    <button type="button" class="visor__cerrar" data-visor-cerrar>
+      <span class="visualmente-oculto">Cerrar</span>
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+        <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
+
+    {imagenes.length > 1 && (
+      <>
+        <button type="button" class="visor__flecha visor__flecha--atras" data-visor-paso="-1">
+          <span class="visualmente-oculto">Foto anterior</span>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
+            <path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+          </svg>
+        </button>
+        <button type="button" class="visor__flecha visor__flecha--adelante" data-visor-paso="1">
+          <span class="visualmente-oculto">Foto siguiente</span>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
+            <path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+          </svg>
+        </button>
+        <p class="visor__contador" data-visor-contador aria-live="polite"></p>
+      </>
+    )}
+  </dialog>
 </Layout>
 
 <script define:vars={{ enlaceBase }}>
@@ -111,44 +229,348 @@ const enlaceInicial = construirEnlaceWhatsApp({
   // llega como texto literal y rompe el parseo del script completo.
   // Este archivo debe quedarse en JavaScript plano.
   const boton = document.querySelector('[data-whatsapp]')
+  const estado = document.querySelector('[data-talla-estado]')
+  const tallas = document.querySelector('.tallas')
   const radios = document.querySelectorAll('input[name="talla"]')
   const [inicio, resto] = enlaceBase.split('?text=')
   const textoBase = decodeURIComponent(resto)
 
   function actualizar() {
     const elegida = document.querySelector('input[name="talla"]:checked')
-    if (!boton || !elegida) return
+    // Nada elegida todavia: el estado sigue en blanco y el enlace, sin talla.
+    if (!elegida) return
+
+    // Solo se puede marcar una talla que hay, asi que llegar aqui ya significa
+    // que esta disponible.
+    pintarEstado('disponible')
+
+    if (!boton) return
     const [linea1, linea2] = textoBase.split('\n')
     const texto = `${linea1} (talla ${elegida.value})\n${linea2}`
     boton.href = `${inicio}?text=${encodeURIComponent(texto)}`
   }
 
+  function pintarEstado(cual) {
+    if (!estado) return
+    estado.textContent = cual === 'agotado' ? 'Agotado' : 'Disponible'
+    estado.dataset.estado = cual
+  }
+
   radios.forEach((r) => r.addEventListener('change', actualizar))
+
+  // Un radio deshabilitado no dispara change, pero el clic sobre su etiqueta
+  // si llega hasta aqui. Es la unica via para contestar a quien pulsa una
+  // talla agotada, que si no se quedaria sin respuesta.
+  if (tallas) {
+    tallas.addEventListener('click', (evento) => {
+      const etiqueta = evento.target.closest('label')
+      if (!etiqueta) return
+      const radio = etiqueta.querySelector('input[name="talla"]')
+      if (radio && radio.disabled) pintarEstado('agotado')
+    })
+  }
+
   actualizar()
+</script>
+
+<script>
+  // Barrido entre colores. La animacion vive en CSS; aqui solo se conmuta el
+  // estado en <html> y se retrasa la navegacion hasta que la galeria queda
+  // tapada, para que el cambio de foto ocurra fuera de la vista.
+  const ENTRADA = 580 // 420ms de transicion + 160ms de retardo de la ultima capa
+
+  const raiz = document.documentElement
+  const suave = matchMedia('(prefers-reduced-motion: no-preference)')
+
+  // Salida: llegamos tapados, descubrimos.
+  if (raiz.dataset.barrido === 'cubierto') {
+    if (!suave.matches) {
+      raiz.dataset.barrido = 'listo'
+    } else {
+      // Dos fotogramas: el primero confirma el estado tapado sin transicion,
+      // el segundo ya anima. Con uno solo el navegador colapsa ambos y la
+      // salida no se ve.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          raiz.dataset.barrido = 'saliendo'
+          setTimeout(() => { raiz.dataset.barrido = 'listo' }, ENTRADA)
+        })
+      )
+    }
+  }
+
+  // Entrada: tapamos y solo entonces navegamos.
+  document.querySelectorAll<HTMLAnchorElement>('.color:not(.activo)').forEach((enlace) => {
+    enlace.addEventListener('click', (evento) => {
+      // Sin animacion, o con clic de nueva pestana, se deja el enlace normal.
+      if (!suave.matches) return
+      if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) return
+
+      evento.preventDefault()
+      try { sessionStorage.setItem('barrido-color', '1') } catch {}
+      raiz.dataset.barrido = 'entrando'
+      setTimeout(() => { window.location.href = enlace.href }, ENTRADA)
+    })
+  })
 </script>
 
 <style>
   .ficha { display: grid; gap: var(--espacio-3); padding-block: var(--espacio-3); }
 
-  /* En movil el bloque de compra va PRIMERO. Con la galeria delante, el precio
-     quedaba a 3,3 pantallas de scroll y el boton de WhatsApp a 3,5, medido a
-     375px con dos fotos. La galeria no contiene elementos enfocables, asi que
-     invertir el orden visual no altera el recorrido de tabulacion. */
-  .detalle { order: -1; }
+  /* En movil la columna se deshace y sus dos mitades pasan a ser celdas de
+     la ficha, para poder colar la foto entre la marca y el precio. */
+  @media (max-width: 899px) {
+    .columna { display: contents; }
+    .encabezado { order: 1; }
+    .galeria { order: 2; }
+    .detalle { order: 3; }
+  }
 
+  /* En escritorio la ficha vuelve a ser lo que siempre fue: dos celdas, la
+     galeria y una columna de flujo normal. Que sea flujo normal es lo que
+     importa, porque los margenes de nombre, marca y precio se colapsan entre
+     si; como celdas de grid no lo hacen y el precio se despegaba. */
   @media (min-width: 900px) {
     .ficha { grid-template-columns: 1fr 1fr; gap: var(--espacio-4); align-items: start; }
-    .detalle { order: 0; }
   }
-  .galeria { display: grid; gap: var(--espacio-1); }
-  .galeria :global(img) { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
-  .precio { font-size: 1.25rem; margin-block: var(--espacio-1) var(--espacio-2); }
+  .galeria { position: relative; display: grid; gap: var(--espacio-1); }
+
+  /* En movil se ve una sola foto y se rota con las flechas. Todas ocupan la
+     misma celda: cambiar de foto no mueve nada de sitio ni cambia el alto de
+     la pagina, y la que no toca queda fuera del recorrido de tabulacion por
+     visibility, no por opacidad. */
+  @media (max-width: 899px) {
+    .galeria { gap: 0; }
+    .lupa {
+      grid-area: 1 / 1;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 300ms ease;
+    }
+    .lupa.activa { opacity: 1; visibility: visible; }
+  }
+
+  .galeria__flecha {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 0;
+    background: color-mix(in srgb, var(--fondo) 88%, transparent);
+    color: var(--texto);
+    cursor: pointer;
+  }
+  .galeria__flecha--atras { inset-inline-start: var(--espacio-1); }
+  .galeria__flecha--adelante { inset-inline-end: var(--espacio-1); }
+  .galeria__flecha:hover { background: var(--fondo); }
+  .galeria__flecha:focus-visible { outline: 2px solid var(--texto); outline-offset: 2px; }
+
+  /* En dos columnas caben todas las fotos en vertical: las flechas sobran. */
+  @media (min-width: 900px) {
+    .galeria__flecha { display: none; }
+  }
+  /* height: auto es obligatorio, no cosmetico: <Image /> emite width y height
+     como atributos HTML, que cuentan como altura explicita. Con ambas
+     dimensiones fijadas el navegador ignora aspect-ratio y la caja adopta la
+     altura en pixeles del archivo, que object-fit: cover resuelve recortando
+     los lados. */
+  .galeria :global(img) {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+  }
+
+  /* --- Barrido entre colores ---
+     Mismas capas escalonadas y misma curva que el menu a pantalla completa,
+     pero acotadas a la galeria: al elegir color solo cambia la foto, y tapar
+     cabecera y precio alargaria un gesto que es solo mirar otra prenda.
+     El estado vive en <html> porque hay que fijarlo antes de pintar. */
+  .barrido {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .barrido__capa {
+    position: absolute;
+    inset: 0;
+    transform: translateX(101%);
+    transition: transform 420ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  .barrido__capa:nth-child(1) { background: var(--texto-suave); }
+  .barrido__capa:nth-child(2) { background: #2A2724; transition-delay: 80ms; }
+  .barrido__capa:nth-child(3) { background: var(--texto); transition-delay: 160ms; }
+
+  /* Entrada: las capas cubren de derecha a izquierda antes de navegar. */
+  :global(html[data-barrido='entrando']) .barrido__capa { transform: translateX(0); }
+
+  /* Llegada: la pagina nueva se pinta ya tapada, sin animar. */
+  :global(html[data-barrido='cubierto']) .barrido__capa {
+    transform: translateX(0);
+    transition: none;
+  }
+
+  /* Salida: siguen hacia la izquierda en vez de retroceder, para que se lea
+     como un barrido que pasa. La capa de encima se va primero. */
+  :global(html[data-barrido='saliendo']) .barrido__capa { transform: translateX(-101%); }
+  :global(html[data-barrido='saliendo']) .barrido__capa:nth-child(1) { transition-delay: 160ms; }
+  :global(html[data-barrido='saliendo']) .barrido__capa:nth-child(2) { transition-delay: 80ms; }
+  :global(html[data-barrido='saliendo']) .barrido__capa:nth-child(3) { transition-delay: 0ms; }
+
+  /* Rearmado sin animacion: si no, al volver al estado inicial las capas
+     cruzarian la galeria de izquierda a derecha a la vista. */
+  :global(html[data-barrido='listo']) .barrido__capa {
+    transform: translateX(101%);
+    transition: none;
+  }
+  .marca {
+    font-family: var(--fuente-ui);
+    margin-block: var(--espacio-1) 0;
+    color: var(--texto-suave);
+    font-size: 1.875rem;
+  }
+  /* Solo en movil se achica. Ahi el nombre, la marca y el precio caen
+     seguidos en una columna, y a 1.875rem la marca competia con los dos; en
+     dos columnas eso no pasa, asi que se queda como estaba. */
+  @media (max-width: 899px) {
+    .marca { font-size: 1.125rem; }
+  }
+  /* El doble que en la tarjeta del catalogo, y por encima del nombre de la
+     prenda: en la ficha el precio es el dato que decide la compra. */
+  .precio { font-size: 2.5rem; margin-block: var(--espacio-2) var(--espacio-3); }
+  /* La foto de la galeria es un boton: hay que quitarle todo el aspecto de
+     boton y dejar solo el cursor, que es lo que anuncia que amplia. */
+  .lupa {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+  }
+  .lupa:focus-visible { outline: 2px solid var(--texto); outline-offset: 4px; }
+
+  /* --- Visor --- */
+  .visor {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--fondo);
+    overscroll-behavior: contain;
+  }
+  .visor::backdrop { background: rgb(17 17 17 / 0.9); }
+
+  /* overflow hidden y no auto: el desplazamiento con la foto ampliada lo
+     lleva el arrastre, no la barra del navegador. */
+  .visor__lienzo {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+
+  .visor :global(.visor__foto) {
+    grid-area: 1 / 1;
+    max-width: 100%;
+    max-height: 100dvh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    /* Sin esto el raton arrastra la propia imagen (fantasma del navegador) o
+       selecciona, en vez de desplazar la foto ampliada. */
+    user-select: none;
+    -webkit-user-drag: none;
+    opacity: 0;
+    visibility: hidden;
+    cursor: zoom-in;
+    transition: opacity 250ms ease, transform 250ms ease;
+  }
+  .visor :global(.visor__foto.activa) { opacity: 1; visibility: visible; }
+  /* Ampliada: el arrastre mueve la foto, asi que el cursor lo anuncia. */
+  .visor[data-zoom='si'] :global(.visor__foto.activa) { cursor: grab; }
+  /* Ampliada, el gesto es nuestro: sin esto el navegador se queda el
+     desplazamiento tactil y cancela el puntero a mitad del arrastre. */
+  .visor[data-zoom='si'] .visor__lienzo { touch-action: none; }
+  .visor[data-arrastrando='si'] :global(.visor__foto.activa) {
+    cursor: grabbing;
+    /* Sin transicion mientras se arrastra: si no, la foto persigue al raton
+       con retardo en vez de seguirlo. */
+    transition: none;
+  }
+
+  .visor__cerrar,
+  .visor__flecha {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: color-mix(in srgb, var(--fondo) 90%, transparent);
+    color: var(--texto);
+    cursor: pointer;
+  }
+  .visor__cerrar:hover,
+  .visor__flecha:hover { background: var(--fondo); }
+  .visor__cerrar:focus-visible,
+  .visor__flecha:focus-visible { outline: 2px solid var(--texto); outline-offset: 2px; }
+
+  .visor__cerrar {
+    inset-block-start: var(--espacio-2);
+    inset-inline-end: var(--espacio-2);
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .visor__flecha {
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    width: 3rem;
+    height: 3rem;
+  }
+  .visor__flecha--atras { inset-inline-start: var(--espacio-2); }
+  .visor__flecha--adelante { inset-inline-end: var(--espacio-2); }
+
+  .visor__contador {
+    position: absolute;
+    z-index: 2;
+    inset-block-end: var(--espacio-2);
+    inset-inline: 0;
+    margin: 0;
+    text-align: center;
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    color: var(--texto-suave);
+  }
+
+  .visualmente-oculto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
   .descripcion { color: var(--texto-suave); max-width: 55ch; }
   .colores { margin-block: var(--espacio-3) var(--espacio-2); }
   .etiqueta {
     display: block;
     font-size: 0.8125rem;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--texto-suave);
     margin-bottom: var(--espacio-1);
@@ -166,14 +588,14 @@ const enlaceInicial = construirEnlaceWhatsApp({
   .tallas legend {
     padding: 0;
     font-size: 0.8125rem;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--texto-suave);
     margin-bottom: var(--espacio-1);
   }
   .tallas label { display: inline-block; position: relative; margin-inline-end: var(--espacio-1); }
   .tallas input { position: absolute; opacity: 0; pointer-events: none; }
-  .tallas span {
+  .tallas input + span {
     display: inline-block;
     border: 1px solid var(--linea);
     padding: 0.5rem 0.875rem;
@@ -181,14 +603,214 @@ const enlaceInicial = construirEnlaceWhatsApp({
     cursor: pointer;
   }
   .tallas input:checked + span { border-color: var(--texto); background: var(--texto); color: var(--fondo); }
+  /* Agotada: tachada y apagada, para que no se confunda con una disponible. */
+  .tallas input:disabled + span {
+    opacity: 0.5;
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+  /* Texto suelto junto a la palabra Talla, sin recuadro: es una respuesta a
+     lo que el cliente acaba de pulsar, no una etiqueta mas de la ficha. */
+  .tallas__estado { color: var(--texto-suave); }
+  .tallas__estado:not(:empty)::before { content: ' - '; white-space: pre; }
+  .tallas__estado[data-estado='agotado'] { color: var(--burdeos); }
+
+  .visualmente-oculto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
   .tallas input:focus-visible + span { outline: 2px solid var(--texto); outline-offset: 2px; }
   .secundario { font-size: 0.875rem; color: var(--texto-suave); margin-top: var(--espacio-2); }
   .secundario a { text-decoration: underline; }
   .agotado-aviso {
     margin-top: var(--espacio-3);
     font-size: 0.8125rem;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--texto-suave);
   }
 </style>
+
+<script>
+  // Visor de fotos: ampliar, arrastrar y rotar. El <dialog> ya aporta el modal,
+  // el foco atrapado y el cierre con Escape; aqui va solo lo que falta.
+  const ESCALA = 2.5
+
+  const visor = document.querySelector<HTMLDialogElement>('[data-visor]')
+  const lienzo = document.querySelector<HTMLElement>('[data-visor-lienzo]')
+  const contador = document.querySelector<HTMLElement>('[data-visor-contador]')
+
+  if (visor && lienzo) {
+    const fotos = [...lienzo.querySelectorAll<HTMLImageElement>('.visor__foto')]
+    let indice = 0
+    let zoom = false
+    let tx = 0
+    let ty = 0
+
+    const activa = () => fotos[indice]
+
+    function pintar() {
+      const foto = activa()
+      if (!foto) return
+      foto.style.transform = zoom ? `scale(${ESCALA}) translate(${tx}px, ${ty}px)` : ''
+    }
+
+    // Cuanto puede desplazarse la foto ampliada sin despegar sus bordes del
+    // hueco. En unidades sin escalar, que es lo que consume translate().
+    function limites() {
+      const foto = activa()
+      if (!foto) return { x: 0, y: 0 }
+      const hueco = lienzo!.getBoundingClientRect()
+      // offsetWidth es el tamano sin transformar; getBoundingClientRect ya
+      // vendria multiplicado por la escala.
+      const ancho = foto.offsetWidth * ESCALA
+      const alto = foto.offsetHeight * ESCALA
+      return {
+        x: Math.max(0, (ancho - hueco.width) / 2) / ESCALA,
+        y: Math.max(0, (alto - hueco.height) / 2) / ESCALA,
+      }
+    }
+
+    function acotar() {
+      const l = limites()
+      tx = Math.min(l.x, Math.max(-l.x, tx))
+      ty = Math.min(l.y, Math.max(-l.y, ty))
+    }
+
+    function quitarZoom() {
+      zoom = false
+      tx = 0
+      ty = 0
+      visor!.dataset.zoom = 'no'
+      pintar()
+    }
+
+    function mostrar(i: number) {
+      fotos[indice]?.classList.remove('activa')
+      // Modulo con correccion de signo: en JS -1 % 2 es -1, no 1.
+      indice = ((i % fotos.length) + fotos.length) % fotos.length
+      fotos[indice]?.classList.add('activa')
+      if (contador) contador.textContent = `${indice + 1} / ${fotos.length}`
+      quitarZoom()
+    }
+
+    // --- Abrir ---
+    document.querySelectorAll<HTMLButtonElement>('[data-visor-abrir]').forEach((boton) => {
+      boton.addEventListener('click', () => {
+        mostrar(Number(boton.dataset.visorAbrir))
+        visor.showModal()
+      })
+    })
+
+    // --- Cerrar ---
+    document.querySelector('[data-visor-cerrar]')?.addEventListener('click', () => visor.close())
+    visor.addEventListener('close', quitarZoom)
+
+    // --- Rotar ---
+    visor.querySelectorAll<HTMLButtonElement>('[data-visor-paso]').forEach((boton) => {
+      boton.addEventListener('click', () => mostrar(indice + Number(boton.dataset.visorPaso)))
+    })
+    visor.addEventListener('keydown', (e) => {
+      if (fotos.length < 2) return
+      if (e.key === 'ArrowRight') { e.preventDefault(); mostrar(indice + 1) }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); mostrar(indice - 1) }
+    })
+
+    // --- Ampliar y cerrar al pulsar fuera ---
+    lienzo.addEventListener('click', (e) => {
+      // Soltar un arrastre dispara un click aqui detras: sin esto, arrastrar
+      // terminaria siempre quitando el zoom.
+      if (ignorarClic) { ignorarClic = false; return }
+      const foto = (e.target as HTMLElement).closest('.visor__foto')
+      // Pulsar el hueco vacio alrededor de la foto cierra, como en cualquier visor.
+      if (!foto) { visor.close(); return }
+      if (zoom) { quitarZoom(); return }
+
+      // Se amplia alrededor del centro y se lleva el punto pulsado hasta el:
+      // con transform-origin variable, acotar el arrastre se vuelve un lio.
+      const caja = foto.getBoundingClientRect()
+      zoom = true
+      tx = -(e.clientX - (caja.left + caja.width / 2))
+      ty = -(e.clientY - (caja.top + caja.height / 2))
+      visor.dataset.zoom = 'si'
+      acotar()
+      pintar()
+    })
+
+    // --- Arrastrar ---
+    let arrastrando = false
+    let origenX = 0
+    let origenY = 0
+    let recorrido = 0
+    let ignorarClic = false
+
+    lienzo.addEventListener('pointerdown', (e) => {
+      if (!zoom || e.button !== 0) return
+      arrastrando = true
+      recorrido = 0
+      origenX = e.clientX
+      origenY = e.clientY
+      visor.dataset.arrastrando = 'si'
+      lienzo.setPointerCapture(e.pointerId)
+    })
+
+    lienzo.addEventListener('pointermove', (e) => {
+      if (!arrastrando) return
+      // El desplazamiento en pantalla se divide por la escala porque translate()
+      // se aplica antes de scale().
+      const dx = e.clientX - origenX
+      const dy = e.clientY - origenY
+      recorrido += Math.abs(dx) + Math.abs(dy)
+      tx += dx / ESCALA
+      ty += dy / ESCALA
+      origenX = e.clientX
+      origenY = e.clientY
+      acotar()
+      pintar()
+    })
+
+    const soltar = (e: PointerEvent) => {
+      if (!arrastrando) return
+      arrastrando = false
+      // Un temblor de unos pocos pixeles sigue siendo un clic, no un arrastre.
+      if (recorrido > 4) ignorarClic = true
+      visor.dataset.arrastrando = 'no'
+      if (lienzo.hasPointerCapture(e.pointerId)) lienzo.releasePointerCapture(e.pointerId)
+    }
+    lienzo.addEventListener('pointerup', soltar)
+    lienzo.addEventListener('pointercancel', soltar)
+  }
+</script>
+
+<script>
+  // Rotacion de la galeria de la ficha. Solo se nota en movil: en escritorio
+  // las flechas no se pintan y todas las fotos estan a la vista.
+  const galeria = document.querySelector<HTMLElement>('[data-galeria-ficha]')
+
+  if (galeria) {
+    const fotos = [...galeria.querySelectorAll<HTMLElement>('.lupa')]
+
+    galeria.querySelectorAll<HTMLButtonElement>('[data-ficha-paso]').forEach((boton) => {
+      boton.addEventListener('click', () => {
+        if (fotos.length < 2) return
+
+        const paso = Number(boton.dataset.fichaPaso)
+        const actual = Number(galeria.dataset.indice ?? 0)
+        // Modulo con correccion de signo: pasada la ultima se vuelve a la
+        // primera, y retrocediendo desde la primera se va a la ultima. En JS
+        // -1 % 4 es -1, no 3, de ahi la suma antes del segundo modulo.
+        const siguiente = (((actual + paso) % fotos.length) + fotos.length) % fotos.length
+
+        fotos[actual]?.classList.remove('activa')
+        fotos[siguiente]?.classList.add('activa')
+        galeria.dataset.indice = String(siguiente)
+      })
+    })
+  }
+</script>

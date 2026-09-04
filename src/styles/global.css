@@ -1,11 +1,19 @@
 :root {
-  --fondo: #FAFAF9;
+  /* Muestreado del fondo de las fotos de producto: la prenda se recorta
+     contra el mismo gris, asi que la foto no deja recuadro sobre la pagina. */
+  --fondo: #F8F8F8;
   --texto: #111111;
   --texto-suave: #57534E;
   --linea: #E7E5E4;
+  /* Solo para avisar de lo que falta: una talla agotada. Es el unico color
+     de la paleta, asi que se gasta donde tiene que frenar al que lee. */
+  --burdeos: #7B1E2E;
 
   --fuente-titular: 'Instrument Serif', Georgia, serif;
-  --fuente-ui: 'Geist Variable', system-ui, sans-serif;
+  --fuente-ui: 'secret-service-typewriter', 'Geist Variable', system-ui, sans-serif;
+  /* La marca de la prenda se queda en la sans anterior: la typewriter le
+     restaba jerarquia al nombre propio del fabricante. */
+  --fuente-marca: 'Geist Variable', system-ui, sans-serif;
 
   --ancho-max: 1400px;
   --espacio-1: 0.5rem;
