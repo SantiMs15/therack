@@ -223,6 +223,77 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+
+  {
+    slug: 'crewneck-favorite-t-shirt',
+    nombre: 'Crewneck Favorite T-Shirt',
+    marca: 'Tommy Hilfiger',
+    categoria: 'mujer',
+    precio: 120000,
+    tallas: [...TALLAS_MUJER],
+    descripcion:
+      'Camiseta Tommy Hilfiger de algodon, cuello redondo acanalado, corte entallado y la bandera bordada en el pecho.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-crewneck-favorite-t-shirt-azul-marino-frente.jpg',
+            alt: 'Camiseta Tommy Hilfiger azul marino, vista frontal de la prenda sola con el cuello redondo y la bandera bordada en el pecho',
+          },
+          {
+            archivo: 'tommy-hilfiger-crewneck-favorite-t-shirt-azul-marino-modelo.jpg',
+            alt: 'Camiseta Tommy Hilfiger azul marino puesta, plano medio de una modelo que la lleva por dentro de unos jeans con cinturon negro',
+            // Mismo criterio que el polo de punto trenzado: una camiseta lisa
+            // azul marino sola no dice como cae ni a que altura queda, y en la
+            // rejilla se confunde con cualquier otra. La ficha abre por el
+            // frente, donde se ve la bandera bordada.
+            portada: true,
+          },
+          {
+            archivo: 'tommy-hilfiger-crewneck-favorite-t-shirt-azul-marino-espalda.jpg',
+            alt: 'Camiseta Tommy Hilfiger azul marino, vista de espalda de la prenda sola, lisa, con el cuello acanalado',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'essentials-hoodie',
+    nombre: 'Hoodie',
+    marca: 'Essentials',
+    categoria: 'hombre',
+    precio: 320000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Hoodie Essentials de Fear of God en tejido fleece de algodon, corte oversize, capucha forrada y el logo Essentials Fear of God en el pecho y en la espalda.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'essentials-hoodie-negro-frente.jpg',
+            alt: 'Hoodie Essentials negro, vista frontal de la prenda sola con capucha, corte oversize y el logo Essentials Fear of God en pequeno sobre el pecho',
+          },
+          {
+            archivo: 'essentials-hoodie-negro-espalda.jpg',
+            alt: 'Hoodie Essentials negro, vista de espalda con el logo Essentials Fear of God impreso en grande y en blanco entre los hombros',
+            // Mismo criterio que el hoodie de Lacoste: en la rejilla va la
+            // espalda, porque el logo grande distingue la prenda y el frente,
+            // con el logo pequeno en el pecho, no.
+            portada: true,
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
 ]
 
 export const productos: Producto[] = validarCatalogo(catalogo)
