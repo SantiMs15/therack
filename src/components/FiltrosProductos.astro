@@ -85,20 +85,33 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
   <div class="filtros__superior">
     <div class="filtros__barra">
       {/* Nombra lo que hay en esta barra, que es el orden. Los filtros de
-          verdad -- genero y prenda -- se rotulan en su propia columna. */}
+          verdad -- genero y prenda -- se rotulan en su propia columna.
+          En movil no es rotulo sino boton, y abre su propio panel. */}
       <span class="filtros__titulo">Ordenar por:</span>
-      {(generos.length > 1 || tipos.length > 1) && (
-        <button
-          type="button"
-          class="filtros__abrir"
-          aria-expanded="false"
-          aria-controls="panel-filtros"
-          data-filtros-abrir
-        >
-          Filtros
-        </button>
-      )}
+      <button
+        type="button"
+        class="filtros__abrir filtros__abrir--orden"
+        aria-expanded="false"
+        aria-controls="panel-orden"
+        data-filtros-abrir="orden"
+      >
+        <span>Ordenar por:</span>
+        <svg class="filtros__flecha" viewBox="0 0 12 8" width="10" height="7" aria-hidden="true">
+          <path
+            d="M1 1.5 6 6.5l5-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="square"
+          />
+        </svg>
+      </button>
 
+      {/* En movil esta caja es un panel que sube desde abajo; en escritorio no
+          pinta nada y el orden se queda en la barra. Envuelve al orden en vez
+          de moverlo fuera porque `position: fixed` lo saca del flujo desde
+          donde este: asi el mismo marcado sirve para las dos formas. */}
+      <div class="filtros__caja-orden" id="panel-orden">
       <div class="filtros__orden" role="group" aria-label="Orden" data-orden-opciones>
         {ORDENES.map((orden) => (
           <button
@@ -115,8 +128,32 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
             viajar de uno a otro: un subrayado por boton solo puede encenderse
             y apagarse. La coloca el script; sin el no se pinta y el subrayado
             de texto ocupa su lugar. */}
-        <span class="filtros__barra-activa" aria-hidden="true" data-orden-barra></span>
+          <span class="filtros__barra-activa" aria-hidden="true" data-orden-barra></span>
       </div>
+      </div>
+
+      {/* Debajo de "Ordenar por:" en movil, porque filtrar es el gesto menos
+          frecuente de los dos. */}
+      {(generos.length > 1 || tipos.length > 1) && (
+        <button
+          type="button"
+          class="filtros__abrir"
+          aria-expanded="false"
+          aria-controls="panel-filtros"
+          data-filtros-abrir="filtros"
+        >
+          <span>Filtros</span>
+        <svg class="filtros__flecha" viewBox="0 0 12 8" width="10" height="7" aria-hidden="true">
+          <path
+            d="M1 1.5 6 6.5l5-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="square"
+          />
+        </svg>
+        </button>
+      )}
     </div>
 
     {/* La marca no tiene desplegable: se elige en el menu de la cabecera. Pero
@@ -169,11 +206,27 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
   /* Rotulo y boton comparten pinta: son la misma palabra en el mismo sitio,
      y cual se ve depende de si la columna cabe al lado o hay que abrirla. */
   .filtros__abrir {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5ch;
     background: none;
     border: 0;
     padding: 0;
     font: inherit;
     cursor: pointer;
+  }
+
+  /* La misma flecha que los desplegables de genero y prenda, con el mismo
+     giro al abrir: los tres controles hacen lo mismo -- desplegar algo -- y
+     conviene que lo anuncien igual. */
+  .filtros__flecha {
+    /* Se alinea con el texto, no con la caja: sin este empujon queda
+       flotando alta respecto a una linea de 13px. */
+    margin-block-start: 0.15em;
+    transition: transform 320ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  .filtros__abrir[aria-expanded='true'] .filtros__flecha {
+    transform: rotate(180deg);
   }
   .filtros__titulo,
   .filtros__rotulo,
@@ -235,18 +288,66 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
       visibility 0s linear 320ms;
   }
 
-  .filtros[data-estado='abierto'] .filtros__velo {
+  /* El estado no es abierto/cerrado sino CUAL de los dos esta abierto: asi no
+     pueden solaparse y comparten el mismo velo. */
+  .filtros:not([data-estado='cerrado']) .filtros__velo {
     opacity: 1;
     visibility: visible;
     transition-delay: 0s, 0s;
   }
-  .filtros[data-estado='abierto'] .filtros__panel {
+  .filtros[data-estado='filtros'] .filtros__panel,
+  .filtros[data-estado='orden'] .filtros__caja-orden {
     transform: none;
     visibility: visible;
     transition-delay: 0s, 0s;
   }
 
   .filtros__desplegables { flex-direction: column; align-items: flex-start; }
+
+  /* --- Movil: los dos controles se comportan igual --- */
+  /* Nada de opciones sueltas en la pagina: dos botones, uno debajo del otro,
+     y cada uno abre su panel. "Ordenar por:" arriba porque ordenar es el
+     gesto mas frecuente; filtrar, el mas ocasional. */
+  .filtros__titulo { display: none; }
+
+  .filtros__barra {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--espacio-2);
+  }
+
+  .filtros__caja-orden {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 40;
+    background: var(--fondo);
+    border-block-start: 1px solid var(--linea);
+    padding: var(--espacio-3) var(--espacio-2) var(--espacio-4);
+    transform: translateY(100%);
+    visibility: hidden;
+    transition:
+      transform 320ms cubic-bezier(0.65, 0.01, 0.05, 0.99),
+      visibility 0s linear 320ms;
+  }
+
+  /* Dentro del panel, las cuatro opciones en vertical: es una lista que se
+     recorre con el pulgar, no una tira que se arrastra de lado. */
+  .filtros__orden {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--espacio-2);
+    overflow: visible;
+  }
+
+  /* La barrita deslizante mide con offsetLeft, que apilado no dice nada.
+     Manda el subrayado del texto, el mismo recurso de la version sin JS. */
+  .filtros__barra-activa { display: none; }
+  .filtros__opcion[aria-pressed='true'] {
+    text-decoration: underline;
+    text-underline-offset: 0.35em;
+    text-decoration-thickness: 1px;
+  }
 
   /* ===== Pantalla ancha: la columna vive en el margen izquierdo ===== */
   /* 1650px es donde el contenedor (1400px como maximo, centrado) deja a su
@@ -255,7 +356,6 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
   @media (min-width: 1700px) {
     .filtros__abrir,
     .filtros__velo { display: none; }
-    .filtros__titulo { display: inline; }
 
     .filtros__panel {
       /* Fuera del flujo: no ocupa sitio, asi que ni la barra de orden ni las
@@ -321,7 +421,32 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
      gestos distintos y no conviene que se lean como una sola lista. Solo desde
      tablet: en movil la barra ya viene apilada. */
   @media (min-width: 768px) {
-    .filtros__orden { margin-inline-start: auto; }
+    /* El orden vuelve a ser lo que era: una fila en la barra, a la derecha,
+       con su barrita deslizante. La caja deja de pintar nada. */
+    .filtros__titulo { display: inline; }
+    .filtros__abrir--orden { display: none; }
+    .filtros__caja-orden { display: contents; }
+
+    .filtros__barra {
+      flex-direction: row;
+      align-items: center;
+      gap: var(--espacio-2) var(--espacio-3);
+    }
+
+    .filtros__orden {
+      margin-inline-start: auto;
+      flex-direction: row;
+      align-items: stretch;
+      gap: var(--espacio-3);
+      overflow-x: auto;
+    }
+    .filtros__barra-activa { display: block; }
+    .filtros:not([data-js]) .filtros__opcion[aria-pressed='true'] {
+      text-decoration: underline;
+    }
+    .filtros[data-js] .filtros__opcion[aria-pressed='true'] {
+      text-decoration: none;
+    }
   }
 
   /* En movil los cuatro ordenes no caben: se recorren de lado en vez de
@@ -452,42 +577,70 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
   // aqui se espera, alli se pinta.
   const FUNDIDO = 240
 
-  // --- Panel de movil ---
-  // Vive fuera del bloque grande de abajo a proposito: abrir y cerrar tiene
-  // que funcionar aunque la rejilla no este (una categoria vacia), y no
-  // depende de nada del filtrado.
+  // --- Paneles de movil ---
+  // Dos: uno para el orden y otro para genero/prenda. Viven fuera del bloque
+  // grande de abajo a proposito: abrir y cerrar tiene que funcionar aunque la
+  // rejilla no este (una categoria vacia), y no depende del filtrado.
+  //
+  // El estado dice CUAL esta abierto, no si hay alguno: asi dos paneles no
+  // pueden quedarse abiertos a la vez y comparten el mismo velo.
   {
-    const panel = document.querySelector<HTMLElement>('[data-filtros]')
-    const abrir = document.querySelector<HTMLButtonElement>('[data-filtros-abrir]')
+    const zona = document.querySelector<HTMLElement>('[data-filtros]')
+    const disparadores = [
+      ...document.querySelectorAll<HTMLButtonElement>('[data-filtros-abrir]'),
+    ]
 
-    if (panel && abrir) {
-      const mostrar = (si: boolean) => {
-        panel.dataset.estado = si ? 'abierto' : 'cerrado'
-        abrir.setAttribute('aria-expanded', String(si))
-        // Solo en movil: en escritorio el panel es una columna fija y bloquear
-        // el scroll de la pagina seria dejarla inservible.
-        if (matchMedia('(max-width: 767px)').matches) {
-          document.body.style.overflow = si ? 'hidden' : ''
+    if (zona && disparadores.length > 0) {
+      const enMovil = () => matchMedia('(max-width: 767px)').matches
+
+      const mostrar = (cual: string | null) => {
+        zona.dataset.estado = cual ?? 'cerrado'
+        for (const boton of disparadores) {
+          boton.setAttribute('aria-expanded', String(boton.dataset.filtrosAbrir === cual))
         }
-        if (!si) abrir.focus()
+        // Solo en movil: en escritorio no hay panel que bloquee nada, y dejar
+        // el <body> sin scroll lo volveria inservible.
+        if (enMovil()) document.body.style.overflow = cual ? 'hidden' : ''
+        if (!cual) return
+        // Al cerrar, el foco vuelve al boton que abrio.
       }
 
-      abrir.addEventListener('click', () => mostrar(panel.dataset.estado !== 'abierto'))
+      const cerrar = () => {
+        const abierto = zona.dataset.estado
+        mostrar(null)
+        disparadores.find((b) => b.dataset.filtrosAbrir === abierto)?.focus()
+      }
 
-      for (const cerrar of panel.querySelectorAll('[data-filtros-cerrar]')) {
-        cerrar.addEventListener('click', () => mostrar(false))
+      for (const boton of disparadores) {
+        boton.addEventListener('click', () => {
+          const cual = boton.dataset.filtrosAbrir ?? null
+          if (zona.dataset.estado === cual) cerrar()
+          else mostrar(cual)
+        })
+      }
+
+      for (const x of zona.querySelectorAll('[data-filtros-cerrar]')) {
+        x.addEventListener('click', cerrar)
       }
 
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && panel.dataset.estado === 'abierto') mostrar(false)
+        if (e.key === 'Escape' && zona.dataset.estado !== 'cerrado') cerrar()
       })
 
-      // Al pasar a escritorio el panel deja de ser panel: si se quedo abierto,
-      // el <body> seguiria sin scroll.
+      // Elegir un orden cierra el panel: es una eleccion unica, no una lista
+      // que se vaya componiendo como los filtros.
+      for (const boton of zona.querySelectorAll('[data-orden]')) {
+        boton.addEventListener('click', () => {
+          if (zona.dataset.estado === 'orden') cerrar()
+        })
+      }
+
+      // Al pasar a escritorio los paneles dejan de serlo: si alguno se quedo
+      // abierto, el <body> seguiria sin scroll.
       matchMedia('(min-width: 768px)').addEventListener('change', (e) => {
         if (e.matches) {
           document.body.style.overflow = ''
-          mostrar(false)
+          mostrar(null)
         }
       })
     }
