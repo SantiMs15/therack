@@ -11,5 +11,7 @@ therack-web.zip
 # Carpetas basura que aparecen de forma intermitente en Windows: cada una es
 # una copia de dist/. No se pudo reproducir con ningun comando aislado, asi
 # que se ignoran para que no vuelvan a entrar en un commit.
-/1/
-/2/
+#
+# Se numeran solas y van subiendo -- ya iban por la 5 -- asi que en vez de
+# listarlas una a una se ignora el patron entero.
+/[0-9]/
