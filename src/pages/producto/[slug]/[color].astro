@@ -1,10 +1,13 @@
 ---
-import { Image } from 'astro:assets'
+import { Image, getImage } from 'astro:assets'
 import Layout from '../../../layouts/Layout.astro'
 import BotonWhatsApp from '../../../components/BotonWhatsApp.astro'
+import Migas from '../../../components/Migas.astro'
 import { productos } from '../../../data/productos'
+import { ETIQUETAS_CATEGORIA, ETIQUETAS_TIPO_UNA, ultimaTalla } from '../../../data/schema'
+import { fichaMigas, fichaProducto, serializar, type Miga } from '../../../lib/datos-estructurados'
 import { resolverImagen } from '../../../lib/imagenes-productos'
-import { formatearPrecio } from '../../../lib/formato'
+import { formatearPrecio, resumir } from '../../../lib/formato'
 import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
 import { CONFIG, INSTAGRAM_URL } from '../../../config'
 
@@ -25,6 +28,34 @@ const { producto, variante } = Astro.props
 // producto.nombre y el color por separado, y concatenarlos en el dato lo
 // dejaria diciendo "Crew Neck - Verde (Verde, talla S)".
 const titulo = `${producto.nombre} - ${variante.color}`
+
+/**
+ * El titulo del navegador y del resultado de busqueda, que NO es el <h1>.
+ *
+ * En la pagina manda el nombre oficial del fabricante, que es lo que el
+ * cliente reconoce con la prenda delante. En un resultado manda la palabra
+ * con la que se busca: "chaqueta tommy hilfiger", no "Mixed-Media Puffer
+ * Jacket". El nombre oficial sigue estando en el h1, en la descripcion y en
+ * la ficha estructurada, asi que quien busque el modelo exacto lo encuentra.
+ *
+ * Se queda corto a proposito: con el " — The Rack store" que anade el layout
+ * el mas largo ronda los 55 caracteres, por debajo de donde Google corta.
+ */
+const tituloBuscador = [ETIQUETAS_TIPO_UNA[producto.tipo], producto.marca]
+  .filter(Boolean)
+  .join(' ') + ` · ${variante.color}`
+
+/**
+ * La descripcion para el buscador, que no es la que se lee en la ficha.
+ *
+ * Dos cosas que la descripcion del catalogo no resuelve: se pasa de los ~155
+ * caracteres que se muestran, y es la MISMA para todos los colores de una
+ * prenda, asi que dos paginas indexables la compartian palabra por palabra.
+ * Se recorta y se le anade el color cuando hay mas de uno.
+ */
+const descripcionBuscador =
+  resumir(producto.descripcion, 140) +
+  (producto.variantes.length > 1 ? ` Color ${variante.color.toLowerCase()}.` : '')
 // El alt describe cada foto por separado. Donde la variante no lo declara se
 // compone con marca y color, que es lo que distingue una ficha de otra.
 const alternativoPorDefecto = [producto.marca, producto.nombre, variante.color]
@@ -43,7 +74,13 @@ const imagenes = variante.imagenes.map((foto) => {
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
 }
-const url = new URL(`/producto/${producto.slug}/${variante.slug}`, Astro.site).href
+// Solo se anuncia sobre una variante que se puede pedir: si el color esta
+// agotado la ficha no llega a pintar las tallas.
+const ultima = variante.disponible ? ultimaTalla(producto) : null
+// Con barra final: el build usa `format: 'directory'`, asi que esa es la forma
+// canonica. Sin ella el servidor redirige, y ademas el enlace no coincidiria
+// con el canonical ni con el `offers.url` del schema.
+const url = new URL(`/producto/${producto.slug}/${variante.slug}/`, Astro.site).href
 const enlaceBase = construirEnlaceWhatsApp({
   telefono: CONFIG.telefono,
   nombre: producto.nombre,
@@ -59,8 +96,63 @@ const enlaceInicial = construirEnlaceWhatsApp({
   url,
   color: producto.variantes.length > 1 ? variante.color : undefined,
 })
+
+/**
+ * Las fotos con URL absoluta, que es lo que piden tanto el schema como la
+ * tarjeta de compartir.
+ *
+ * Se piden por getImage y no usando el `src` del import: asi el archivo que
+ * se nombra es uno que el build emite seguro, en vez de una ruta del original
+ * que puede no llegar a dist si nadie mas la referencia.
+ */
+const optimizadas = await Promise.all(
+  imagenes.map((foto) => getImage({ src: foto.datos, format: 'webp' }))
+)
+const absolutas = optimizadas.map((foto) => new URL(foto.src, Astro.site).href)
+
+// La misma foto que abre la prenda en la rejilla: hay prendas que se venden
+// por la espalda, y el enlace pegado en un chat tiene que enseñar eso.
+const iPortada = Math.max(0, variante.imagenes.findIndex((foto) => foto.portada))
+
+// Ficha estructurada para el buscador. La arma datos-estructurados.ts, que
+// esta cubierto por tests: son datos que no se ven en la pagina, asi que un
+// error ahi no lo nota nadie hasta que Google rechaza la ficha.
+const fichaJson = serializar(
+  fichaProducto({ producto, variante, url, imagenes: absolutas })
+)
+
+/**
+ * El camino hasta esta ficha.
+ *
+ * La categoria de una prenda siempre tiene pagina: /catalogo/<categoria> se
+ * genera para las categorias con prendas, y esta prenda es una de ellas.
+ *
+ * El ultimo escalon es el nombre del fabricante a secas, sin el color: el
+ * rastro dice donde cae la pagina, y el color ya lo dicen el h1 y el
+ * selector de mas abajo.
+ */
+const migas: Miga[] = [
+  { nombre: 'Inicio', ruta: '/' },
+  {
+    nombre: ETIQUETAS_CATEGORIA[producto.categoria],
+    ruta: `/catalogo/${producto.categoria}/`,
+  },
+  { nombre: producto.nombre },
+]
+const migasJson = serializar(fichaMigas(migas, Astro.site))
 ---
-<Layout titulo={titulo} descripcion={producto.descripcion}>
+<Layout
+  titulo={tituloBuscador}
+  descripcion={descripcionBuscador}
+  tipo="product"
+  imagen={absolutas[iPortada]}
+  imagenAlt={imagenes[iPortada]!.alt}
+  imagenAncho={imagenes[iPortada]!.datos.width}
+  imagenAlto={imagenes[iPortada]!.datos.height}
+>
+  <script type="application/ld+json" is:inline set:html={fichaJson}></script>
+  <script type="application/ld+json" is:inline set:html={migasJson}></script>
+
   <script is:inline>
     // Se ejecuta antes de que la galeria se pinte: si venimos de un cambio de
     // color, la pagina nueva debe aparecer ya tapada por las capas. Hacerlo
@@ -72,6 +164,8 @@ const enlaceInicial = construirEnlaceWhatsApp({
       }
     } catch {}
   </script>
+  <div class="contenedor"><Migas migas={migas} /></div>
+
   <div class="contenedor ficha">
     <div class="galeria" data-galeria-ficha data-indice="0">
       <span class="barrido" aria-hidden="true">
@@ -134,7 +228,7 @@ const enlaceInicial = construirEnlaceWhatsApp({
           <div class="opciones">
             {producto.variantes.map((v) => (
               <a
-                href={`/producto/${producto.slug}/${v.slug}`}
+                href={`/producto/${producto.slug}/${v.slug}/`}
                 class:list={['color', { activo: v.slug === variante.slug }]}
                 aria-current={v.slug === variante.slug ? 'page' : undefined}
               >{v.color}</a>
@@ -143,7 +237,9 @@ const enlaceInicial = construirEnlaceWhatsApp({
         </div>
       )}
 
-      <fieldset class="tallas">
+      {ultima && <p class="ultima-talla">Última talla</p>}
+
+          <fieldset class="tallas">
             <legend>
               Talla
               {/* Nace vacio: el estado contesta a una eleccion, no la adelanta. */}
@@ -167,7 +263,7 @@ const enlaceInicial = construirEnlaceWhatsApp({
           <BotonWhatsApp href={enlaceInicial}>Consultar por WhatsApp</BotonWhatsApp>
 
           <p class="secundario">
-            O escribenos por <a href={INSTAGRAM_URL}>Instagram</a>
+            O escríbenos por <a href={INSTAGRAM_URL}>Instagram</a>
           </p>
         </>
       ) : (
@@ -554,17 +650,6 @@ const enlaceInicial = construirEnlaceWhatsApp({
     color: var(--texto-suave);
   }
 
-  .visualmente-oculto {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
   .descripcion { color: var(--texto-suave); max-width: 55ch; }
   .colores { margin-block: var(--espacio-3) var(--espacio-2); }
   .etiqueta {
@@ -583,6 +668,29 @@ const enlaceInicial = construirEnlaceWhatsApp({
   }
   .color:hover { border-color: var(--texto); }
   .color.activo { border-color: var(--texto); background: var(--texto); color: var(--fondo); }
+
+  /* Misma etiqueta que en la rejilla, para que quien viene de alli la
+     reconozca. Va pegada encima de las tallas y no junto al precio: es la
+     eleccion de talla lo que condiciona, y ahi es donde hay que verla. */
+  .ultima-talla {
+    display: inline-block;
+    margin-block: var(--espacio-3) 0;
+    background: var(--burdeos);
+    color: var(--fondo);
+    /* Geist, la sans que ya usa el nombre de marca en la tarjeta. A 11px y en
+       versalitas la typewriter emborrona los remates, y encima de un relleno
+       burdeos hay que leerla de un vistazo. El peso 500 es la excepcion al
+       400 del resto del sitio: texto claro sobre fondo oscuro y muy pequeno
+       adelgaza, y esto tiene que frenar al que recorre la rejilla. */
+    font-family: var(--fuente-marca);
+    font-weight: 500;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.5rem;
+  }
+  /* Con el aviso puesto, las tallas suben a pegarse a el. */
+  .ultima-talla + .tallas { margin-block-start: var(--espacio-1); }
 
   .tallas { border: 0; padding: 0; margin-block: var(--espacio-3) var(--espacio-2); }
   .tallas legend {
@@ -614,17 +722,6 @@ const enlaceInicial = construirEnlaceWhatsApp({
   .tallas__estado { color: var(--texto-suave); }
   .tallas__estado:not(:empty)::before { content: ' - '; white-space: pre; }
   .tallas__estado[data-estado='agotado'] { color: var(--burdeos); }
-
-  .visualmente-oculto {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
   .tallas input:focus-visible + span { outline: 2px solid var(--texto); outline-offset: 2px; }
   .secundario { font-size: 0.875rem; color: var(--texto-suave); margin-top: var(--espacio-2); }
   .secundario a { text-decoration: underline; }

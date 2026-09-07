@@ -1,15 +1,34 @@
 ---
 import Layout from '../layouts/Layout.astro'
-import { CONFIG, INSTAGRAM_URL } from '../config'
+import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
+import { formatearPrecio } from '../lib/formato'
+
+/**
+ * La tienda es solo online, asi que aqui ya no van direccion ni horario de
+ * puerta: lo que un cliente necesita saber antes de escribir es cuanto cuesta
+ * el envio, cuanto tarda, como se paga y si puede cambiar la prenda. Eso es
+ * lo que se responde una y otra vez por WhatsApp.
+ */
+const envio =
+  VENTA.envio.costo === 0
+    ? `Gratis a toda Colombia · ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días`
+    : `${formatearPrecio(VENTA.envio.costo)} · ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días`
 ---
-<Layout titulo="La tienda">
+<Layout
+  titulo="La tienda"
+  descripcion={`Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días, pago por transferencia y cambios hasta ${VENTA.cambios.dias} días.`}
+>
   <div class="contenedor tienda">
     <h1>La tienda</h1>
     <p class="sobre">{CONFIG.sobre}</p>
     <dl>
-      <dt>Direccion</dt>
-      <dd>{CONFIG.direccion}, {CONFIG.ciudad}</dd>
-      <dt>Horarios</dt>
+      <dt>Envíos</dt>
+      <dd>{envio}</dd>
+      <dt>Pagos</dt>
+      <dd>{VENTA.pago.texto}</dd>
+      <dt>Cambios</dt>
+      <dd>Hasta {VENTA.cambios.dias} días después de recibir la prenda</dd>
+      <dt>Atención</dt>
       <dd>{CONFIG.horarios}</dd>
       <dt>Instagram</dt>
       <dd><a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">@{CONFIG.instagram}</a></dd>

@@ -24,6 +24,6 @@ export function construirEnlaceWhatsApp({ telefono, nombre, url, talla, color }:
   }
   const partes = [color, talla && `talla ${talla}`].filter(Boolean)
   const detalle = partes.length ? ` (${partes.join(', ')})` : ''
-  const texto = `Hola! Me interesa el ${nombre}${detalle}\n${url}`
+  const texto = `¡Hola! Me interesa el ${nombre}${detalle}\n${url}`
   return `https://wa.me/${digitos}?text=${encodeURIComponent(texto)}`
 }

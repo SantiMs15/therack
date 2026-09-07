@@ -2,24 +2,116 @@
 import '@fontsource/instrument-serif'
 import '@fontsource-variable/geist'
 import '../styles/global.css'
-import Logo from '../assets/logo-web.svg'
+/**
+ * El logo como ARCHIVO, no como componente.
+ *
+ * Importado a secas, Astro lo incrusta: seis kilobytes de trazados dentro de
+ * cada HTML, que en /tienda eran casi la mitad del documento, repetidos en
+ * las quince paginas y descargados de nuevo en cada navegacion. Con `?url`
+ * viaja como un .svg aparte que el navegador cachea una vez -- y /_astro/ ya
+ * lo sirve con cache de un ano.
+ */
+import logoUrl from '../assets/logo-web.svg?url'
 import MenuPantallaCompleta from '../components/MenuPantallaCompleta.astro'
 import { CONFIG, INSTAGRAM_URL } from '../config'
 
 interface Props {
   titulo: string
   descripcion?: string
+  /**
+   * Pagina que no es una direccion real del sitio. Hoy solo el 404: se sirve
+   * desde cualquier ruta que no existe, asi que no hay URL propia que declarar
+   * como canonica. Apuntar a /404/ seria senalar como buena una pagina que
+   * tampoco existe.
+   */
+  sinCanonica?: boolean
+  /**
+   * Foto para la tarjeta que se pinta al compartir el enlace. URL absoluta.
+   * Sin ella va el logo sobre el gris del sitio, que es lo correcto para la
+   * portada y la tienda; una ficha de producto manda la foto de la prenda.
+   */
+  imagen?: string
+  imagenAlt?: string
+  imagenAncho?: number
+  imagenAlto?: number
+  /** 'product' en las fichas, 'website' en el resto. */
+  tipo?: 'website' | 'product'
 }
 
-const { titulo, descripcion = 'Tienda de ropa en ' + CONFIG.ciudad } = Astro.props
+const {
+  titulo,
+  descripcion = 'Tienda de ropa en ' + CONFIG.ciudad,
+  sinCanonica = false,
+  imagen,
+  imagenAlt,
+  imagenAncho,
+  imagenAlto,
+  tipo = 'website',
+} = Astro.props
+
+/**
+ * Canonica auto-referenciada, construida con el pathname y NO con Astro.url
+ * entero: asi se queda fuera la query.
+ *
+ * El menu enlaza cada marca a /?marca=<slug>, que sirve exactamente la misma
+ * portada. Sin esta etiqueta serian cuatro URLs con el mismo contenido
+ * compitiendo entre si, y el buscador eligiendo por su cuenta cual es la
+ * buena. Lo mismo con los ?orden=, ?genero= y ?tipo= que deja el filtrado.
+ */
+const canonica = new URL(Astro.url.pathname, Astro.site)
+
+/**
+ * Tarjeta para cuando se comparte el enlace.
+ *
+ * Esta tienda vende por WhatsApp e Instagram: cada ficha lleva un boton que
+ * abre el chat con el enlace dentro, asi que el enlace pegado en una
+ * conversacion es el escaparate real. Sin estas etiquetas salia pelado, solo
+ * la URL.
+ *
+ * og.png es el logo sobre el gris del sitio, en 1200x630, que es la
+ * proporcion que recortan WhatsApp, Instagram y las tarjetas de X.
+ */
+const tarjeta = {
+  imagen: imagen ?? new URL('/og.png', Astro.site).href,
+  alt: imagenAlt ?? CONFIG.nombre,
+  ancho: imagenAncho ?? 1200,
+  alto: imagenAlto ?? 630,
+}
+const tituloCompleto = `${titulo} — ${CONFIG.nombre}`
+
+/*
+ * El pie ya no enlaza las categorias: ese camino es ahora el desplegable de
+ * genero de la barra de filtros, que son enlaces de verdad a
+ * /catalogo/<genero> y estan en todas las paginas con rejilla. Tenerlo en los
+ * dos sitios pintaba Mujer y Hombre dos veces en la misma pagina.
+ */
 ---
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{titulo} — {CONFIG.nombre}</title>
+    <title>{tituloCompleto}</title>
     <meta name="description" content={descripcion} />
+    {!sinCanonica && <link rel="canonical" href={canonica.href} />}
+
+    <meta property="og:type" content={tipo} />
+    <meta property="og:site_name" content={CONFIG.nombre} />
+    <meta property="og:locale" content="es_CO" />
+    <meta property="og:url" content={canonica.href} />
+    <meta property="og:title" content={tituloCompleto} />
+    <meta property="og:description" content={descripcion} />
+    <meta property="og:image" content={tarjeta.imagen} />
+    <meta property="og:image:width" content={String(tarjeta.ancho)} />
+    <meta property="og:image:height" content={String(tarjeta.alto)} />
+    <meta property="og:image:alt" content={tarjeta.alt} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={tituloCompleto} />
+    <meta name="twitter:description" content={descripcion} />
+    <meta name="twitter:image" content={tarjeta.imagen} />
+    <meta name="twitter:image:alt" content={tarjeta.alt} />
+
     <link rel="preconnect" href="https://use.typekit.net" crossorigin />
     <link rel="preconnect" href="https://p.typekit.net" crossorigin />
     <link rel="stylesheet" href="https://use.typekit.net/uat3sbv.css" />
@@ -27,7 +119,11 @@ const { titulo, descripcion = 'Tienda de ropa en ' + CONFIG.ciudad } = Astro.pro
   <body>
     <header class="cabecera contenedor">
       <a href="/" aria-label={CONFIG.nombre}>
-        <Logo width={200} aria-hidden="true" />
+        {/* alt vacio: el enlace ya se anuncia con su aria-label, y repetir el
+            nombre aqui lo haria sonar dos veces. Ancho y alto declarados
+            (680x122.61 del viewBox, escalado a 200) para que la cabecera no
+            de un salto mientras el archivo llega. */}
+        <img src={logoUrl} width="200" height="36" alt="" />
       </a>
       <MenuPantallaCompleta />
     </header>
@@ -35,7 +131,9 @@ const { titulo, descripcion = 'Tienda de ropa en ' + CONFIG.ciudad } = Astro.pro
     <main><slot /></main>
 
     <footer class="pie contenedor">
-      <p>{CONFIG.nombre} · {CONFIG.direccion}, {CONFIG.ciudad}</p>
+      {/* Sin calle: la tienda es solo online. Queda la ciudad, que sigue
+          diciendo desde donde se vende y a quien. */}
+      <p>{CONFIG.nombre} · {CONFIG.ciudad}</p>
       <p><a href={INSTAGRAM_URL}>Instagram</a></p>
     </footer>
   </body>
@@ -76,4 +174,5 @@ const { titulo, descripcion = 'Tienda de ropa en ' + CONFIG.ciudad } = Astro.pro
     color: var(--texto-suave);
     font-size: 0.875rem;
   }
+
 </style>

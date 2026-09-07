@@ -1,10 +1,19 @@
 import { describe, it, expect } from 'vitest'
-import { validarCatalogo, ProductoSchema, CATEGORIAS } from './schema'
+import {
+  validarCatalogo,
+  ProductoSchema,
+  CATEGORIAS,
+  TIPOS,
+  generoDe,
+  tallasDisponibles,
+  ultimaTalla,
+} from './schema'
 
 const valido = {
   slug: 'blazer-lino-negro',
   nombre: 'Blazer de lino',
   categoria: 'mujer',
+  tipo: 'sweater',
   precio: 189000,
   tallas: ['S', 'M', 'L'],
   descripcion: 'Corte recto, forro interior.',
@@ -22,6 +31,22 @@ describe('ProductoSchema', () => {
   it('expone exactamente las cuatro categorias del spec', () => {
     expect([...CATEGORIAS]).toEqual(['mujer', 'hombre', 'calzado', 'accesorios'])
   })
+
+  it('expone los tipos en orden alfabetico, que es como se pintan', () => {
+    expect([...TIPOS]).toEqual([...TIPOS].sort())
+  })
+})
+
+describe('generoDe', () => {
+  it('mujer y hombre son genero', () => {
+    expect(generoDe('mujer')).toBe('mujer')
+    expect(generoDe('hombre')).toBe('hombre')
+  })
+
+  it('calzado y accesorios no lo son: son clase de producto', () => {
+    expect(generoDe('calzado')).toBeNull()
+    expect(generoDe('accesorios')).toBeNull()
+  })
 })
 
 describe('validarCatalogo', () => {
@@ -32,6 +57,15 @@ describe('validarCatalogo', () => {
   it('rompe si falta el precio', () => {
     const { precio, ...sinPrecio } = valido
     expect(() => validarCatalogo([sinPrecio])).toThrow(/precio/i)
+  })
+
+  it('rompe si falta el tipo de prenda', () => {
+    const { tipo, ...sinTipo } = valido
+    expect(() => validarCatalogo([sinTipo])).toThrow(/tipo/i)
+  })
+
+  it('rompe si el tipo no es uno de los declarados', () => {
+    expect(() => validarCatalogo([{ ...valido, tipo: 'gabardina' }])).toThrow(/tipo/i)
   })
 
   it('rompe si la categoria no es una de las cuatro', () => {
@@ -89,5 +123,45 @@ describe('validarCatalogo', () => {
   it('identifica que producto es el invalido', () => {
     expect(() => validarCatalogo([valido, { ...valido, slug: 'otro', precio: 'gratis' }]))
       .toThrow(/#1/)
+  })
+})
+
+describe('ultimaTalla', () => {
+  const conTallas = (tallas: unknown[]) => validarCatalogo([{ ...valido, tallas }])[0]!
+
+  it('devuelve la talla cuando solo queda una', () => {
+    expect(ultimaTalla(conTallas(['S']))?.talla).toBe('S')
+  })
+
+  it('la cuenta es de tallas DISPONIBLES, no de tallas declaradas', () => {
+    // La escala entera a la vista, pero solo la M se puede pedir.
+    const producto = conTallas([
+      { talla: 'S', disponible: false },
+      'M',
+      { talla: 'L', disponible: false },
+    ])
+    expect(ultimaTalla(producto)?.talla).toBe('M')
+  })
+
+  it('no avisa si quedan dos o mas', () => {
+    expect(ultimaTalla(conTallas(['S', 'M']))).toBeNull()
+    expect(ultimaTalla(conTallas([{ talla: 'S', disponible: false }, 'M', 'L']))).toBeNull()
+  })
+
+  it('sin ninguna disponible no es ultima talla, es agotado', () => {
+    const agotado = conTallas([
+      { talla: 'S', disponible: false },
+      { talla: 'M', disponible: false },
+    ])
+    expect(ultimaTalla(agotado)).toBeNull()
+  })
+})
+
+describe('tallasDisponibles', () => {
+  it('deja fuera las agotadas y conserva el orden declarado', () => {
+    const producto = validarCatalogo([
+      { ...valido, tallas: ['S', { talla: 'M', disponible: false }, 'L'] },
+    ])[0]!
+    expect(tallasDisponibles(producto).map((t) => t.talla)).toEqual(['S', 'L'])
   })
 })

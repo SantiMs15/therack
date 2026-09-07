@@ -6,6 +6,75 @@ export type Categoria = (typeof CATEGORIAS)[number]
 export const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 /**
+ * Como se nombra cada categoria a la vista. Vive aqui y no en la pagina que
+ * la pinta porque ahora la usan tres: el titulo de /catalogo/<categoria>, las
+ * migas de esa pagina y las de cada ficha. Escrita tres veces, tarde o
+ * temprano una se queda vieja.
+ */
+export const ETIQUETAS_CATEGORIA: Record<Categoria, string> = {
+  mujer: 'Mujer',
+  hombre: 'Hombre',
+  calzado: 'Calzado',
+  accesorios: 'Accesorios',
+}
+
+/**
+ * Genero al que se dirige la prenda. No es un campo: sale de `categoria`.
+ * Las cuatro categorias del sitio mezclan dos ejes, genero (mujer, hombre) y
+ * clase de producto (calzado, accesorios), asi que solo las dos primeras
+ * responden a esta pregunta y las otras dos devuelven null. Duplicar el dato
+ * en un campo propio abriria la puerta a que se contradijeran.
+ */
+export const GENEROS = ['mujer', 'hombre'] as const
+export type Genero = (typeof GENEROS)[number]
+
+export const ETIQUETAS_GENERO: Record<Genero, string> = {
+  mujer: 'Mujer',
+  hombre: 'Hombre',
+}
+
+export function generoDe(categoria: Categoria): Genero | null {
+  return categoria === 'mujer' || categoria === 'hombre' ? categoria : null
+}
+
+/**
+ * Clase de prenda. Es lo que el cliente pide por su nombre cuando entra
+ * buscando algo concreto: "un hoodie", "una camiseta". Va en orden
+ * alfabetico porque es el orden en que se pinta el desplegable.
+ *
+ * Anadir un tipo aqui obliga a declararlo en cada producto: el build falla
+ * si una prenda se queda sin el, que es preferible a una prenda que no
+ * aparece en ningun filtro.
+ */
+export const TIPOS = ['buzo', 'camiseta', 'chaqueta', 'hoodie', 'polo', 'sweater'] as const
+export type Tipo = (typeof TIPOS)[number]
+
+/** En plural: el desplegable nombra grupos de prendas, no una prenda. */
+export const ETIQUETAS_TIPO: Record<Tipo, string> = {
+  buzo: 'Buzos',
+  camiseta: 'Camisetas',
+  chaqueta: 'Chaquetas',
+  hoodie: 'Hoodies',
+  polo: 'Polos',
+  sweater: 'Suéteres',
+}
+
+/**
+ * En singular, para nombrar UNA prenda: es lo que abre el titulo de la ficha
+ * en los resultados de busqueda. Un cliente en Bogota escribe "chaqueta tommy
+ * hilfiger", no el nombre de catalogo del fabricante, y hasta ahora ninguno
+ * de los diez titulos llevaba esa palabra.
+ */
+export const ETIQUETAS_TIPO_UNA: Record<Tipo, string> = {
+  buzo: 'Buzo',
+  camiseta: 'Camiseta',
+  chaqueta: 'Chaqueta',
+  hoodie: 'Hoodie',
+  polo: 'Polo',
+  sweater: 'Suéter',
+}
+
+/**
  * Escala de tallas de la ropa de mujer, de la mas pequena a la mas grande.
  * Es el rango que maneja la tienda, no lo que hay de cada prenda: el campo
  * `tallas` de un producto declara solo las que se pueden pedir hoy, asi que
@@ -86,6 +155,7 @@ export const ProductoSchema = z.strictObject({
   /** Opcional: no toda prenda de la tienda es de marca conocida. */
   marca: z.string().min(1, 'marca: no puede estar vacia si se declara').optional(),
   categoria: z.enum(CATEGORIAS),
+  tipo: z.enum(TIPOS),
   precio: z.number().int('precio: debe ser entero').positive('precio: debe ser positivo'),
   tallas: z.array(TallaSchema).min(1, 'tallas: al menos una'),
   descripcion: z.string().min(1, 'descripcion: no puede estar vacia'),
@@ -131,4 +201,24 @@ export function validarCatalogo(datos: unknown[]): Producto[] {
   }
 
   return productos
+}
+
+/** Las tallas que hoy se pueden pedir. Las agotadas siguen en la ficha, tachadas. */
+export function tallasDisponibles(producto: Producto): Talla[] {
+  return producto.tallas.filter((talla) => talla.disponible)
+}
+
+/**
+ * Queda UNA sola talla, y cual. Es lo que enciende el aviso en burdeos de la
+ * rejilla y de la ficha.
+ *
+ * Devuelve la talla y no un booleano porque quien avisa suele querer decir
+ * cual es, y calcularlo dos veces invita a que las dos cuentas se separen.
+ *
+ * Cero tallas disponibles no es "ultima talla" sino agotado, que la ficha ya
+ * resuelve por su cuenta con `variante.disponible`.
+ */
+export function ultimaTalla(producto: Producto): Talla | null {
+  const quedan = tallasDisponibles(producto)
+  return quedan.length === 1 ? quedan[0]! : null
 }

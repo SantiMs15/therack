@@ -1,29 +1,107 @@
 ---
-import type { Producto } from '../data/schema'
+import { productos as CATALOGO } from '../data/productos'
+import type { Genero, Producto } from '../data/schema'
+import { generosDe, marcasDe, tarjetasEnOrden, tiposDe } from '../lib/catalogo'
+import FiltrosProductos from './FiltrosProductos.astro'
 import TarjetaProducto from './TarjetaProducto.astro'
 
-interface Props { productos: Producto[] }
-const { productos } = Astro.props
+interface Props {
+  productos: Producto[]
+  /** Pinta la barra de filtros y orden encima de la rejilla. */
+  ordenable?: boolean
+  /** Genero de la pagina, o null en la portada. Lo marca el desplegable. */
+  generoActivo?: Genero | null
+}
+const { productos, ordenable = false, generoActivo = null } = Astro.props
 
-// Una tarjeta por COLOR, no por prenda: el cliente ve el negro y el verde
-// como dos piezas en la rejilla, que es como los mira en una tienda.
-const tarjetas = productos.flatMap((producto) =>
-  producto.variantes.map((variante) => ({ producto, variante }))
-)
+// Se ordena en el build, no en el navegador: el HTML sale ya en el orden que
+// se ve al entrar, y las cuatro primeras fotos pueden marcarse como
+// prioritarias sabiendo cuales van a abrir la rejilla. El `turno` viaja al
+// <li> como un atributo mas, para que el navegador pueda reordenar sin
+// recalcularlo.
+const ordenadas = tarjetasEnOrden(productos)
 ---
-{tarjetas.length === 0 ? (
-  <p class="vacio">Todavia no hay prendas en esta categoria.</p>
+{ordenadas.length === 0 ? (
+  <p class="vacio">Todavía no hay prendas en esta categoría.</p>
 ) : (
-  <ul class="rejilla">
-    {tarjetas.map(({ producto, variante }, i) => (
-      <li>
-        <TarjetaProducto producto={producto} variante={variante} prioridad={i < 4} />
-      </li>
-    ))}
-  </ul>
+  <>
+    {/* Dos columnas desde tablet: los filtros a la izquierda, pegados al
+        borde inferior de la ventana, y la rejilla a su derecha. En movil no
+        hay columna -- los filtros se abren a pantalla completa desde un boton
+        -- asi que esto es una sola columna y el orden del DOM manda. */}
+    <div class:list={['catalogo', { 'catalogo--con-filtros': ordenable }]}>
+      {ordenable && (
+        <FiltrosProductos
+          generos={generosDe(CATALOGO)}
+          tipos={tiposDe(productos)}
+          marcas={marcasDe(productos)}
+          generoActivo={generoActivo}
+        />
+      )}
+
+      {/* Se ejecuta ANTES de que la rejilla se pinte: si venimos de cambiar
+          de genero, esta pagina tiene que aparecer ya apagada para poder
+          encenderse. Hacerlo desde el script diferido de FiltrosProductos
+          dejaria ver un fotograma con las prendas a la vista. Mismo recurso
+          que el barrido del cambio de color en la ficha. */}
+      <script is:inline>
+        try {
+          if (sessionStorage.getItem('cambio-genero')) {
+            document.documentElement.dataset.filtrando = ''
+            sessionStorage.removeItem('cambio-genero')
+            // Red de seguridad: quien enciende la rejilla es el script de los
+            // filtros, y si ese no llegara a ejecutarse el catalogo se
+            // quedaria invisible. Una animacion que no sale es un defecto;
+            // una tienda sin prendas, un desastre.
+            setTimeout(function () {
+              delete document.documentElement.dataset.filtrando
+            }, 1000)
+          }
+        } catch {}
+      </script>
+
+      {/* Rejilla y aviso comparten envoltorio porque comparten el fundido: al
+          cambiar de filtro se apaga el resultado entero, sea una cosa o la
+          otra, y no solo las tarjetas. */}
+      <div class="resultados" data-resultados>
+      <ul class="rejilla" data-rejilla>
+        {ordenadas.map(({ producto, variante, indice, turno, precio, destacado, genero, tipo, marca }, i) => (
+          <li
+            data-indice={indice}
+            data-turno={turno}
+            data-precio={precio}
+            data-destacado={destacado ? '1' : '0'}
+            data-genero={genero ?? undefined}
+            data-tipo={tipo}
+            data-marca={marca ?? undefined}
+          >
+            <TarjetaProducto
+              producto={producto}
+              variante={variante}
+              prioridad={i < 4}
+              principal={i === 0}
+            />
+          </li>
+        ))}
+      </ul>
+
+        <p class="vacio" data-rejilla-vacio hidden>Ninguna prenda coincide con estos filtros.</p>
+      </div>
+    </div>
+  </>
 )}
 
 <style>
+  /* --- Donde cae la columna de filtros --- */
+  /* NADA de rejilla aqui: la barra de orden y las fotos se quedan en el flujo
+     normal, exactamente como estaban antes de que los filtros existieran. Con
+     `display: grid` los margenes dejan de colapsar y la barra bajaba.
+     `position: relative` es lo unico que se anade, y solo sirve de referencia
+     para que el panel se coloque encima sin ocupar sitio. */
+  @media (min-width: 1700px) {
+    .catalogo--con-filtros { position: relative; }
+  }
+
   .rejilla {
     list-style: none;
     margin: 0;
@@ -50,6 +128,38 @@ const tarjetas = productos.flatMap((producto) =>
   @media (min-width: 1100px) {
     .rejilla { grid-template-columns: repeat(4, 1fr); }
   }
+
+  /* Cambio de filtro o de orden: el resultado se apaga, se recompone a
+     oscuras y vuelve. Recomponer a la vista se lee como un parpadeo, porque
+     cada tarjeta salta a una posicion distinta a la vez y algunas ademas
+     desaparecen.
+
+     Los 240ms de salida son los que espera el script antes de tocar los <li>:
+     si se tocan aqui hay que tocar FUNDIDO en FiltrosProductos.astro. La
+     vuelta va mas lenta que la ida, que es lo que hace que la rejilla parezca
+     asentarse en vez de encenderse de golpe. */
+  .resultados {
+    transition: opacity 360ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  .resultados[data-cambiando] {
+    opacity: 0;
+    transition-duration: 240ms;
+  }
+
+  /* Al llegar desde otro genero la rejilla entra apagada, y el script la
+     enciende en cuanto ha pintado. Asi el cambio de genero se ve igual que el
+     de prenda, aunque uno sea una navegacion y el otro no. */
+  :global(html[data-filtrando]) .resultados {
+    opacity: 0;
+    transition: none;
+  }
+
+  /* El atributo `hidden` del navegador vale display:none, pero lo pinta la
+     hoja del agente de usuario y cualquier `display` declarado aqui le gana.
+     Los elementos que el script esconde necesitan decirlo ellos mismos. */
+  .rejilla[hidden],
+  .rejilla li[hidden] { display: none; }
+
   .vacio { color: var(--texto-suave); }
 
   /* Entrada suave al hacer scroll (spec §6).

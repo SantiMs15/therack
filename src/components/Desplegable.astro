@@ -1,0 +1,234 @@
+---
+/**
+ * Un desplegable de la barra de filtros.
+ *
+ * No es un <select>: el nativo lo pinta el sistema operativo y trae su propio
+ * tipo de letra, su borde y su flecha, que en esta pagina se ven pegados. La
+ * contrapartida es tener que resolver a mano lo que el nativo regala, asi que
+ * aqui esta el teclado (Escape cierra y devuelve el foco), el clic fuera y el
+ * que las opciones no se puedan tabular con el panel cerrado.
+ *
+ * Solo pinta el control. Quien decide que hacer con lo elegido es el script
+ * de FiltrosProductos.astro, que escucha por delegacion.
+ */
+import type { Opcion } from '../lib/filtros'
+
+interface Props {
+  /** Clave del filtro: 'genero' o 'tipo'. Es lo que viaja en la URL. */
+  clave: string
+  etiqueta: string
+  opciones: Opcion[]
+  /** Texto de la opcion que no filtra nada. */
+  todos: string
+  /**
+   * Enlace de esa opcion. Si viene, el desplegable NAVEGA: sus entradas son
+   * enlaces a paginas propias en vez de botones que esconden tarjetas, y de
+   * lo elegido se encarga el servidor, no el script.
+   *
+   * Lo usa el genero, que tiene /catalogo/mujer y /catalogo/hombre. El tipo
+   * de prenda no tiene pagina, asi que sigue filtrando en el navegador.
+   */
+  hrefTodos?: string
+  /** Valor puesto cuando el desplegable navega. Lo sabe el build. */
+  activo?: string | null
+}
+
+const { clave, etiqueta, opciones, todos, hrefTodos, activo = null } = Astro.props
+const id = `desplegable-${clave}`
+
+const navega = Boolean(hrefTodos)
+// Con el desplegable que navega, el rotulo del boton lo pinta el build: no hay
+// nada que el script pueda descubrir que la URL no diga ya.
+const puesta = navega ? (opciones.find((o) => o.valor === activo)?.etiqueta ?? '') : ''
+---
+
+<div
+  class="desplegable"
+  data-desplegable={clave}
+  data-estado="cerrado"
+  data-desplegable-filtro={navega ? undefined : ''}
+>
+  <button
+    type="button"
+    class="desplegable__boton"
+    aria-expanded="false"
+    aria-controls={id}
+    data-desplegable-boton
+  >
+    <span class="desplegable__etiqueta">{etiqueta}</span>
+    <span class="desplegable__valor" data-desplegable-valor hidden={puesta === ''}>{puesta}</span>
+    <svg class="desplegable__flecha" viewBox="0 0 12 8" width="10" height="7" aria-hidden="true">
+      <path
+        d="M1 1.5 6 6.5l5-5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="square"
+      />
+    </svg>
+  </button>
+
+  <div class="desplegable__panel" id={id} role="group" aria-label={etiqueta} data-desplegable-panel>
+    {/* La primera opcion quita el filtro. Va dentro de la lista y no como una
+        cruz aparte: quitar es una eleccion mas, y asi el panel se recorre
+        entero con las flechas del teclado. */}
+    {navega ? (
+      <>
+        <a class="desplegable__opcion" href={hrefTodos} data-opcion tabindex="-1"
+          aria-current={activo ? undefined : 'page'}>{todos}</a>
+
+        {opciones.map((opcion) => (
+          <a class="desplegable__opcion" href={opcion.href} data-opcion tabindex="-1"
+            aria-current={opcion.valor === activo ? 'page' : undefined}>{opcion.etiqueta}</a>
+        ))}
+      </>
+    ) : (
+      <>
+        <button
+          type="button"
+          class="desplegable__opcion"
+          data-opcion
+          data-valor=""
+          aria-pressed="true"
+          tabindex="-1"
+        >
+          {todos}
+        </button>
+
+        {opciones.map((opcion) => (
+          <button
+            type="button"
+            class="desplegable__opcion"
+            data-opcion
+            data-valor={opcion.valor}
+            aria-pressed="false"
+            tabindex="-1"
+          >
+            {opcion.etiqueta}
+          </button>
+        ))}
+      </>
+    )}
+  </div>
+</div>
+
+<style>
+  .desplegable { position: relative; }
+
+  .desplegable__boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5ch;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    color: var(--texto-suave);
+    cursor: pointer;
+    transition: color 320ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+
+  .desplegable__boton:hover,
+  .desplegable[data-estado='abierto'] .desplegable__boton { color: var(--texto); }
+
+  .desplegable__boton:focus-visible {
+    outline: 2px solid var(--texto);
+    outline-offset: 4px;
+  }
+
+  /* Con filtro puesto manda el valor y la etiqueta pasa a ser su rotulo: se
+     lee "Genero Mujer" de un vistazo, sin tener que abrir el panel para
+     saber por que faltan prendas en la rejilla. */
+  .desplegable__valor {
+    color: var(--texto);
+    margin-inline-start: -0.1ch;
+  }
+  .desplegable__valor::before {
+    content: '·';
+    margin-inline-end: 0.6ch;
+    color: var(--linea);
+  }
+
+  .desplegable__flecha {
+    /* La flecha se alinea con el texto, no con la caja: sin este empujon
+       queda flotando alta respecto a una linea de 13px. */
+    margin-block-start: 0.15em;
+    transition: transform 320ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  .desplegable[data-estado='abierto'] .desplegable__flecha { transform: rotate(180deg); }
+
+  /* --- Panel --- */
+  .desplegable__panel {
+    position: absolute;
+    inset-block-start: calc(100% + 0.9rem);
+    inset-inline-start: 0;
+    /* Por encima de la rejilla, por debajo de la cabecera pegajosa (30) y del
+       menu a pantalla completa (20). */
+    z-index: 10;
+    min-width: max(100%, 10rem);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: var(--espacio-2);
+    background: var(--fondo);
+    /* Borde y nada mas: en esta pagina no hay ni una sombra ni una esquina
+       redondeada, y el panel no va a ser el primero. */
+    border: 1px solid var(--linea);
+
+    opacity: 0;
+    transform: translateY(-0.4rem);
+    visibility: hidden;
+    transition:
+      opacity 260ms cubic-bezier(0.65, 0.01, 0.05, 0.99),
+      transform 260ms cubic-bezier(0.65, 0.01, 0.05, 0.99),
+      /* visibility no se interpola: se retrasa hasta que acaba la salida,
+         igual que en el menu de la cabecera. */
+      visibility 0s linear 260ms;
+  }
+
+  .desplegable[data-estado='abierto'] .desplegable__panel {
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+    transition-delay: 0s, 0s, 0s;
+  }
+
+  .desplegable__opcion {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    text-align: start;
+    color: var(--texto-suave);
+    cursor: pointer;
+    transition: color 200ms ease;
+  }
+
+  /* El desplegable que navega pinta <a>, y el subrayado del enlace se
+     estorbaria con el que marca la opcion puesta. */
+  a.desplegable__opcion { text-decoration: none; }
+
+  .desplegable__opcion:hover { color: var(--texto); }
+
+  /* Dos formas de decir lo mismo: aria-pressed lo pone el script en el
+     desplegable que filtra, aria-current lo pone el build en el que navega. */
+  .desplegable__opcion[aria-pressed='true'],
+  .desplegable__opcion[aria-current='page'] {
+    color: var(--texto);
+    text-decoration: underline;
+    text-underline-offset: 0.35em;
+    text-decoration-thickness: 1px;
+  }
+
+  .desplegable__opcion:focus-visible {
+    outline: 2px solid var(--texto);
+    outline-offset: 4px;
+  }
+</style>

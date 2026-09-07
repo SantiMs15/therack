@@ -1,0 +1,859 @@
+---
+/**
+ * Barra de filtros y orden de la rejilla.
+ *
+ * El sitio es estatico: no hay servidor que devuelva la rejilla filtrada, y
+ * generar una pagina por cada combinacion de genero, tipo, marca y orden
+ * daria cientos de paginas para mover doce tarjetas. Asi que el HTML sale del
+ * build con todo el catalogo en el orden por defecto y un script corto
+ * esconde y reordena los <li> en el sitio.
+ *
+ * Sin JavaScript se ve el catalogo entero sin filtrar, que es un estado
+ * correcto de la pagina: se pierde el filtro, no el contenido.
+ *
+ * El genero es la excepcion: no filtra, NAVEGA. Cada genero tiene su pagina
+ * (/catalogo/mujer, /catalogo/hombre), con titulo y descripcion propios, y
+ * mandar alli vale mas que esconder tarjetas en la portada. Ademas es el
+ * unico camino del sitio a esas paginas, asi que tiene que ser un enlace de
+ * verdad y no un boton: un buscador no ejecuta el filtro para descubrirlas.
+ *
+ * El desplegable de prenda solo se pinta si tiene mas de una opcion que
+ * ofrecer: uno con una sola entrada solo puede mentir sobre lo que hace.
+ */
+import { ETIQUETAS, ORDENES, ORDEN_POR_DEFECTO } from '../lib/orden'
+import type { Opcion } from '../lib/filtros'
+import Desplegable from './Desplegable.astro'
+
+interface Props {
+  /** Los del catalogo ENTERO, con su href: el desplegable navega. */
+  generos: Opcion[]
+  tipos: Opcion[]
+  /** Solo para el distintivo: la marca se elige en el menu de la cabecera. */
+  marcas: Opcion[]
+  /** Genero de la pagina actual, o null en la portada. */
+  generoActivo?: string | null
+}
+
+const { generos, tipos, marcas, generoActivo = null } = Astro.props
+---
+
+{/* `display: contents` en .filtros: no pinta caja propia, asi que sus tres
+    hijos se colocan solos donde toque -- la columna a la izquierda, la barra
+    arriba -- sin que el componente tenga que partirse en dos. */}
+<div class="filtros" data-filtros data-estado="cerrado">
+  {/* Solo movil: cierra el panel tocando fuera. */}
+  <div class="filtros__velo" data-filtros-cerrar></div>
+
+  {/* IZQUIERDA en escritorio, panel inferior en movil.
+      Solo genero y prenda: son los que dicen QUE es una prenda. El orden no
+      filtra nada y se queda arriba, donde siempre estuvo.
+
+      Se lee de ABAJO hacia arriba: "Filtros" ancla la columna contra el borde
+      inferior de la ventana y los desplegables suben desde ahi. Lo hace
+      `column-reverse`, asi que el orden del DOM sigue siendo el logico
+      -- titulo primero -- y es el unico que ve un lector de pantalla. */}
+  {(generos.length > 1 || tipos.length > 1) && (
+    <div class="filtros__panel" id="panel-filtros">
+      {/* El rotulo va DENTRO del bloque pegajoso y por delante en el DOM: se
+          lee primero, y al bajar la pagina viaja con los desplegables en vez
+          de quedarse arriba solo. Los desplegables van en su propia caja
+          porque son los unicos que se invierten. */}
+      <div class="filtros__grupo">
+        <span class="filtros__rotulo">Filtros</span>
+
+        <div class="filtros__desplegables">
+          {generos.length > 1 && (
+            <Desplegable
+              clave="genero"
+              etiqueta="Género"
+              opciones={generos}
+              todos="Todos"
+              hrefTodos="/"
+              activo={generoActivo}
+            />
+          )}
+          {tipos.length > 1 && (
+            <Desplegable clave="tipo" etiqueta="Prenda" opciones={tipos} todos="Todas" />
+          )}
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* ARRIBA, sin moverse: el orden a la derecha y el distintivo de marca
+      debajo, exactamente como estaban. */}
+  <div class="filtros__superior">
+    <div class="filtros__barra">
+      {/* Nombra lo que hay en esta barra, que es el orden. Los filtros de
+          verdad -- genero y prenda -- se rotulan en su propia columna. */}
+      <span class="filtros__titulo">Ordenar por:</span>
+      {(generos.length > 1 || tipos.length > 1) && (
+        <button
+          type="button"
+          class="filtros__abrir"
+          aria-expanded="false"
+          aria-controls="panel-filtros"
+          data-filtros-abrir
+        >
+          Filtros
+        </button>
+      )}
+
+      <div class="filtros__orden" role="group" aria-label="Orden" data-orden-opciones>
+        {ORDENES.map((orden) => (
+          <button
+            type="button"
+            class="filtros__opcion"
+            data-orden={orden}
+            aria-pressed={orden === ORDEN_POR_DEFECTO}
+          >
+            {ETIQUETAS[orden]}
+          </button>
+        ))}
+
+        {/* La barra del orden activo. Vive fuera de los botones para poder
+            viajar de uno a otro: un subrayado por boton solo puede encenderse
+            y apagarse. La coloca el script; sin el no se pinta y el subrayado
+            de texto ocupa su lugar. */}
+        <span class="filtros__barra-activa" aria-hidden="true" data-orden-barra></span>
+      </div>
+    </div>
+
+    {/* La marca no tiene desplegable: se elige en el menu de la cabecera. Pero
+        si no se viera en algun sitio, el cliente que llega por /?marca=lacoste
+        veria media tienda sin saber por que. */}
+    {marcas.length > 0 && (
+      <p class="filtros__activos" data-filtros-activos hidden>
+        {marcas.map((marca) => (
+          <button type="button" class="distintivo" data-quitar-marca={marca.valor} hidden>
+            <span class="distintivo__rotulo">Marca</span>
+            <span class="distintivo__valor">{marca.etiqueta}</span>
+            <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true">
+              <path
+                d="M1 1l10 10M11 1L1 11"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="square"
+              />
+            </svg>
+            <span class="visualmente-oculto">Quitar el filtro de marca {marca.etiqueta}</span>
+          </button>
+        ))}
+      </p>
+    )}
+  </div>
+</div>
+
+<style>
+  /* .filtros no pinta caja: la barra se queda en el flujo y la columna sale
+     de el con position:fixed, para no robarle ancho a la rejilla. */
+  .filtros { display: contents; }
+
+  /* --- La barra de arriba: no se ha movido --- */
+  .filtros__superior {
+    border-block-end: 1px solid var(--linea);
+    padding-block-end: var(--espacio-2);
+    /* Aire arriba tambien: en las paginas de catalogo la barra cuelga directa
+       del <h1>, que no trae margen inferior propio. */
+    margin-block: var(--espacio-3);
+  }
+
+  .filtros__barra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--espacio-2) var(--espacio-3);
+  }
+
+  /* Rotulo y boton comparten pinta: son la misma palabra en el mismo sitio,
+     y cual se ve depende de si la columna cabe al lado o hay que abrirla. */
+  .filtros__abrir {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+  }
+  .filtros__titulo,
+  .filtros__rotulo,
+  .filtros__abrir {
+    font-family: var(--fuente-ui);
+    font-size: 0.8125rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--texto);
+  }
+  .filtros__abrir:focus-visible { outline: 2px solid var(--texto); outline-offset: 4px; }
+
+  .filtros__desplegables {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-2) var(--espacio-3);
+  }
+
+  /* El rotulo de la columna se separa de los desplegables lo mismo que la
+     barra de arriba se separa de su contenido. */
+  .filtros__grupo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--espacio-2);
+  }
+
+  /* ===== Por defecto la columna es un panel que sube desde abajo ===== */
+  /* Vale para movil y para cualquier escritorio donde no quepa una columna al
+     margen sin comerse las fotos. */
+
+  .filtros__velo {
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: rgba(17, 17, 17, 0.35);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 260ms cubic-bezier(0.65, 0.01, 0.05, 0.99),
+      visibility 0s linear 260ms;
+  }
+
+  .filtros__panel {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-3);
+    background: var(--fondo);
+    border-block-start: 1px solid var(--linea);
+    padding: var(--espacio-3) var(--espacio-2) var(--espacio-4);
+    transform: translateY(100%);
+    visibility: hidden;
+    transition:
+      transform 320ms cubic-bezier(0.65, 0.01, 0.05, 0.99),
+      visibility 0s linear 320ms;
+  }
+
+  .filtros[data-estado='abierto'] .filtros__velo {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s, 0s;
+  }
+  .filtros[data-estado='abierto'] .filtros__panel {
+    transform: none;
+    visibility: visible;
+    transition-delay: 0s, 0s;
+  }
+
+  .filtros__desplegables { flex-direction: column; align-items: flex-start; }
+
+  /* ===== Pantalla ancha: la columna vive en el margen izquierdo ===== */
+  /* 1650px es donde el contenedor (1400px como maximo, centrado) deja a su
+     izquierda los ~10rem que necesitan los desplegables. Por debajo no cabe, y
+     antes que encoger las fotos se prefiere el panel de abajo. */
+  @media (min-width: 1700px) {
+    .filtros__abrir,
+    .filtros__velo { display: none; }
+    .filtros__titulo { display: inline; }
+
+    .filtros__panel {
+      /* Fuera del flujo: no ocupa sitio, asi que ni la barra de orden ni las
+         fotos se enteran de que existe. `inset-block: 0` lo estira de arriba
+         abajo del catalogo, asi que su borde superior es el de la barra --
+         "Filtros" queda a la altura de "Ordenar por:" -- y ademas le da
+         recorrido al sticky de dentro. */
+      position: absolute;
+      inset-block: 0;
+      width: 9rem;
+
+      /* Hasta el borde de la ventana. El contenedor mide --ancho-max y va
+         centrado, asi que su margen izquierdo es (100vw - ancho) / 2 mas su
+         propio padding: deshacer los dos deja la columna pegada a la
+         izquierda de la pagina. */
+      inset-inline-start: calc(var(--ancho-max) / 2 - 50vw - var(--espacio-2));
+
+      z-index: auto;
+      background: none;
+      border: 0;
+      padding: 0;
+      transform: none;
+      visibility: visible;
+      display: block;
+    }
+
+    /* Sigue el scroll dentro de su columna: arranca a la altura de la primera
+       fila y se queda pegado bajo la cabecera al bajar. Se pega el GRUPO, no
+       los desplegables, para que el rotulo baje con ellos. */
+    .filtros__grupo {
+      position: sticky;
+      top: var(--alto-cabecera);
+    }
+
+    /* De abajo hacia arriba: el primer hijo del DOM (Genero) cae abajo. */
+    .filtros__desplegables {
+      display: flex;
+      flex-direction: column-reverse;
+      justify-content: flex-start;
+      align-items: flex-start;
+      gap: var(--espacio-2);
+    }
+  }
+
+  /* La palabra que titula el bloque, en la typewriter del sitio. El tracking
+     ancho es lo que la separa del resto de la barra, que comparte la misma
+     fuente: sin el, todo se leeria como una sola fila de texto. */
+  .filtros__titulo {
+    font-family: var(--fuente-ui);
+    font-size: 0.8125rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--texto);
+  }
+
+  .filtros__desplegables {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-2) var(--espacio-3);
+  }
+
+  /* El orden se va al extremo opuesto de la barra: filtrar y ordenar son dos
+     gestos distintos y no conviene que se lean como una sola lista. Solo desde
+     tablet: en movil la barra ya viene apilada. */
+  @media (min-width: 768px) {
+    .filtros__orden { margin-inline-start: auto; }
+  }
+
+  /* En movil los cuatro ordenes no caben: se recorren de lado en vez de
+     apilarse en cuatro lineas, que empujaria la primera foto fuera de
+     pantalla. En escritorio no llegan a desbordar y la barra no aparece. */
+  .filtros__orden {
+    position: relative;
+    display: flex;
+    gap: var(--espacio-3);
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* El foco del teclado dibuja fuera del boton: sin este aire el contorno
+       quedaria recortado por el borde del carrusel. */
+    padding-block: 0.25rem;
+  }
+  .filtros__orden::-webkit-scrollbar { display: none; }
+
+  .filtros__opcion {
+    flex: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    color: var(--texto-suave);
+    cursor: pointer;
+    transition: color 320ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+
+  .filtros__opcion:hover { color: var(--texto); }
+
+  /* El orden activo se marca en el negro del texto y con la barra de abajo.
+     Es la unica senal: un fondo o un recuadro meterian una caja en una
+     pagina que no tiene ninguna. */
+  .filtros__opcion[aria-pressed='true'] { color: var(--texto); }
+
+  .filtros__opcion:focus-visible {
+    outline: 2px solid var(--texto);
+    outline-offset: 4px;
+  }
+
+  /* --- La barra del orden activo --- */
+  /* Mide 1px de ancho y se estira con scaleX en vez de animar `width`: el
+     ancho recalcula el layout en cada fotograma, la transformacion no. Como
+     es una linea solida no hay contenido que la escala pueda deformar.
+     `left` la ancla al origen y translateX la lleva hasta el boton. */
+  .filtros__barra-activa {
+    position: absolute;
+    inset-block-end: 0.25rem;
+    inset-inline-start: 0;
+    width: 1px;
+    height: 1px;
+    background: var(--texto);
+    transform-origin: left center;
+    transform: translateX(var(--barra-x, 0px)) scaleX(var(--barra-ancho, 0));
+    transition: transform 420ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+    /* Sin script no hay medidas que darle: se queda invisible y manda el
+       subrayado de texto de mas abajo. */
+    opacity: 0;
+  }
+  .filtros[data-js] .filtros__barra-activa { opacity: 1; }
+
+  /* Colocarla la primera vez, o recolocarla tras un cambio de tamano, no es
+     un movimiento que el cliente haya pedido: en esos dos casos salta. */
+  .filtros__barra-activa[data-sin-transicion] { transition: none; }
+
+  /* Sin JavaScript la barra no puede medir nada, asi que el orden activo se
+     subraya con el propio texto. Con JavaScript sobra: serian dos rayas. */
+  .filtros:not([data-js]) .filtros__opcion[aria-pressed='true'] {
+    text-decoration: underline;
+    text-underline-offset: 0.35em;
+    text-decoration-thickness: 1px;
+  }
+
+  /* --- Distintivo de marca --- */
+  .filtros__activos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-1);
+    margin-block: var(--espacio-2) 0;
+  }
+
+  .distintivo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6ch;
+    /* El unico recuadro de la pagina, y se lo gana: es lo que hay que poder
+       encontrar y quitar cuando la rejilla ha perdido tres cuartas partes de
+       las prendas. */
+    border: 1px solid var(--linea);
+    background: none;
+    padding: 0.3rem 0.6rem;
+    font: inherit;
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    color: var(--texto);
+    cursor: pointer;
+    transition:
+      border-color 200ms ease,
+      color 200ms ease;
+  }
+  /* El atributo `hidden` del navegador vale display:none, pero lo pinta la
+     hoja del agente de usuario y cualquier `display` declarado aqui le gana.
+     Los elementos que el script esconde necesitan decirlo ellos mismos. */
+  .filtros__activos[hidden],
+  .distintivo[hidden] { display: none; }
+
+  .distintivo:hover { border-color: var(--texto); }
+  .distintivo:focus-visible {
+    outline: 2px solid var(--texto);
+    outline-offset: 2px;
+  }
+
+  .distintivo__rotulo { color: var(--texto-suave); }
+  .distintivo__valor { margin-inline-end: 0.2ch; }
+</style>
+
+<script>
+  import { ORDEN_POR_DEFECTO, comparador, esOrden, type Orden, type Ordenable } from '../lib/orden'
+  import { pasa, type Filtrable, type Filtros } from '../lib/filtros'
+  import type { Genero, Tipo } from '../data/schema'
+
+  // Lo que tarda la rejilla en desvanecerse antes de recomponerse. Tiene que
+  // coincidir con la transicion de .resultados en RejillaProductos.astro:
+  // aqui se espera, alli se pinta.
+  const FUNDIDO = 240
+
+  // --- Panel de movil ---
+  // Vive fuera del bloque grande de abajo a proposito: abrir y cerrar tiene
+  // que funcionar aunque la rejilla no este (una categoria vacia), y no
+  // depende de nada del filtrado.
+  {
+    const panel = document.querySelector<HTMLElement>('[data-filtros]')
+    const abrir = document.querySelector<HTMLButtonElement>('[data-filtros-abrir]')
+
+    if (panel && abrir) {
+      const mostrar = (si: boolean) => {
+        panel.dataset.estado = si ? 'abierto' : 'cerrado'
+        abrir.setAttribute('aria-expanded', String(si))
+        // Solo en movil: en escritorio el panel es una columna fija y bloquear
+        // el scroll de la pagina seria dejarla inservible.
+        if (matchMedia('(max-width: 767px)').matches) {
+          document.body.style.overflow = si ? 'hidden' : ''
+        }
+        if (!si) abrir.focus()
+      }
+
+      abrir.addEventListener('click', () => mostrar(panel.dataset.estado !== 'abierto'))
+
+      for (const cerrar of panel.querySelectorAll('[data-filtros-cerrar]')) {
+        cerrar.addEventListener('click', () => mostrar(false))
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && panel.dataset.estado === 'abierto') mostrar(false)
+      })
+
+      // Al pasar a escritorio el panel deja de ser panel: si se quedo abierto,
+      // el <body> seguiria sin scroll.
+      matchMedia('(min-width: 768px)').addEventListener('change', (e) => {
+        if (e.matches) {
+          document.body.style.overflow = ''
+          mostrar(false)
+        }
+      })
+    }
+  }
+
+  const raiz = document.querySelector<HTMLElement>('[data-filtros]')
+  const resultados = document.querySelector<HTMLElement>('[data-resultados]')
+  const rejilla = document.querySelector<HTMLElement>('[data-rejilla]')
+  const sinCoincidencias = document.querySelector<HTMLElement>('[data-rejilla-vacio]')
+
+  if (raiz && resultados && rejilla && sinCoincidencias) {
+    const tira = raiz.querySelector<HTMLElement>('[data-orden-opciones]')
+    const barra = raiz.querySelector<HTMLElement>('[data-orden-barra]')
+    const botonesOrden = [...raiz.querySelectorAll<HTMLButtonElement>('[data-orden]')]
+    // Todos abren y cierran. Pero solo los marcados como filtro llevan
+    // estado: el de genero navega, y de lo elegido se encarga el servidor.
+    const desplegables = [...raiz.querySelectorAll<HTMLElement>('[data-desplegable]')]
+    const desplegablesFiltro = [
+      ...raiz.querySelectorAll<HTMLElement>('[data-desplegable-filtro]'),
+    ]
+    const distintivos = [...raiz.querySelectorAll<HTMLButtonElement>('[data-quitar-marca]')]
+    const zonaDistintivos = raiz.querySelector<HTMLElement>('[data-filtros-activos]')
+
+    if (tira && barra && botonesOrden.length > 0) {
+      const quietud = matchMedia('(prefers-reduced-motion: reduce)')
+
+      // Los datos de cada tarjeta viajan en atributos del <li>, no en un JSON
+      // aparte: ya estan en el HTML que se descarga y evitan mandar el
+      // catalogo dos veces. Se leen una sola vez, al arrancar.
+      type Tarjeta = Ordenable & Filtrable & { li: HTMLElement }
+      const tarjetas: Tarjeta[] = [...rejilla.children].map((nodo) => {
+        const li = nodo as HTMLElement
+        return {
+          li,
+          precio: Number(li.dataset.precio),
+          destacado: li.dataset.destacado === '1',
+          indice: Number(li.dataset.indice),
+          turno: Number(li.dataset.turno),
+          genero: (li.dataset.genero as Genero | undefined) ?? null,
+          tipo: li.dataset.tipo as Tipo,
+          marca: li.dataset.marca ?? null,
+        }
+      })
+
+      // --- Estado ---
+      const estado = {
+        orden: ORDEN_POR_DEFECTO as Orden,
+        tipo: null as Tipo | null,
+        marca: null as string | null,
+      }
+
+      // El genero nunca se filtra aqui: cada uno tiene su pagina y el
+      // desplegable lleva a ella. En esta rejilla siempre pasan todos.
+      const filtros = (): Filtros => ({
+        genero: null,
+        tipo: estado.tipo,
+        marca: estado.marca,
+      })
+
+      // Lo que cada desplegable acepta sale de lo que se pinto en el, y las
+      // marcas de los distintivos: asi un ?tipo=gabardina escrito a mano no
+      // deja la rejilla filtrada por algo que no existe.
+      const validos = (clave: string) =>
+        new Set(
+          [...raiz.querySelectorAll<HTMLButtonElement>(`[data-desplegable='${clave}'] [data-valor]`)]
+            .map((boton) => boton.dataset.valor)
+            .filter((valor): valor is string => Boolean(valor))
+        )
+
+      const marcasValidas = new Set(distintivos.map((boton) => boton.dataset.quitarMarca))
+
+      // --- Pintar la rejilla ---
+      // append() mueve los nodos que ya existen, no los vuelve a crear: las
+      // fotos no se descargan otra vez ni parpadean. El fragmento hace el
+      // traslado en una sola escritura del DOM.
+      const pintar = () => {
+        const orden = [...tarjetas].sort(comparador(estado.orden))
+        const fragmento = document.createDocumentFragment()
+        let visibles = 0
+
+        for (const tarjeta of orden) {
+          const cabe = pasa(tarjeta, filtros())
+          tarjeta.li.hidden = !cabe
+          if (cabe) visibles++
+          fragmento.append(tarjeta.li)
+        }
+
+        rejilla.append(fragmento)
+        rejilla.hidden = visibles === 0
+        sinCoincidencias.hidden = visibles > 0
+      }
+
+      // --- La barra del orden ---
+      const botonDe = (orden: Orden) =>
+        botonesOrden.find((boton) => boton.dataset.orden === orden) ?? botonesOrden[0]!
+
+      const moverBarra = (animar: boolean) => {
+        const boton = botonDe(estado.orden)
+        if (!animar) barra.dataset.sinTransicion = ''
+
+        barra.style.setProperty('--barra-x', `${boton.offsetLeft}px`)
+        // Sin unidad: es el factor de scaleX sobre una barra de 1px, asi que
+        // el numero es directamente el ancho en pixeles del boton.
+        barra.style.setProperty('--barra-ancho', String(boton.offsetWidth))
+
+        if (!animar) {
+          // Leer una medida obliga al navegador a aplicar el cambio ya, en vez
+          // de agruparlo con el siguiente: sin esto, quitar el atributo en la
+          // misma vuelta dejaria que el salto se animase igual.
+          void barra.offsetWidth
+          delete barra.dataset.sinTransicion
+        }
+      }
+
+      // En movil los ordenes se recorren de lado, asi que el recien elegido
+      // puede quedar medio fuera. Se arrastra la tira lo justo para verlo
+      // entero, en vez de scrollIntoView, que ademas moveria la pagina.
+      const asomar = () => {
+        const boton = botonDe(estado.orden)
+        const margen = 16
+        const izquierda = boton.offsetLeft
+        const derecha = izquierda + boton.offsetWidth
+
+        if (izquierda < tira.scrollLeft) {
+          tira.scrollTo({ left: izquierda - margen, behavior: 'smooth' })
+        } else if (derecha > tira.scrollLeft + tira.clientWidth) {
+          tira.scrollTo({ left: derecha - tira.clientWidth + margen, behavior: 'smooth' })
+        }
+      }
+
+      // --- Sincronizar los controles con el estado ---
+      const sincronizar = () => {
+        for (const boton of botonesOrden) {
+          boton.setAttribute('aria-pressed', String(boton.dataset.orden === estado.orden))
+        }
+
+        for (const desplegable of desplegablesFiltro) {
+          const clave = desplegable.dataset.desplegable as 'tipo'
+          const elegido = estado[clave] ?? ''
+          const valor = desplegable.querySelector<HTMLElement>('[data-desplegable-valor]')
+          let etiquetaElegida = ''
+
+          for (const opcion of desplegable.querySelectorAll<HTMLButtonElement>('[data-valor]')) {
+            const activa = (opcion.dataset.valor ?? '') === elegido
+            opcion.setAttribute('aria-pressed', String(activa))
+            if (activa && elegido) etiquetaElegida = opcion.textContent?.trim() ?? ''
+          }
+
+          if (valor) {
+            valor.textContent = etiquetaElegida
+            valor.hidden = etiquetaElegida === ''
+          }
+        }
+
+        for (const distintivo of distintivos) {
+          distintivo.hidden = distintivo.dataset.quitarMarca !== estado.marca
+        }
+        if (zonaDistintivos) zonaDistintivos.hidden = estado.marca === null
+      }
+
+      const guardarEnUrl = () => {
+        // El estado queda en la URL para que el enlace que se comparte abra la
+        // rejilla igual que la veia quien lo mando, y para que el menu de la
+        // cabecera pueda enlazar a /?marca=lacoste. replaceState y no
+        // pushState: cuatro clics seguidos no deberian llenar el historial de
+        // vueltas atras por la misma pagina.
+        const url = new URL(location.href)
+        const parametros: [string, string | null][] = [
+          ['orden', estado.orden === ORDEN_POR_DEFECTO ? null : estado.orden],
+          // Siempre null: ya no se filtra por genero. Se mantiene en la lista
+          // para que un ?genero= de un enlace viejo se borre de la URL.
+          ['genero', null],
+          ['tipo', estado.tipo],
+          ['marca', estado.marca],
+        ]
+        for (const [clave, valor] of parametros) {
+          if (valor) url.searchParams.set(clave, valor)
+          else url.searchParams.delete(clave)
+        }
+        history.replaceState(null, '', url)
+      }
+
+      // --- Aplicar un cambio ---
+      let fundiendo: number | undefined
+
+      const aplicar = (moverOrden: boolean) => {
+        // Los controles responden en el acto: la barra arranca y el
+        // desplegable se cierra mientras la rejilla todavia se apaga.
+        // Esperar a las tarjetas dejaria el clic sin respuesta medio segundo.
+        sincronizar()
+        if (moverOrden) {
+          moverBarra(true)
+          asomar()
+        }
+        guardarEnUrl()
+
+        if (quietud.matches) {
+          pintar()
+          return
+        }
+
+        // Fundido de salida, se recompone a oscuras, fundido de entrada. Con
+        // las tarjetas a la vista el salto de posiciones se lee como un
+        // parpadeo; apagadas, la rejilla vuelve ya recompuesta.
+        clearTimeout(fundiendo)
+        resultados.dataset.cambiando = ''
+        fundiendo = window.setTimeout(() => {
+          pintar()
+          delete resultados.dataset.cambiando
+        }, FUNDIDO)
+      }
+
+      // --- Desplegables ---
+      const abrir = (desplegable: HTMLElement, si: boolean) => {
+        desplegable.dataset.estado = si ? 'abierto' : 'cerrado'
+        desplegable
+          .querySelector('[data-desplegable-boton]')
+          ?.setAttribute('aria-expanded', String(si))
+        // Con el panel cerrado sus opciones siguen en el DOM: sin esto,
+        // tabular las recorreria estando invisibles.
+        for (const opcion of desplegable.querySelectorAll('[data-opcion]')) {
+          opcion.setAttribute('tabindex', si ? '0' : '-1')
+        }
+      }
+
+      const cerrarTodos = (excepto?: HTMLElement) => {
+        for (const desplegable of desplegables) {
+          if (desplegable !== excepto) abrir(desplegable, false)
+        }
+      }
+
+      for (const desplegable of desplegables) {
+        const boton = desplegable.querySelector<HTMLButtonElement>('[data-desplegable-boton]')
+        // Solo el de prenda tiene opciones con [data-valor]: en el de genero
+        // son enlaces, y el bucle de abajo no encuentra ninguna.
+        const clave = desplegable.dataset.desplegable as 'tipo'
+
+        boton?.addEventListener('click', () => {
+          const abierto = desplegable.dataset.estado === 'abierto'
+          cerrarTodos(desplegable)
+          abrir(desplegable, !abierto)
+        })
+
+        for (const opcion of desplegable.querySelectorAll<HTMLButtonElement>('[data-valor]')) {
+          opcion.addEventListener('click', () => {
+            const valor = opcion.dataset.valor || null
+            abrir(desplegable, false)
+            boton?.focus()
+            if (valor === estado[clave]) return
+            estado[clave] = valor as never
+            aplicar(false)
+          })
+        }
+      }
+
+      // Clic fuera y Escape: lo que se espera de cualquier desplegable, y lo
+      // unico que el nativo daba gratis.
+      document.addEventListener('click', (evento) => {
+        if (!(evento.target as HTMLElement).closest('[data-desplegable]')) cerrarTodos()
+      })
+
+      document.addEventListener('keydown', (evento) => {
+        if (evento.key !== 'Escape') return
+        const abierto = desplegables.find((d) => d.dataset.estado === 'abierto')
+        if (!abierto) return
+        abrir(abierto, false)
+        abierto.querySelector<HTMLButtonElement>('[data-desplegable-boton]')?.focus()
+      })
+
+      // --- Orden y distintivos ---
+      for (const boton of botonesOrden) {
+        boton.addEventListener('click', () => {
+          const valor = boton.dataset.orden
+          if (!esOrden(valor) || valor === estado.orden) return
+          estado.orden = valor
+          aplicar(true)
+        })
+      }
+
+      for (const distintivo of distintivos) {
+        distintivo.addEventListener('click', () => {
+          estado.marca = null
+          aplicar(false)
+        })
+      }
+
+      // --- El genero navega, pero se ve como si filtrara ---
+      // Cada genero tiene pagina propia, asi que elegirlo es una navegacion y
+      // no un filtrado. Sin esto el cambio era un salto seco mientras prenda y
+      // marca se funden: la misma accion con dos respuestas distintas.
+      //
+      // Se apaga la rejilla, se deja una senal y se navega. La pagina que
+      // llega se pinta ya apagada (script inline de RejillaProductos) y aqui
+      // abajo se enciende. El fundido de ida y el de vuelta son los mismos que
+      // usa el filtrado.
+      {
+        const enlacesGenero = raiz.querySelectorAll<HTMLAnchorElement>(
+          '[data-desplegable]:not([data-desplegable-filtro]) a[data-opcion]'
+        )
+
+        for (const enlace of enlacesGenero) {
+          enlace.addEventListener('click', (evento) => {
+            // Abrir en otra pestana, o con boton central, no es navegar aqui.
+            if (
+              evento.defaultPrevented ||
+              evento.metaKey ||
+              evento.ctrlKey ||
+              evento.shiftKey ||
+              evento.altKey
+            ) {
+              return
+            }
+            // Sin animaciones, sin espera: se navega y ya.
+            if (quietud.matches) return
+
+            evento.preventDefault()
+            try {
+              sessionStorage.setItem('cambio-genero', '1')
+            } catch {}
+            resultados.dataset.cambiando = ''
+            setTimeout(() => {
+              location.href = enlace.href
+            }, FUNDIDO)
+          })
+        }
+      }
+
+      // Encender la rejilla que llego apagada. Dos fotogramas: el primero deja
+      // que el navegador pinte el estado apagado, el segundo quita la marca y
+      // esa diferencia es la que la transicion puede animar.
+      if (document.documentElement.hasAttribute('data-filtrando')) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            delete document.documentElement.dataset.filtrando
+          })
+        })
+      }
+
+      // --- Arranque ---
+      // Al entrar por un enlace con parametros, la rejilla que llega del build
+      // esta sin filtrar y en el orden por defecto: se rehace antes del primer
+      // pintado, sin fundido, porque no hay nada anterior de lo que venir.
+      const url = new URL(location.href)
+      const pedidoOrden = url.searchParams.get('orden')
+      const pedidoTipo = url.searchParams.get('tipo')
+      const pedidoMarca = url.searchParams.get('marca')
+
+      if (esOrden(pedidoOrden)) estado.orden = pedidoOrden
+      if (pedidoTipo && validos('tipo').has(pedidoTipo)) estado.tipo = pedidoTipo as Tipo
+      if (pedidoMarca && marcasValidas.has(pedidoMarca)) estado.marca = pedidoMarca
+
+      for (const desplegable of desplegables) abrir(desplegable, false)
+      sincronizar()
+      pintar()
+      // Limpia de la URL lo que no se pudo aplicar, para que no siga viajando.
+      guardarEnUrl()
+
+      raiz.dataset.js = ''
+      moverBarra(false)
+
+      // Las medidas del boton cambian con el ancho de la ventana y otra vez
+      // cuando entra la typewriter de Typekit, que hasta entonces se pinta con
+      // la fuente de reserva. Sin recolocar, la barra se queda medida sobre un
+      // texto que ya no esta ahi.
+      addEventListener('resize', () => moverBarra(false))
+      document.fonts?.ready.then(() => moverBarra(false))
+    }
+  }
+</script>

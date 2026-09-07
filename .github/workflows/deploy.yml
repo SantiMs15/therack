@@ -23,6 +23,12 @@ jobs:
     steps:
       - name: Descargar el repositorio
         uses: actions/checkout@v4
+        with:
+          # Historial completo. El `lastmod` del sitemap sale de la fecha del
+          # ultimo commit que toco src/data/productos.ts, y con el clon
+          # superficial que hace checkout por defecto (un solo commit) git no
+          # sabe esa fecha: el sitemap saldria sin lastmod.
+          fetch-depth: 0
 
       - name: Preparar Node
         uses: actions/setup-node@v4

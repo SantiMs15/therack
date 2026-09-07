@@ -1,11 +1,23 @@
 ---
 import { Image } from 'astro:assets'
-import type { Producto, Variante } from '../data/schema'
+import { ultimaTalla, type Producto, type Variante } from '../data/schema'
 import { resolverImagen } from '../lib/imagenes-productos'
 import { formatearPrecio } from '../lib/formato'
 
-interface Props { producto: Producto; variante: Variante; prioridad?: boolean }
-const { producto, variante, prioridad = false } = Astro.props
+interface Props {
+  producto: Producto
+  variante: Variante
+  /** Se descarga sin esperar a estar en pantalla: las primeras filas. */
+  prioridad?: boolean
+  /**
+   * La que probablemente sea el elemento mas grande de la primera pantalla.
+   * Solo UNA por pagina: fetchpriority reparte el ancho de banda, y marcar
+   * cuatro como altas es no marcar ninguna -- compiten entre si y la que de
+   * verdad manda llega mas tarde que si solo estuviera ella.
+   */
+  principal?: boolean
+}
+const { producto, variante, prioridad = false, principal = false } = Astro.props
 
 const alternativoPorDefecto = [producto.marca, producto.nombre, variante.color]
   .filter(Boolean)
@@ -23,7 +35,11 @@ const fotos = variante.imagenes.map((foto) => ({
 // La rejilla puede abrir por una foto distinta a la que abre la ficha: hay
 // prendas que se venden por la espalda. Sin `portada` manda la primera.
 const indiceInicial = Math.max(0, variante.imagenes.findIndex((i) => i.portada))
-const enlace = `/producto/${producto.slug}/${variante.slug}`
+const enlace = `/producto/${producto.slug}/${variante.slug}/`
+
+// Si la prenda esta agotada no hay ultima talla que anunciar: lo que falta ya
+// lo dice el aviso de abajo, y dos avisos sobre la misma foto se estorban.
+const ultima = variante.disponible ? ultimaTalla(producto) : null
 ---
 <article class="tarjeta">
   <div class="marco" data-galeria data-indice={indiceInicial}>
@@ -35,9 +51,11 @@ const enlace = `/producto/${producto.slug}/${variante.slug}`
         widths={[300, 600, 900]}
         sizes="(max-width: 767px) 50vw, 33vw"
         loading={prioridad && i === indiceInicial ? 'eager' : 'lazy'}
-        fetchpriority={prioridad && i === indiceInicial ? 'high' : undefined}
+        fetchpriority={principal && i === indiceInicial ? 'high' : undefined}
       />
     ))}
+
+    {ultima && <span class="ultima-talla">Última talla</span>}
 
     {!variante.disponible && <span class="agotado">Agotado</span>}
 
@@ -95,6 +113,30 @@ const enlace = `/producto/${producto.slug}/${variante.slug}`
   }
   .marco :global(.foto.activa) { opacity: 1; }
   .tarjeta:hover .marco :global(.foto) { transform: scale(1.03); }
+
+  /* El unico color de la paleta, gastado donde tiene que frenar al que
+     recorre la rejilla. Etiqueta pequena y arriba a la izquierda: no tapa la
+     prenda, no choca con el aviso de agotado (abajo) ni con las flechas de la
+     galeria (a media altura), y aun asi se ve antes que el precio. */
+  .ultima-talla {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    background: var(--burdeos);
+    color: var(--fondo);
+    /* Geist, la sans que ya usa el nombre de marca en la tarjeta. A 11px y en
+       versalitas la typewriter emborrona los remates, y encima de un relleno
+       burdeos hay que leerla de un vistazo. El peso 500 es la excepcion al
+       400 del resto del sitio: texto claro sobre fondo oscuro y muy pequeno
+       adelgaza, y esto tiene que frenar al que recorre la rejilla. */
+    font-family: var(--fuente-marca);
+    font-weight: 500;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.5rem;
+  }
 
   .agotado {
     position: absolute;
@@ -174,17 +216,6 @@ const enlace = `/producto/${producto.slug}/${variante.slug}`
     margin-block: var(--espacio-1) 0;
     color: var(--texto);
     font-size: 1.0625rem;
-  }
-
-  .visualmente-oculto {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 </style>
 

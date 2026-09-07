@@ -2,24 +2,94 @@
 import Layout from '../../layouts/Layout.astro'
 import RejillaProductos from '../../components/RejillaProductos.astro'
 import { productos } from '../../data/productos'
-import { CATEGORIAS, type Categoria } from '../../data/schema'
+import { CATEGORIAS, ETIQUETAS_CATEGORIA, generoDe, type Categoria } from '../../data/schema'
+import { descripcionDeCategoria, tarjetasEnOrden } from '../../lib/catalogo'
+import {
+  fichaCategoria,
+  fichaMigas,
+  serializar,
+  type Miga,
+} from '../../lib/datos-estructurados'
+import { VENTA } from '../../config'
 
+/**
+ * Solo las categorias que tienen prendas.
+ *
+ * Antes se generaban las cuatro siempre, asi que /catalogo/calzado y
+ * /catalogo/accesorios se publicaban vacias, entraban en el sitemap y le
+ * pedian a un buscador que indexara dos paginas sin nada. Ahora no existen
+ * hasta que existe la primera prenda: piden un 404, que es la verdad.
+ *
+ * Es la misma regla con la que el pie decide que categorias enlaza, asi que
+ * ni el sitio ni el sitemap pueden apuntar a una pagina que no se genera.
+ */
 export function getStaticPaths() {
-  return CATEGORIAS.map((categoria) => ({ params: { categoria } }))
+  return CATEGORIAS.filter((categoria) =>
+    productos.some((producto) => producto.categoria === categoria)
+  ).map((categoria) => ({ params: { categoria } }))
 }
 
 const { categoria } = Astro.params as { categoria: Categoria }
 const deLaCategoria = productos.filter((p) => p.categoria === categoria)
-const titulos: Record<Categoria, string> = {
-  mujer: 'Mujer',
-  hombre: 'Hombre',
-  calzado: 'Calzado',
-  accesorios: 'Accesorios',
+/** Como se nombra a quien compra en esa categoria. */
+const QUIENES: Record<Categoria, string> = {
+  mujer: 'mujer',
+  hombre: 'hombre',
+  calzado: 'calzado',
+  accesorios: 'accesorios',
 }
+const cierre = `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
+const descripcion = descripcionDeCategoria(deLaCategoria, QUIENES[categoria], cierre)
+
+if (!Astro.site) {
+  throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
+}
+const migas: Miga[] = [
+  { nombre: 'Inicio', ruta: '/' },
+  { nombre: ETIQUETAS_CATEGORIA[categoria] },
+]
+const migasJson = serializar(fichaMigas(migas, Astro.site))
+
+/**
+ * La ficha de listado.
+ *
+ * Nombre y descripcion salen de las MISMAS variables que pintan el <h1> y la
+ * meta description, no de un texto escrito aparte: el dia que cambien esos
+ * dos, el schema cambia con ellos y no se queda contando otra cosa.
+ *
+ * Las URLs salen de `tarjetasEnOrden`, la misma funcion que ordena la
+ * rejilla, asi que la lista que se declara es la que se ve, en su orden.
+ */
+const listadoJson = serializar(
+  fichaCategoria({
+    nombre: ETIQUETAS_CATEGORIA[categoria],
+    descripcion,
+    url: new URL(`/catalogo/${categoria}/`, Astro.site).href,
+    urls: tarjetasEnOrden(deLaCategoria).map(
+      ({ producto, variante }) =>
+        new URL(`/producto/${producto.slug}/${variante.slug}/`, Astro.site).href
+    ),
+  })
+)
 ---
-<Layout titulo={titulos[categoria]}>
-  <div class="contenedor">
-    <h1>{titulos[categoria]}</h1>
-    <RejillaProductos productos={deLaCategoria} />
+<Layout titulo={ETIQUETAS_CATEGORIA[categoria]} descripcion={descripcion}>
+  <script type="application/ld+json" is:inline set:html={migasJson}></script>
+  <script type="application/ld+json" is:inline set:html={listadoJson}></script>
+
+  <div class="contenedor catalogo-pagina">
+    {/* Oculto a la vista, igual que el de la portada. Una pagina de catalogo
+        es la misma pagina con menos prendas: si al elegir Mujer aparecieran un
+        rastro y un titular que la portada no tiene, saltaria toda la
+        composicion y pareceria otro sitio. Se queda en el documento porque un
+        buscador y un lector de pantalla si necesitan saber que es esto: sin
+        el, la pagina empezaria en el <h3> del nombre de la primera prenda. */}
+    <h1 class="visualmente-oculto">{ETIQUETAS_CATEGORIA[categoria]}</h1>
+    <RejillaProductos productos={deLaCategoria} ordenable generoActivo={generoDe(categoria)} />
   </div>
 </Layout>
+
+<style>
+  /* El mismo aire que la portada: sin titular ni migas, la barra de orden
+     tiene que arrancar a la misma altura en las dos. */
+  .catalogo-pagina { padding-block: var(--espacio-2) var(--espacio-4); }
+</style>

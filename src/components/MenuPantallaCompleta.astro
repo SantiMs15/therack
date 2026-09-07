@@ -12,12 +12,31 @@
  * La paleta se pasa a la del sitio: el original usaba indigo, violeta y rosa,
  * que el spec y el DESIGN.md del proyecto prohiben expresamente.
  */
+import { productos } from '../data/productos'
+import { marcasDe } from '../lib/catalogo'
+
+/**
+ * El menu lista las MARCAS del catalogo, no las categorias: genero y tipo de
+ * prenda ya se eligen en la barra de filtros de la rejilla, y repetirlos aqui
+ * daria dos caminos para lo mismo. La marca no tiene desplegable propio
+ * porque es lo que trae al cliente a la tienda, asi que se queda en el sitio
+ * mas visible de la cabecera.
+ *
+ * Cada marca lleva a la portada con el filtro puesto. No hay una pagina por
+ * marca: la rejilla de la portada ya sabe filtrar, y /marca/<slug> seria una
+ * segunda ruta que mantener para pintar exactamente lo mismo.
+ *
+ * La lista sale del catalogo, no escrita a mano: una marca nueva aparece en
+ * el menu en cuanto entra su primera prenda.
+ */
 const enlaces = [
-  { href: '/catalogo/mujer', texto: 'Mujer' },
-  { href: '/catalogo/hombre', texto: 'Hombre' },
-  { href: '/catalogo/calzado', texto: 'Calzado' },
-  { href: '/catalogo/accesorios', texto: 'Accesorios' },
-  { href: '/tienda', texto: 'Tienda' },
+  ...marcasDe(productos).map((marca) => ({
+    href: `/?marca=${marca.valor}`,
+    texto: marca.etiqueta,
+    aparte: false,
+  })),
+  // Tienda no es una marca: se separa para que no se lea como una mas.
+  { href: '/tienda/', texto: 'Tienda', aparte: true },
 ]
 ---
 
@@ -29,7 +48,7 @@ const enlaces = [
   data-menu-boton
 >
   <span class="boton-menu__textos">
-    <span>Menu</span>
+    <span>Marcas</span>
     <span>Cerrar</span>
   </span>
   <span class="boton-menu__icono" aria-hidden="true">
@@ -43,14 +62,14 @@ const enlaces = [
 <div class="menu" id="menu-pantalla-completa" data-menu data-estado="cerrado">
   <div class="menu__velo" data-menu-cerrar></div>
 
-  <nav class="menu__panel" aria-label="Menu principal">
+  <nav class="menu__panel" aria-label="Marcas de la tienda">
     <span class="menu__capa" aria-hidden="true"></span>
     <span class="menu__capa" aria-hidden="true"></span>
     <span class="menu__capa" aria-hidden="true"></span>
 
     <ul class="menu__lista">
       {enlaces.map((e) => (
-        <li class="menu__item">
+        <li class:list={['menu__item', { 'menu__item--aparte': e.aparte }]}>
           <a href={e.href} class="menu__enlace"><span>{e.texto}</span></a>
         </li>
       ))}
@@ -211,6 +230,16 @@ const enlaces = [
   .menu__item:nth-child(3) .menu__enlace span { transition-delay: 470ms; }
   .menu__item:nth-child(4) .menu__enlace span { transition-delay: 530ms; }
   .menu__item:nth-child(5) .menu__enlace span { transition-delay: 590ms; }
+
+  /* Tienda no es una marca: baja a la typewriter de la interfaz y se
+     descuelga del bloque, para que la vista no la cuente como una mas de la
+     lista de arriba. */
+  .menu__item--aparte { margin-block-start: var(--espacio-3); }
+  .menu__item--aparte .menu__enlace {
+    font-family: var(--fuente-ui);
+    font-size: 0.9375rem;
+    letter-spacing: 0.04em;
+  }
 
   .menu__enlace:hover span { opacity: 0.55; }
   .menu__enlace:focus-visible { outline: 2px solid var(--fondo); outline-offset: 4px; }

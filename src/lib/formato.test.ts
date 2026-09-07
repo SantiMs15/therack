@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatearPrecio } from './formato'
+import { formatearPrecio, resumir } from './formato'
 
 describe('formatearPrecio', () => {
   it('usa punto como separador de miles', () => {
@@ -28,5 +28,31 @@ describe('formatearPrecio', () => {
 
   it('rechaza valores no numericos', () => {
     expect(() => formatearPrecio(NaN)).toThrow(/inv[aá]lido/i)
+  })
+})
+
+describe('resumir', () => {
+  it('deja intacto lo que ya cabe', () => {
+    expect(resumir('Corto.', 100)).toBe('Corto.')
+  })
+
+  it('cierra en el punto cuando hay uno util', () => {
+    const t = 'Primera frase completa. Segunda frase que ya no cabe entera aqui dentro.'
+    expect(resumir(t, 40)).toBe('Primera frase completa.')
+  })
+
+  it('recorta por palabra si la primera frase ya se pasa', () => {
+    const t = 'Una sola frase muy larga que no tiene ningun punto donde cortar antes del limite'
+    const r = resumir(t, 30)
+    expect(r.length).toBeLessThanOrEqual(31)
+    expect(r.endsWith('…')).toBe(true)
+    expect(r).not.toContain(' …')
+  })
+
+  it('nunca parte una palabra por la mitad', () => {
+    const t = 'palabras sueltas separadas correctamente por espacios simples'
+    const r = resumir(t, 25).replace('…', '').trimEnd()
+    expect(t.startsWith(r)).toBe(true)
+    expect(t[r.length] === ' ' || r.length === t.length).toBe(true)
   })
 })

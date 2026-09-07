@@ -14,3 +14,21 @@ export function formatearPrecio(valor: number): string {
   const entero = Math.round(valor).toString()
   return '$' + entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
+
+/**
+ * Recorta un texto para la meta description, que es donde un buscador corta
+ * hacia los 155 caracteres y deja la frase a medias.
+ *
+ * Prefiere cerrar en un punto: una descripcion completa hasta la primera
+ * frase se lee mejor que una frase larga cortada con puntos suspensivos. Solo
+ * si la primera frase ya se pasa recorta por palabra.
+ */
+export function resumir(texto: string, maximo: number): string {
+  if (texto.length <= maximo) return texto
+
+  const punto = texto.lastIndexOf('. ', maximo)
+  if (punto > maximo * 0.5) return texto.slice(0, punto + 1)
+
+  const espacio = texto.lastIndexOf(' ', maximo - 1)
+  return texto.slice(0, espacio > 0 ? espacio : maximo - 1).trimEnd() + '…'
+}

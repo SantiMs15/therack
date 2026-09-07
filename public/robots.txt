@@ -1,0 +1,11 @@
+# Catalogo abierto: todo el sitio es publico y no hay nada que esconder.
+User-agent: *
+Allow: /
+
+# Las marcas del menu enlazan a /?marca=<slug>, que sirve la misma portada.
+# NO se bloquean aqui a proposito: estan enlazadas desde todas las paginas, y
+# una URL bloqueada que Google ve enlazada la puede indexar igual, solo que sin
+# poder leer el canonical que dice cual es la buena. Se deja rastrear para que
+# lea ese canonical y consolide las senales en la portada.
+
+Sitemap: https://therackstore.shop/sitemap-index.xml

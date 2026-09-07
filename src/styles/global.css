@@ -15,6 +15,10 @@
      restaba jerarquia al nombre propio del fabricante. */
   --fuente-marca: 'Geist Variable', system-ui, sans-serif;
 
+  /* Alto de la cabecera pegajosa: padding-block (2rem x2) + el logo (36px).
+     Lo necesita la columna de filtros para pegarse justo debajo. */
+  --alto-cabecera: 6.5rem;
+
   --ancho-max: 1400px;
   --espacio-1: 0.5rem;
   --espacio-2: 1rem;
@@ -23,6 +27,91 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+
+/*
+ * Hueco de la barra de desplazamiento, siempre reservado.
+ *
+ * /catalogo/hombre tiene siete prendas y /catalogo/mujer dos: una pagina pasa
+ * de largo y la otra no, asi que al saltar entre generos la barra aparecia y
+ * desaparecia. Cada vez, el area de contenido cambiaba de ancho unos 15px, y
+ * como TODO va centrado se movia la pagina entera -- titulo, cabecera, pie y
+ * fotos -- un puñado de pixeles a un lado.
+ *
+ * Se lee como si la animacion moviera cosas que no cambian. No es la
+ * animacion: es que el ancho de la ventana no era el mismo antes y despues.
+ * Reservando el hueco siempre, lo unico que se mueve es lo que de verdad
+ * cambia.
+ */
+html {
+  scrollbar-gutter: stable;
+
+  /* La sintaxis estandar. La entienden Firefox, y desde hace poco Chrome y
+     Safari; da poco control -- grosor en tres pasos y dos colores -- pero es
+     la unica que llega a Firefox, asi que va primero y la de abajo la afina
+     donde se puede. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--texto-suave) var(--fondo);
+}
+
+/*
+ * Barra de desplazamiento, en el mismo idioma que el resto.
+ *
+ * Fina y cuadrada: en esta pagina no hay ni una sombra ni una esquina
+ * redondeada, y la barra no va a ser la primera. El pulgar en el gris del
+ * texto suave y el carril en el fondo del sitio, asi que lo unico que se ve
+ * es una linea vertical que se oscurece al agarrarla.
+ *
+ * Solo WebKit (Chrome, Edge, Safari). Firefox se queda con las dos
+ * declaraciones de arriba, que dan un resultado parecido.
+ *
+ * En macOS el sistema las pinta flotantes y solo mientras se hace scroll:
+ * alli esto se ve poco, y es lo correcto.
+ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--fondo);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--texto-suave);
+  /* Sin radio, como todo. Y el borde del color del fondo deja el pulgar mas
+     estrecho que el carril sin tener que mentir sobre el ancho: es lo que le
+     da aire a los lados. */
+  border: 2px solid var(--fondo);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--texto);
+}
+
+/* La esquina donde se cruzan las dos barras: sin esto la pinta el sistema con
+   su propio gris y se ve un cuadrito ajeno. */
+::-webkit-scrollbar-corner {
+  background: var(--fondo);
+}
+
+/*
+ * Texto que se lee pero no se ve: lo reciben un lector de pantalla y un
+ * buscador, y no ocupa un pixel en la pagina. Vivia copiado en cinco sitios
+ * -- la portada, la ficha (dos veces), la tarjeta y los filtros -- palabra por
+ * palabra. Con `clip-path` y no `display:none`, que lo esconderia tambien de
+ * quien lo necesita.
+ */
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 body {
   margin: 0;

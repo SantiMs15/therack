@@ -2,10 +2,42 @@
 import Layout from '../layouts/Layout.astro'
 import RejillaProductos from '../components/RejillaProductos.astro'
 import { productos } from '../data/productos'
+import { fichaTienda, serializar } from '../lib/datos-estructurados'
+import { enumerar, marcasDe } from '../lib/catalogo'
+import { CONFIG, VENTA } from '../config'
+
+// Nombra las marcas que hay de verdad y las condiciones de venta, en vez de
+// la generica de 24 caracteres que compartia con media web.
+const descripcion =
+  `Ropa de marca en ${CONFIG.ciudad}: ${enumerar(marcasDe(productos).map((m) => m.etiqueta))}. ` +
+  `Envío gratis a toda Colombia y cambios hasta ${VENTA.cambios.dias} días.`
+
+if (!Astro.site) {
+  throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
+}
+// Solo en la portada: es la ficha del negocio entero, y repetirla en cada
+// pagina no la refuerza, solo la duplica.
+const tiendaJson = serializar(
+  fichaTienda({
+    url: Astro.site.href,
+    logo: new URL('/og.png', Astro.site).href,
+  })
+)
 ---
-<Layout titulo="Inicio">
+<Layout titulo="Inicio" descripcion={descripcion}>
+  <script type="application/ld+json" is:inline set:html={tiendaJson}></script>
+
   <div class="contenedor portada">
-    <RejillaProductos productos={productos} />
+    {/* La portada arrancaba en la rejilla, asi que su primer encabezado era el
+        <h3> del nombre de la primera prenda: el documento empezaba en el nivel
+        tres y sin decir en ninguna parte que es esta pagina.
+
+        Va oculto a la vista y no al diseno: la portada se lee como un muro de
+        fotos a proposito, y meter un titular grande encima cambiaria la pagina
+        entera por un problema que es de jerarquia, no de composicion. Un
+        lector de pantalla y un buscador si lo reciben. */}
+    <h1 class="visualmente-oculto">Ropa de marca en {CONFIG.ciudad}</h1>
+    <RejillaProductos productos={productos} ordenable />
   </div>
 </Layout>
 

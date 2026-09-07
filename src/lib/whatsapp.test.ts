@@ -70,3 +70,15 @@ describe('construirEnlaceWhatsApp', () => {
       .toThrow(/tel[eé]fono/i)
   })
 })
+
+describe('el saludo', () => {
+  it('abre con la exclamacion de apertura', () => {
+    expect(decodeURIComponent(construirEnlaceWhatsApp(base))).toContain('¡Hola!')
+  })
+
+  it('la codifica en el enlace, no la manda cruda', () => {
+    // %C2%A1 es U+00A1 en UTF-8. Sin codificar, un cliente que interprete el
+    // enlace como latin-1 abriria el chat con "Â¡Hola!".
+    expect(construirEnlaceWhatsApp(base)).toContain('%C2%A1Hola!')
+  })
+})

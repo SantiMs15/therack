@@ -1,0 +1,87 @@
+---
+/**
+ * El rastro que se ve: Inicio > Hombre > la prenda.
+ *
+ * Hermano del BreadcrumbList que va en el JSON-LD, y los dos salen de la
+ * misma lista: si el rastro dijera una cosa y el schema otra, Google se queda
+ * con el schema y el cliente ve lo otro.
+ *
+ * Hace dos trabajos a la vez. Para quien lee, es la unica forma de subir de
+ * una ficha a su catalogo: la barra de filtros solo esta donde hay rejilla, y
+ * en una ficha no la hay. Para un buscador, es el enlace que faltaba de las
+ * diez fichas a las dos paginas de categoria.
+ */
+import type { Miga } from '../lib/datos-estructurados'
+
+interface Props {
+  migas: Miga[]
+}
+
+const { migas } = Astro.props
+---
+
+<nav class="migas" aria-label="Migas de pan">
+  <ol>
+    {migas.map((miga) => (
+      <li>
+        {miga.ruta ? (
+          <a href={miga.ruta}>{miga.nombre}</a>
+        ) : (
+          /* El ultimo escalon no es un enlace: lleva a donde ya se esta. */
+          <span aria-current="page">{miga.nombre}</span>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<style>
+  .migas {
+    /* La typewriter y el tamano de la barra de filtros: son las dos lineas
+       pequenas que enmarcan el contenido, y conviene que se lean como una
+       familia y no como dos inventos distintos. */
+    font-family: var(--fuente-ui);
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    color: var(--texto-suave);
+    padding-block-start: var(--espacio-3);
+  }
+
+  .migas ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.6ch;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* El separador se pinta desde CSS y no como texto: un lector de pantalla ya
+     anuncia la lista, y leer "mayor que" entre cada escalon solo estorba. */
+  .migas li + li::before {
+    content: '›';
+    margin-inline-end: 0.6ch;
+    color: var(--linea);
+  }
+
+  .migas a {
+    color: var(--texto-suave);
+    text-decoration: none;
+    transition: color 200ms ease;
+  }
+  .migas a:hover {
+    color: var(--texto);
+    text-decoration: underline;
+    text-underline-offset: 0.35em;
+    text-decoration-thickness: 1px;
+  }
+  .migas a:focus-visible {
+    outline: 2px solid var(--texto);
+    outline-offset: 4px;
+  }
+
+  /* La pagina actual, en el negro del texto: cierra el rastro y de paso dice
+     cual de los escalones no lleva a ninguna parte. */
+  .migas [aria-current='page'] { color: var(--texto); }
+</style>
