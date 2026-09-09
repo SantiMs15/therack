@@ -97,6 +97,26 @@ export function serializar(ficha: unknown): string {
 }
 
 /**
+ * Un elemento de un listado: solo su URL.
+ *
+ * Es el formato que Google pide cuando cada elemento tiene pagina propia, y
+ * es el que ya usaba `fichaCategoria`. Se saca aparte porque ahora lo arman
+ * tres funciones y repetir el `.map` en las tres es repetir tambien el dia
+ * que cambie.
+ */
+function listaDeUrls(urls: readonly string[]) {
+  return {
+    '@type': 'ItemList',
+    numberOfItems: urls.length,
+    itemListElement: urls.map((u, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: u,
+    })),
+  }
+}
+
+/**
  * La ficha de una pagina de catalogo.
  *
  * Dice dos cosas que el HTML solo no deja claras: que esta pagina es un
@@ -132,15 +152,81 @@ export function fichaCategoria({
     name: nombre,
     description: descripcion,
     url,
-    mainEntity: {
-      '@type': 'ItemList',
-      numberOfItems: urls.length,
-      itemListElement: urls.map((u, i) => ({
-        '@type': 'ListItem',
-        position: i + 1,
-        url: u,
-      })),
+    mainEntity: listaDeUrls(urls),
+  }
+}
+
+/**
+ * La ficha de una pagina de marca.
+ *
+ * Es una CollectionPage cuyo `about` es la marca: la pagina no ES la marca,
+ * HABLA de la marca y ademas lista sus piezas. Declararla como Brand a secas
+ * dejaria sin sitio a la lista de productos.
+ *
+ * `foundingDate` va como cadena porque schema.org espera una fecha, y un
+ * numero suelto no lo es. El ano solo es una fecha valida.
+ *
+ * Sin piezas no se emite `mainEntity`. Un ItemList de cero elementos no dice
+ * "no hay nada", dice "esto es un listado" -- y una marca que todavia no ha
+ * llegado a la tienda no lo es.
+ */
+export function fichaMarca({
+  nombre,
+  propuesta,
+  url,
+  pais,
+  anio,
+  fundador,
+  imagen,
+  urls,
+}: {
+  nombre: string
+  /** La linea de propuesta: es la descripcion de la pagina y de la marca. */
+  propuesta: string
+  /** Canonica de la pagina de marca, absoluta. */
+  url: string
+  pais: string
+  anio: number
+  fundador: string
+  /** Foto de campana, absoluta. */
+  imagen: string
+  /** Fichas que lista, absolutas y en el orden en que se ven. */
+  urls: readonly string[]
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: nombre,
+    description: propuesta,
+    url,
+    about: {
+      '@type': 'Brand',
+      name: nombre,
+      description: propuesta,
+      foundingDate: String(anio),
+      founder: { '@type': 'Person', name: fundador },
+      foundingLocation: { '@type': 'Place', name: pais },
+      image: imagen,
     },
+    ...(urls.length > 0 ? { mainEntity: listaDeUrls(urls) } : {}),
+  }
+}
+
+/**
+ * La ficha del indice del archivo: un listado de paginas de marca.
+ *
+ * Cada entrada es solo su URL, por lo mismo que en las otras dos: los datos
+ * de la marca ya estan en su pagina, y dos copias acaban discrepando.
+ */
+export function fichaArchivo({ url, urls }: { url: string; urls: readonly string[] }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Archivo de marcas',
+    description:
+      'Las marcas que trae The Rack store al mercado colombiano, con su origen y su propuesta.',
+    url,
+    mainEntity: listaDeUrls(urls),
   }
 }
 

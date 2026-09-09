@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { validarCatalogo, type Producto, type Variante } from '../data/schema'
 import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
 import {
+  fichaArchivo,
   fichaCategoria,
+  fichaMarca,
   fichaMigas,
   fichaProducto,
   fichaTienda,
@@ -297,5 +299,58 @@ describe('fichaCategoria', () => {
     const f = cat([])
     expect(f.mainEntity.numberOfItems).toBe(0)
     expect(f.mainEntity.itemListElement).toEqual([])
+  })
+})
+
+describe('fichaMarca', () => {
+  const base = {
+    nombre: 'Aimé Leon Dore',
+    propuesta: 'El Nueva York de los noventa hecho ropa de todos los días.',
+    url: 'https://therackstore.shop/marca/aime-leon-dore/',
+    pais: 'Estados Unidos',
+    anio: 2014,
+    fundador: 'Teddy Santis',
+    imagen: 'https://therackstore.shop/_astro/ald.jpg',
+  }
+
+  it('declara la marca como Brand dentro de la pagina', () => {
+    const ficha = fichaMarca({ ...base, urls: [] }) as any
+    expect(ficha['@type']).toBe('CollectionPage')
+    expect(ficha.about['@type']).toBe('Brand')
+    expect(ficha.about.name).toBe('Aimé Leon Dore')
+  })
+
+  it('el ano de fundacion viaja como cadena, que es lo que pide schema.org', () => {
+    const ficha = fichaMarca({ ...base, urls: [] }) as any
+    expect(ficha.about.foundingDate).toBe('2014')
+  })
+
+  it('el fundador es una Person y el pais un Place', () => {
+    const ficha = fichaMarca({ ...base, urls: [] }) as any
+    expect(ficha.about.founder).toEqual({ '@type': 'Person', name: 'Teddy Santis' })
+    expect(ficha.about.foundingLocation).toEqual({ '@type': 'Place', name: 'Estados Unidos' })
+  })
+
+  it('lista las piezas en el orden en que se ven', () => {
+    const urls = ['https://therackstore.shop/a/', 'https://therackstore.shop/b/']
+    const ficha = fichaMarca({ ...base, urls }) as any
+    expect(ficha.mainEntity.numberOfItems).toBe(2)
+    expect(ficha.mainEntity.itemListElement.map((i: any) => i.url)).toEqual(urls)
+    expect(ficha.mainEntity.itemListElement[0].position).toBe(1)
+  })
+
+  it('sin piezas no emite ItemList: una lista vacia declara un listado que no hay', () => {
+    const ficha = fichaMarca({ ...base, urls: [] }) as any
+    expect(ficha.mainEntity).toBeUndefined()
+  })
+})
+
+describe('fichaArchivo', () => {
+  it('lista las paginas de marca', () => {
+    const urls = ['https://therackstore.shop/marca/represent/']
+    const ficha = fichaArchivo({ url: 'https://therackstore.shop/marca/', urls }) as any
+    expect(ficha['@type']).toBe('CollectionPage')
+    expect(ficha.mainEntity.numberOfItems).toBe(1)
+    expect(ficha.mainEntity.itemListElement[0].url).toBe(urls[0])
   })
 })
