@@ -1,0 +1,125 @@
+---
+/**
+ * EL ARCHIVO: la lista de las marcas que la tienda presenta.
+ *
+ * Le da al menu de la cabecera un destino propio -- hasta ahora "Marcas" solo
+ * abria un panel -- y le da a un buscador una pagina que enumera la curaduria
+ * de la tienda en vez de tener que deducirla de las fichas de producto.
+ *
+ * Lista solo las marcas CON ficha. Las otras no tienen pagina a la que
+ * enlazar, y una entrada muerta en un indice es peor que una entrada menos.
+ */
+import Layout from '../../layouts/Layout.astro'
+import Migas from '../../components/Migas.astro'
+import { archivoDeMarcas } from '../../lib/archivo-marcas'
+import {
+  fichaArchivo,
+  fichaMigas,
+  serializar,
+  type Miga,
+} from '../../lib/datos-estructurados'
+
+const entradas = archivoDeMarcas()
+
+if (!Astro.site) {
+  throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
+}
+
+const migas: Miga[] = [{ nombre: 'Inicio', ruta: '/' }, { nombre: 'Archivo de marcas' }]
+const migasJson = serializar(fichaMigas(migas, Astro.site))
+
+// A diferencia de /catalogo/<categoria>, esta pagina se genera siempre,
+// incluso con el archivo vacio. Un ItemList de cero elementos declara un
+// listado que no existe, asi que sin entradas no se emite fichaArchivo.
+const archivoJson =
+  entradas.length > 0
+    ? serializar(
+        fichaArchivo({
+          url: new URL('/marca/', Astro.site).href,
+          urls: entradas.map((e) => new URL(`/marca/${e.slug}/`, Astro.site).href),
+        })
+      )
+    : null
+
+const descripcion =
+  'Las marcas que The Rack store trae a Colombia: de dónde vienen, quién las fundó y por qué las escogimos.'
+---
+
+<Layout titulo="Archivo de marcas" descripcion={descripcion}>
+  <script type="application/ld+json" is:inline set:html={migasJson}></script>
+  {archivoJson && <script type="application/ld+json" is:inline set:html={archivoJson}></script>}
+
+  <div class="contenedor archivo">
+    <Migas migas={migas} />
+
+    <header class="archivo__cabecera">
+      <h1>Archivo de marcas</h1>
+      <p class="archivo__entrada">{descripcion}</p>
+    </header>
+
+    {entradas.length === 0 ? (
+      <p class="archivo__vacio">Todavía no hay marcas en el archivo.</p>
+    ) : (
+      <ul class="archivo__lista">
+        {entradas.map((entrada) => (
+          <li>
+            <a href={`/marca/${entrada.slug}/`}>
+              <h2>{entrada.nombre}</h2>
+              <p class="archivo__datos">
+                {entrada.ficha.pais} · {entrada.ficha.anio}
+              </p>
+              <p class="archivo__propuesta">{entrada.ficha.propuesta}</p>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</Layout>
+
+<style>
+  .archivo { padding-block: var(--espacio-2) var(--espacio-4); }
+
+  .archivo__cabecera { margin-block: var(--espacio-3); }
+
+  .archivo__entrada {
+    max-width: 52ch;
+    color: var(--texto-suave);
+  }
+
+  .archivo__lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-block-start: 1px solid var(--linea);
+  }
+
+  .archivo__lista li { border-block-end: 1px solid var(--linea); }
+
+  /* El enlace ocupa la fila entera: la marca, el dato y la propuesta son un
+     solo destino, y tres enlaces al mismo sitio se tabulan tres veces. */
+  .archivo__lista a {
+    display: block;
+    padding-block: var(--espacio-3);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .archivo__lista a:hover h2 { text-decoration: underline; }
+
+  .archivo__lista h2 { margin: 0; }
+
+  .archivo__datos {
+    margin-block: 0.25rem;
+    color: var(--texto-suave);
+    font-family: var(--fuente-marca);
+    font-size: 0.8125rem;
+  }
+
+  .archivo__propuesta {
+    max-width: 52ch;
+    margin: 0;
+  }
+
+  .archivo__vacio { color: var(--texto-suave); }
+</style>
