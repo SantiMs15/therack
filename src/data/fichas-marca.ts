@@ -89,6 +89,21 @@ export function validarFichas(
  * Para anadir una marca al archivo: deja su foto en src/assets/marcas/ en
  * ratio 3:2 y anade una entrada aqui, con el slug de la marca por clave.
  */
-const archivo: Record<string, unknown> = {}
+const archivo: Record<string, unknown> = {
+  'aime-leon-dore': {
+    pais: 'Estados Unidos',
+    anio: 2014,
+    fundador: 'Teddy Santis',
+    propuesta: 'El Nueva York de los noventa hecho ropa de todos los días.',
+    porQue: [
+      'Teddy Santis creció en Queens y montó la marca sin venir de la moda: abrió una tienda en el Lower East Side y se puso a vestir a la gente que ya conocía. Esa es toda la historia, y se nota en la ropa.',
+      'La trajimos porque resuelve algo que en Colombia falta: prendas que se ven caras sin gritar el logo. Un polo de punto, una sudadera de peso, una gorra con la M de Mets bordada pequeña. Se ponen un lunes.',
+    ],
+    // PROVISIONAL: silueta urbana generada, no es material de la marca.
+    // Reemplazar por la campana real antes de publicar.
+    imagen: 'placeholder-ciudad.jpg',
+    alt: 'Siluetas de edificios de una ciudad en blanco y negro',
+  },
+}
 
 export const FICHAS = validarFichas(archivo, MARCAS)

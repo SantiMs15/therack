@@ -1,0 +1,188 @@
+---
+/**
+ * LA PAGINA DE UNA MARCA.
+ *
+ * La tienda no solo vende: presenta. En Colombia cuesta que alguien compre
+ * una prenda de una marca que nunca ha visto, y esta pagina es donde se
+ * responde a la pregunta que el cliente no llega a hacer en voz alta: quien
+ * es esta gente y por que deberia importarme.
+ *
+ * Solo existe para las marcas con ficha. Sin ficha no hay ruta, y quien
+ * enlaza marcas -- el menu, la ficha de producto -- lo sabe por
+ * `hrefDeMarca`, asi que el sitio no puede apuntar a una pagina que no se
+ * genera.
+ */
+import { Image } from 'astro:assets'
+import Layout from '../../layouts/Layout.astro'
+import Migas from '../../components/Migas.astro'
+import RejillaProductos from '../../components/RejillaProductos.astro'
+import { productos } from '../../data/productos'
+import { archivoDeMarcas, type EntradaArchivo } from '../../lib/archivo-marcas'
+import { tarjetasEnOrden } from '../../lib/catalogo'
+import { slugMarca } from '../../lib/filtros'
+import { resolverImagenMarca } from '../../lib/imagenes-marcas'
+import {
+  fichaMarca,
+  fichaMigas,
+  serializar,
+  type Miga,
+} from '../../lib/datos-estructurados'
+
+export function getStaticPaths() {
+  return archivoDeMarcas().map((entrada) => ({
+    params: { slug: entrada.slug },
+    props: { entrada },
+  }))
+}
+
+const { entrada } = Astro.props as { entrada: EntradaArchivo }
+const { nombre, slug, ficha } = entrada
+
+// Las piezas de esta marca, en el mismo orden con el que abre el catalogo.
+const suyas = productos.filter((p) => p.marca && slugMarca(p.marca) === slug)
+const enOrden = tarjetasEnOrden(suyas)
+
+if (!Astro.site) {
+  throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
+}
+
+const imagen = resolverImagenMarca(ficha.imagen)
+
+const migas: Miga[] = [
+  { nombre: 'Inicio', ruta: '/' },
+  { nombre: 'Archivo de marcas', ruta: '/marca/' },
+  { nombre },
+]
+const migasJson = serializar(fichaMigas(migas, Astro.site))
+
+const marcaJson = serializar(
+  fichaMarca({
+    nombre,
+    propuesta: ficha.propuesta,
+    url: new URL(`/marca/${slug}/`, Astro.site).href,
+    pais: ficha.pais,
+    anio: ficha.anio,
+    fundador: ficha.fundador,
+    imagen: new URL(imagen.src, Astro.site).href,
+    urls: enOrden.map(
+      ({ producto, variante }) =>
+        new URL(`/producto/${producto.slug}/${variante.slug}/`, Astro.site).href
+    ),
+  })
+)
+---
+
+<Layout titulo={`${nombre} en Colombia`} descripcion={ficha.propuesta}>
+  <script type="application/ld+json" is:inline set:html={migasJson}></script>
+  <script type="application/ld+json" is:inline set:html={marcaJson}></script>
+
+  <div class="contenedor marca-pagina">
+    <Migas migas={migas} />
+
+    <header class="marca__cabecera">
+      <h1 class="marca__nombre">{nombre}</h1>
+      {/* Pais, ano y fundador en una linea: es la credencial de la marca, no
+          el argumento. El argumento viene debajo. */}
+      <p class="marca__datos">
+        <span>{ficha.pais}</span>
+        <span aria-hidden="true">·</span>
+        <span>{ficha.anio}</span>
+        <span aria-hidden="true">·</span>
+        <span>{ficha.fundador}</span>
+      </p>
+      <p class="marca__propuesta">{ficha.propuesta}</p>
+    </header>
+
+    {/* La foto de campana va debajo de la propuesta y no encima del nombre:
+        quien llega aqui viene de un enlace que decia el nombre de la marca, y
+        lo primero que necesita leer es de que va, no una imagen sin pie. */}
+    <Image
+      class="marca__foto"
+      src={imagen}
+      alt={ficha.alt}
+      widths={[640, 960, 1280]}
+      sizes="(min-width: 60rem) 60rem, 100vw"
+      loading="eager"
+    />
+
+    <div class="marca__texto">
+      {ficha.porQue.map((parrafo) => <p>{parrafo}</p>)}
+    </div>
+
+    {enOrden.length > 0 ? (
+      <section class="marca__piezas">
+        <h2>Piezas disponibles</h2>
+        {/* Sin barra de filtros: ya se esta dentro de un filtro, y con tres
+            piezas un desplegable de prenda solo puede estorbar. */}
+        <RejillaProductos productos={suyas} />
+      </section>
+    ) : (
+      /* La marca queda presentada aunque no haya nada que vender. Es
+         exactamente para lo que existe el archivo: se presenta antes de
+         tener, no despues. */
+      <p class="marca__sin-piezas">
+        Ahora mismo no hay piezas de {nombre} en la tienda.
+        <a href="/">Mira el resto del catálogo</a>.
+      </p>
+    )}
+  </div>
+</Layout>
+
+<style>
+  .marca-pagina { padding-block: var(--espacio-2) var(--espacio-4); }
+
+  .marca__cabecera { margin-block: var(--espacio-3); }
+
+  .marca__nombre { margin: 0; }
+
+  /* La misma typewriter chica que las migas y la barra de filtros: es un dato
+     de referencia, no una voz mas de la pagina. */
+  .marca__datos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5ch;
+    margin-block: var(--espacio-1) var(--espacio-2);
+    color: var(--texto-suave);
+    font-family: var(--fuente-marca);
+    font-size: 0.8125rem;
+  }
+
+  .marca__propuesta {
+    max-width: 34ch;
+    margin: 0;
+    font-family: var(--fuente-titular);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    line-height: 1.15;
+  }
+
+  .marca__foto {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+
+  /* Medida de lectura: los parrafos son el sitio donde se convence, y a todo
+     el ancho de la pagina no se leen. */
+  .marca__texto {
+    max-width: 62ch;
+    margin-block: var(--espacio-3);
+  }
+
+  .marca__texto p + p { margin-block-start: var(--espacio-2); }
+
+  .marca__piezas { margin-block-start: var(--espacio-4); }
+
+  .marca__piezas h2 {
+    margin-block-end: var(--espacio-2);
+    padding-block-end: var(--espacio-2);
+    border-block-end: 1px solid var(--linea);
+  }
+
+  .marca__sin-piezas {
+    margin-block-start: var(--espacio-4);
+    color: var(--texto-suave);
+  }
+
+  .marca__sin-piezas a { color: inherit; }
+</style>
