@@ -37,6 +37,21 @@ describe('pasa', () => {
     expect(pasa({ ...hoodieLacosteHombre, marca: 'essentials' }, filtros)).toBe(false)
   })
 
+  it('marca, genero y tipo se acumulan: no es la suma de los tres', () => {
+    const hoodieLacosteHombre = { genero: 'hombre' as const, tipo: 'hoodie' as const, marca: 'lacoste' }
+    const hoodieNikeHombre = { genero: 'hombre' as const, tipo: 'hoodie' as const, marca: 'nike' }
+    const camisetaLacosteHombre = {
+      genero: 'hombre' as const,
+      tipo: 'camiseta' as const,
+      marca: 'lacoste',
+    }
+    const filtros = { genero: 'hombre' as const, tipo: 'hoodie' as const, marca: 'lacoste' }
+
+    expect(pasa(hoodieLacosteHombre, filtros)).toBe(true)
+    expect(pasa(hoodieNikeHombre, filtros)).toBe(false)
+    expect(pasa(camisetaLacosteHombre, filtros)).toBe(false)
+  })
+
   it('una prenda sin genero cae fuera de cualquier filtro de genero', () => {
     expect(pasa(zapatoSinMarca, { ...SIN_FILTROS, genero: 'hombre' })).toBe(false)
   })

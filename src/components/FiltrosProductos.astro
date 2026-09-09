@@ -17,8 +17,8 @@
  * unico camino del sitio a esas paginas, asi que tiene que ser un enlace de
  * verdad y no un boton: un buscador no ejecuta el filtro para descubrirlas.
  *
- * El desplegable de prenda solo se pinta si tiene mas de una opcion que
- * ofrecer: uno con una sola entrada solo puede mentir sobre lo que hace.
+ * Prenda y marca solo se pintan si tienen mas de una opcion que ofrecer:
+ * un desplegable con una sola entrada solo puede mentir sobre lo que hace.
  */
 import { ETIQUETAS, ORDENES, ORDEN_POR_DEFECTO } from '../lib/orden'
 import type { Opcion } from '../lib/filtros'
@@ -28,31 +28,45 @@ interface Props {
   /** Los del catalogo ENTERO, con su href: el desplegable navega. */
   generos: Opcion[]
   tipos: Opcion[]
-  /** Solo para el distintivo: la marca se elige en el menu de la cabecera. */
+  /** Las que se OFRECEN: solo las que tienen prenda en esta pagina. */
   marcas: Opcion[]
+  /**
+   * Las que se ADMITEN en la URL: todas las de la tienda.
+   *
+   * Son dos listas porque son dos trabajos. Si la validacion se estrechara a
+   * las que tienen stock, un enlace a /?marca=<marca sin prendas> se
+   * descartaria por invalido y se veria el catalogo entero, que es lo
+   * contrario de lo que pidio quien hizo clic.
+   */
+  marcasValidas: Opcion[]
   /** Genero de la pagina actual, o null en la portada. */
   generoActivo?: string | null
 }
 
-const { generos, tipos, marcas, generoActivo = null } = Astro.props
+const { generos, tipos, marcas, marcasValidas, generoActivo = null } = Astro.props
 ---
 
 {/* `display: contents` en .filtros: no pinta caja propia, asi que sus tres
     hijos se colocan solos donde toque -- la columna a la izquierda, la barra
     arriba -- sin que el componente tenga que partirse en dos. */}
-<div class="filtros" data-filtros data-estado="cerrado">
+<div
+  class="filtros"
+  data-filtros
+  data-estado="cerrado"
+  data-marcas-validas={marcasValidas.map((m) => m.valor).join(' ')}
+>
   {/* Solo movil: cierra el panel tocando fuera. */}
   <div class="filtros__velo" data-filtros-cerrar></div>
 
   {/* IZQUIERDA en escritorio, panel inferior en movil.
-      Solo genero y prenda: son los que dicen QUE es una prenda. El orden no
-      filtra nada y se queda arriba, donde siempre estuvo.
+      Genero, prenda y marca: son los que dicen QUE es una prenda. El orden
+      no filtra nada y se queda arriba, donde siempre estuvo.
 
       Se lee de ABAJO hacia arriba: "Filtros" ancla la columna contra el borde
       inferior de la ventana y los desplegables suben desde ahi. Lo hace
       `column-reverse`, asi que el orden del DOM sigue siendo el logico
       -- titulo primero -- y es el unico que ve un lector de pantalla. */}
-  {(generos.length > 1 || tipos.length > 1) && (
+  {(generos.length > 1 || tipos.length > 1 || marcas.length > 1) && (
     <div class="filtros__panel" id="panel-filtros">
       {/* El rotulo va DENTRO del bloque pegajoso y por delante en el DOM: se
           lee primero, y al bajar la pagina viaja con los desplegables en vez
@@ -75,17 +89,19 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
           {tipos.length > 1 && (
             <Desplegable clave="tipo" etiqueta="Prenda" opciones={tipos} todos="Todas" />
           )}
+          {marcas.length > 1 && (
+            <Desplegable clave="marca" etiqueta="Marca" opciones={marcas} todos="Todas" />
+          )}
         </div>
       </div>
     </div>
   )}
 
-  {/* ARRIBA, sin moverse: el orden a la derecha y el distintivo de marca
-      debajo, exactamente como estaban. */}
+  {/* ARRIBA, sin moverse: el orden, exactamente donde estaba. */}
   <div class="filtros__superior">
     <div class="filtros__barra">
       {/* Nombra lo que hay en esta barra, que es el orden. Los filtros de
-          verdad -- genero y prenda -- se rotulan en su propia columna.
+          verdad -- genero, prenda y marca -- se rotulan en su propia columna.
           En movil no es rotulo sino boton, y abre su propio panel. */}
       <span class="filtros__titulo">Ordenar por:</span>
       <button
@@ -134,7 +150,7 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
 
       {/* Debajo de "Ordenar por:" en movil, porque filtrar es el gesto menos
           frecuente de los dos. */}
-      {(generos.length > 1 || tipos.length > 1) && (
+      {(generos.length > 1 || tipos.length > 1 || marcas.length > 1) && (
         <button
           type="button"
           class="filtros__abrir"
@@ -155,30 +171,6 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
         </button>
       )}
     </div>
-
-    {/* La marca no tiene desplegable: se elige en el menu de la cabecera. Pero
-        si no se viera en algun sitio, el cliente que llega por /?marca=lacoste
-        veria media tienda sin saber por que. */}
-    {marcas.length > 0 && (
-      <p class="filtros__activos" data-filtros-activos hidden>
-        {marcas.map((marca) => (
-          <button type="button" class="distintivo" data-quitar-marca={marca.valor} hidden>
-            <span class="distintivo__rotulo">Marca</span>
-            <span class="distintivo__valor">{marca.etiqueta}</span>
-            <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true">
-              <path
-                d="M1 1l10 10M11 1L1 11"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="square"
-              />
-            </svg>
-            <span class="visualmente-oculto">Quitar el filtro de marca {marca.etiqueta}</span>
-          </button>
-        ))}
-      </p>
-    )}
   </div>
 </div>
 
@@ -526,48 +518,6 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
     text-underline-offset: 0.35em;
     text-decoration-thickness: 1px;
   }
-
-  /* --- Distintivo de marca --- */
-  .filtros__activos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--espacio-1);
-    margin-block: var(--espacio-2) 0;
-  }
-
-  .distintivo {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6ch;
-    /* El unico recuadro de la pagina, y se lo gana: es lo que hay que poder
-       encontrar y quitar cuando la rejilla ha perdido tres cuartas partes de
-       las prendas. */
-    border: 1px solid var(--linea);
-    background: none;
-    padding: 0.3rem 0.6rem;
-    font: inherit;
-    font-size: 0.8125rem;
-    letter-spacing: 0.04em;
-    color: var(--texto);
-    cursor: pointer;
-    transition:
-      border-color 200ms ease,
-      color 200ms ease;
-  }
-  /* El atributo `hidden` del navegador vale display:none, pero lo pinta la
-     hoja del agente de usuario y cualquier `display` declarado aqui le gana.
-     Los elementos que el script esconde necesitan decirlo ellos mismos. */
-  .filtros__activos[hidden],
-  .distintivo[hidden] { display: none; }
-
-  .distintivo:hover { border-color: var(--texto); }
-  .distintivo:focus-visible {
-    outline: 2px solid var(--texto);
-    outline-offset: 2px;
-  }
-
-  .distintivo__rotulo { color: var(--texto-suave); }
-  .distintivo__valor { margin-inline-end: 0.2ch; }
 </style>
 
 <script>
@@ -664,8 +614,6 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
     const desplegablesFiltro = [
       ...raiz.querySelectorAll<HTMLElement>('[data-desplegable-filtro]'),
     ]
-    const distintivos = [...raiz.querySelectorAll<HTMLButtonElement>('[data-quitar-marca]')]
-    const zonaDistintivos = raiz.querySelector<HTMLElement>('[data-filtros-activos]')
 
     if (tira && barra && botonesOrden.length > 0) {
       const quietud = matchMedia('(prefers-reduced-motion: reduce)')
@@ -703,9 +651,9 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
         marca: estado.marca,
       })
 
-      // Lo que cada desplegable acepta sale de lo que se pinto en el, y las
-      // marcas de los distintivos: asi un ?tipo=gabardina escrito a mano no
-      // deja la rejilla filtrada por algo que no existe.
+      // Lo que cada desplegable acepta sale de lo que se pinto en el: asi un
+      // ?tipo=gabardina escrito a mano no deja la rejilla filtrada por algo
+      // que no existe.
       const validos = (clave: string) =>
         new Set(
           [...raiz.querySelectorAll<HTMLButtonElement>(`[data-desplegable='${clave}'] [data-valor]`)]
@@ -713,7 +661,14 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
             .filter((valor): valor is string => Boolean(valor))
         )
 
-      const marcasValidas = new Set(distintivos.map((boton) => boton.dataset.quitarMarca))
+      // Lo que el desplegable OFRECE y lo que la URL ADMITE no es lo mismo: el
+      // desplegable lista las marcas con prenda en esta pagina, y la URL
+      // acepta cualquiera de la tienda, para que un enlace a una marca sin
+      // stock llegue y ensene la rejilla vacia en vez de que se le ignore el
+      // parametro y se vea el catalogo entero.
+      const marcasValidas = new Set(
+        (raiz.dataset.marcasValidas ?? '').split(' ').filter(Boolean)
+      )
 
       // --- Pintar la rejilla ---
       // append() mueve los nodos que ya existen, no los vuelve a crear: las
@@ -781,7 +736,7 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
         }
 
         for (const desplegable of desplegablesFiltro) {
-          const clave = desplegable.dataset.desplegable as 'tipo'
+          const clave = desplegable.dataset.desplegable as 'tipo' | 'marca'
           const elegido = estado[clave] ?? ''
           const valor = desplegable.querySelector<HTMLElement>('[data-desplegable-valor]')
           let etiquetaElegida = ''
@@ -797,11 +752,6 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
             valor.hidden = etiquetaElegida === ''
           }
         }
-
-        for (const distintivo of distintivos) {
-          distintivo.hidden = distintivo.dataset.quitarMarca !== estado.marca
-        }
-        if (zonaDistintivos) zonaDistintivos.hidden = estado.marca === null
       }
 
       const guardarEnUrl = () => {
@@ -877,9 +827,9 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
 
       for (const desplegable of desplegables) {
         const boton = desplegable.querySelector<HTMLButtonElement>('[data-desplegable-boton]')
-        // Solo el de prenda tiene opciones con [data-valor]: en el de genero
-        // son enlaces, y el bucle de abajo no encuentra ninguna.
-        const clave = desplegable.dataset.desplegable as 'tipo'
+        // El de genero navega: sus opciones son enlaces y este bucle no
+        // encuentra ninguna.
+        const clave = desplegable.dataset.desplegable as 'tipo' | 'marca'
 
         boton?.addEventListener('click', () => {
           const abierto = desplegable.dataset.estado === 'abierto'
@@ -913,20 +863,13 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
         abierto.querySelector<HTMLButtonElement>('[data-desplegable-boton]')?.focus()
       })
 
-      // --- Orden y distintivos ---
+      // --- Orden ---
       for (const boton of botonesOrden) {
         boton.addEventListener('click', () => {
           const valor = boton.dataset.orden
           if (!esOrden(valor) || valor === estado.orden) return
           estado.orden = valor
           aplicar(true)
-        })
-      }
-
-      for (const distintivo of distintivos) {
-        distintivo.addEventListener('click', () => {
-          estado.marca = null
-          aplicar(false)
         })
       }
 

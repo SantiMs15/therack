@@ -8,7 +8,7 @@
  * marca de la que no haya nada.
  *
  * Una marca sin stock lleva a /?marca=<slug> y la rejilla sale vacia, con su
- * mensaje y el distintivo para quitar el filtro. Es un estado honesto: dice
+ * mensaje. Es un estado honesto: dice
  * "de esta no queda nada" en vez de esconder la marca hasta que entre la
  * primera prenda. El dia que entre, deja de estar vacia sola.
  *

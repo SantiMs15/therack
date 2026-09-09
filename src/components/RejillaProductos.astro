@@ -2,7 +2,7 @@
 import { productos as CATALOGO } from '../data/productos'
 import type { Genero, Producto } from '../data/schema'
 import { marcasTodas } from '../data/marcas'
-import { generosDe, tarjetasEnOrden, tiposDe } from '../lib/catalogo'
+import { generosDe, marcasDe, tarjetasEnOrden, tiposDe } from '../lib/catalogo'
 import FiltrosProductos from './FiltrosProductos.astro'
 import TarjetaProducto from './TarjetaProducto.astro'
 
@@ -31,16 +31,17 @@ const ordenadas = tarjetasEnOrden(productos)
         hay columna -- los filtros se abren a pantalla completa desde un boton
         -- asi que esto es una sola columna y el orden del DOM manda. */}
     <div class:list={['catalogo', { 'catalogo--con-filtros': ordenable }]}>
-      {/* `marcas` son TODAS las de la tienda, no solo las que tienen prenda
-          en esta pagina: esa lista es la que valida el `?marca=` de la URL.
-          Con solo las del catalogo, el enlace del menu a una marca sin stock
-          se descartaria por invalido y se veria el catalogo entero, que es
-          justo lo contrario de lo que el cliente pidio. */}
+      {/* Dos listas de marcas, dos trabajos. `marcas` es lo que el desplegable
+          ofrece: las que tienen prenda en esta pagina, porque una entrada que
+          deja la rejilla vacia solo puede decepcionar. `marcasValidas` es lo
+          que la URL admite: todas las de la tienda, para que un enlace a una
+          marca sin stock llegue y lo diga. */}
       {ordenable && (
         <FiltrosProductos
           generos={generosDe(CATALOGO)}
           tipos={tiposDe(productos)}
-          marcas={marcasTodas()}
+          marcas={marcasDe(productos)}
+          marcasValidas={marcasTodas()}
           generoActivo={generoActivo}
         />
       )}
