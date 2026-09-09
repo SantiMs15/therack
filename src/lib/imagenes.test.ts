@@ -33,4 +33,9 @@ describe('crearResolvedorImagenes', () => {
     const resolver = crearResolvedorImagenes({} as any)
     expect(() => resolver('cualquiera.jpg')).toThrow(/ninguna/)
   })
+
+  it('el error nombra el directorio que se le paso', () => {
+    const resolver = crearResolvedorImagenes({}, 'src/assets/marcas/')
+    expect(() => resolver('no-existe.jpg')).toThrow(/src\/assets\/marcas\//)
+  })
 })
