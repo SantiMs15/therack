@@ -270,8 +270,8 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'essentials-hoodie',
-    nombre: 'Hoodie',
+    slug: 'essentials-fleece-hoodie-ii',
+    nombre: 'Fleece Hoodie II',
     marca: 'Essentials',
     categoria: 'hombre',
     tipo: 'hoodie',
@@ -285,11 +285,11 @@ const catalogo: unknown[] = [
         slug: 'negro',
         imagenes: [
           {
-            archivo: 'essentials-hoodie-negro-frente.jpg',
+            archivo: 'essentials-fleece-hoodie-ii-negro-frente.jpg',
             alt: 'Hoodie Essentials negro, vista frontal de la prenda sola con capucha, corte oversize y el logo Essentials Fear of God en pequeño sobre el pecho',
           },
           {
-            archivo: 'essentials-hoodie-negro-espalda.jpg',
+            archivo: 'essentials-fleece-hoodie-ii-negro-espalda.jpg',
             alt: 'Hoodie Essentials negro, vista de espalda con el logo Essentials Fear of God impreso en grande y en blanco entre los hombros',
             // Mismo criterio que el hoodie de Lacoste: en la rejilla va la
             // espalda, porque el logo grande distingue la prenda y el frente,
@@ -324,6 +324,73 @@ const catalogo: unknown[] = [
           {
             archivo: 'tommy-hilfiger-mixed-media-puffer-jacket-negro-frente.jpg',
             alt: 'Chaqueta acolchada Tommy Hilfiger Mixed-Media negra, vista frontal con el cuello alto levantado, la cremallera cerrada y la bandera Tommy bordada en el pecho',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+  {
+    slug: 'essentials-fleece-hoodie',
+    nombre: 'Fleece Hoodie',
+    marca: 'Essentials',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 420000,
+    // De la S a la XL: no se declara TALLAS_HOMBRE entera porque de esta no
+    // hay ni XS ni XXL, y ofrecerlas tachadas daria a entender que vuelven.
+    tallas: ['S', 'M', 'L', 'XL'],
+    descripcion:
+      'Hoodie Essentials de Fear of God en gris jaspeado, tejido fleece de algodón, corte oversize con hombros caídos, capucha sin cordones y puños y bajo acanalados. Lleva Fear of God Essentials en letras arqueadas sobre el pecho y la espalda lisa.',
+    variantes: [
+      {
+        color: 'Heather Grey',
+        slug: 'heather-grey',
+        imagenes: [
+          {
+            archivo: 'essentials-fleece-hoodie-gris-frente.jpg',
+            alt: 'Hoodie Essentials gris jaspeado, vista frontal de la prenda sola con capucha, corte oversize y Fear of God Essentials en letras arqueadas de color crudo sobre el pecho',
+          },
+          {
+            archivo: 'essentials-fleece-hoodie-gris-espalda.jpg',
+            alt: 'Hoodie Essentials gris jaspeado, vista de espalda, lisa y sin ningún logo',
+          },
+          // Sin `portada`: manda la primera, que es el frente. Al reves que el
+          // hoodie negro, este lleva el logo grande DELANTE y la espalda
+          // limpia, asi que lo que distingue la prenda ya esta en el frente.
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+  {
+    slug: 'unisphere-tee',
+    nombre: 'Unisphere Tee',
+    marca: 'Aimé Leon Dore',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 390000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Camiseta Aimé Leon Dore en algodón color crudo, cuello redondo acanalado y corte recto. Lleva el escudo Unisphere de Queens estampado en verde: pequeño sobre el pecho y en grande en la espalda, con la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough.',
+    variantes: [
+      {
+        color: 'Pristine',
+        slug: 'pristine',
+        imagenes: [
+          {
+            archivo: 'unisphere-tee-pristine-frente.jpg',
+            alt: 'Camiseta Aimé Leon Dore color crudo, vista frontal de la prenda sola con el cuello redondo acanalado y el escudo Unisphere en verde, pequeño, sobre el pecho',
+          },
+          {
+            archivo: 'unisphere-tee-pristine-espalda.jpg',
+            alt: 'Camiseta Aimé Leon Dore color crudo, vista de espalda con el globo Unisphere y los árboles de Flushing Meadows estampados en verde oscuro sobre la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough',
+            // Mismo criterio que el hoodie negro: manda la espalda, que es
+            // donde va el estampado grande. El frente solo lleva el escudo
+            // pequeño y en la rejilla pasaria por una camiseta lisa.
+            portada: true,
           },
         ],
         disponible: true,

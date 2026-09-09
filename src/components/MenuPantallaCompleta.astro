@@ -12,8 +12,7 @@
  * La paleta se pasa a la del sitio: el original usaba indigo, violeta y rosa,
  * que el spec y el DESIGN.md del proyecto prohiben expresamente.
  */
-import { productos } from '../data/productos'
-import { marcasDe } from '../lib/catalogo'
+import { marcasTodas } from '../data/marcas'
 
 /**
  * El menu lista las MARCAS del catalogo, no las categorias: genero y tipo de
@@ -26,11 +25,13 @@ import { marcasDe } from '../lib/catalogo'
  * marca: la rejilla de la portada ya sabe filtrar, y /marca/<slug> seria una
  * segunda ruta que mantener para pintar exactamente lo mismo.
  *
- * La lista sale del catalogo, no escrita a mano: una marca nueva aparece en
- * el menu en cuanto entra su primera prenda.
+ * La lista es la de marcas.ts, no la del catalogo: el menu anuncia lo que la
+ * tienda vende, y una marca sin stock hoy lleva a una rejilla vacia que lo
+ * dice. Esconderla hasta que entre la primera prenda seria contar menos de lo
+ * que hay.
  */
 const enlaces = [
-  ...marcasDe(productos).map((marca) => ({
+  ...marcasTodas().map((marca) => ({
     href: `/?marca=${marca.valor}`,
     texto: marca.etiqueta,
     aparte: false,
@@ -67,13 +68,22 @@ const enlaces = [
     <span class="menu__capa" aria-hidden="true"></span>
     <span class="menu__capa" aria-hidden="true"></span>
 
+    {/* El que desplaza es este, no el panel: las tres capas de fondo son
+        hermanas de la lista y estan posicionadas contra el panel, asi que si
+        el que se moviera fuera el panel se irian con el texto y dejarian el
+        hueco a la vista. */}
+    <div class="menu__desplazable">
     <ul class="menu__lista">
-      {enlaces.map((e) => (
-        <li class:list={['menu__item', { 'menu__item--aparte': e.aparte }]}>
+      {enlaces.map((e, i) => (
+        <li
+          class:list={['menu__item', { 'menu__item--aparte': e.aparte }]}
+          style={`--i: ${i}`}
+        >
           <a href={e.href} class="menu__enlace"><span>{e.texto}</span></a>
         </li>
       ))}
     </ul>
+    </div>
   </nav>
 </div>
 
@@ -171,6 +181,25 @@ const enlaces = [
     transform: translateX(0);
   }
 
+  /* Dos columnas piden ancho: "Maison Mihara Yasuhiro" partida en dos lineas
+     no se lee como un nombre. */
+  @media (min-width: 768px) {
+    .menu__panel { width: min(100%, 44rem); }
+  }
+
+  /* La lista es mas alta que la ventana en un movil, y en un portatil bajo
+     tambien con dos columnas. `contain` para que al llegar al final no siga
+     desplazandose la pagina de debajo. */
+  .menu__desplazable {
+    position: relative;
+    width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .menu__desplazable::-webkit-scrollbar { display: none; }
+
   /* Tres capas que entran escalonadas detras del panel. En el original eran
      paneles de color; aqui son tonos del propio sistema, que es lo que deja
      la sensacion de profundidad sin meter un color de acento. */
@@ -197,6 +226,17 @@ const enlaces = [
     width: 100%;
   }
 
+  /* Veintiseis marcas no caben en una columna a tamano de titular: serian dos
+     pantallas y media de alto y habria que bajar para ver la mitad. Dos
+     columnas desde tablet, con la lista partida por altura, que es como se
+     lee un indice. La entrada aparte -- Tienda -- se saca de las columnas
+     para que siga colgando debajo de todo. */
+  @media (min-width: 768px) {
+    .menu__lista { columns: 2; column-gap: var(--espacio-4); }
+    .menu__item { break-inside: avoid; }
+    .menu__item--aparte { column-span: all; }
+  }
+
   /* Cada enlace vive en una ventana que recorta: el texto sube desde abajo
      rotando ligeramente, como en el original. */
   .menu__item { overflow: hidden; }
@@ -205,8 +245,10 @@ const enlaces = [
     display: block;
     color: var(--fondo);
     font-family: var(--fuente-titular);
-    font-size: clamp(2rem, 7vw, 3.5rem);
-    line-height: 1.25;
+    /* Mas corto que un titular: la lista es larga y a 3,5rem cada marca
+       ocupaba una linea de pantalla entera. */
+    font-size: clamp(1.25rem, 3.2vw, 1.75rem);
+    line-height: 1.35;
     letter-spacing: -0.02em;
     padding-block: 0.15em;
   }
@@ -223,13 +265,17 @@ const enlaces = [
     opacity: 1;
   }
 
-  /* Escalonado: cada enlace entra 60 ms despues del anterior, tras la entrada
-     del panel. */
-  .menu__item:nth-child(1) .menu__enlace span { transition-delay: 350ms; }
-  .menu__item:nth-child(2) .menu__enlace span { transition-delay: 410ms; }
-  .menu__item:nth-child(3) .menu__enlace span { transition-delay: 470ms; }
-  .menu__item:nth-child(4) .menu__enlace span { transition-delay: 530ms; }
-  .menu__item:nth-child(5) .menu__enlace span { transition-delay: 590ms; }
+  /* Escalonado: cada enlace entra despues del anterior, tras la entrada del
+     panel. El indice lo pone el marcado en `--i`, no una regla por posicion:
+     con veintisiete entradas habria que escribir veintisiete reglas, y la
+     primera marca que entrase al catalogo dejaria la ultima sin retardo.
+
+     20 ms por entrada y no 60: a 60 la ultima esperaria dos segundos largos.
+     `min` corta el escalonado a los 600 ms, asi que las de mas abajo entran
+     juntas -- y son las que quedan fuera de la primera mirada. */
+  .menu__item .menu__enlace span {
+    transition-delay: calc(350ms + min(var(--i, 0) * 20ms, 600ms));
+  }
 
   /* Tienda no es una marca: baja a la typewriter de la interfaz y se
      descuelga del bloque, para que la vista no la cuente como una mas de la
@@ -248,11 +294,10 @@ const enlaces = [
   /* Al abrir entra primero el panel y despues los enlaces. Al cerrar se
      invierte: salen los enlaces escalonados y solo entonces se retira el
      panel, en vez de desvanecerse todo a la vez. */
-  .menu[data-estado='cerrado'] .menu__item:nth-child(1) .menu__enlace span { transition-delay: 240ms; }
-  .menu[data-estado='cerrado'] .menu__item:nth-child(2) .menu__enlace span { transition-delay: 180ms; }
-  .menu[data-estado='cerrado'] .menu__item:nth-child(3) .menu__enlace span { transition-delay: 120ms; }
-  .menu[data-estado='cerrado'] .menu__item:nth-child(4) .menu__enlace span { transition-delay: 60ms; }
-  .menu[data-estado='cerrado'] .menu__item:nth-child(5) .menu__enlace span { transition-delay: 0ms; }
+  /* Al cerrar no se escalona: veintisiete salidas encadenadas retrasarian el
+     panel casi un segundo, y cerrar tiene que sentirse inmediato. Salen todas
+     a la vez y el panel se retira detras. */
+  .menu[data-estado='cerrado'] .menu__item .menu__enlace span { transition-delay: 0ms; }
 
   /* El panel y sus capas esperan a que los enlaces hayan salido. */
   .menu[data-estado='cerrado'] .menu__panel { transition-delay: 340ms; }

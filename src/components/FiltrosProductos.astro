@@ -425,7 +425,10 @@ const { generos, tipos, marcas, generoActivo = null } = Astro.props
        con su barrita deslizante. La caja deja de pintar nada. */
     .filtros__titulo { display: inline; }
     .filtros__abrir--orden { display: none; }
-    .filtros__caja-orden { display: contents; }
+    /* `display: contents` borra la caja, no la herencia: el
+       `visibility: hidden` del panel movil seguia bajando a las opciones y
+       las dejaba invisibles aqui. Se devuelve en la misma regla. */
+    .filtros__caja-orden { display: contents; visibility: visible; }
 
     .filtros__barra {
       flex-direction: row;
