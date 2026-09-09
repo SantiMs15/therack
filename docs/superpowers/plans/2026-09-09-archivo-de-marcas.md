@@ -6,7 +6,7 @@
 
 **Architecture:** Una ficha de marca opcional, declarada en TypeScript y validada con zod en el build, igual que el catálogo. Si una marca tiene ficha se genera su página y todo lo que la nombra enlaza allí; si no la tiene, no hay ruta y los enlaces siguen llevando al filtro de la portada, como hoy. El filtro de marca pasa a ser un tercer `Desplegable` en la columna izquierda, reusando el modo «filtro» que el componente ya implementa para Prenda.
 
-**Tech Stack:** Astro 5 estático, TypeScript, zod para validación en build, vitest para las pruebas. Sin framework de UI.
+**Tech Stack:** Astro 7 estático, TypeScript, zod para validación en build, vitest para las pruebas. Sin framework de UI.
 
 **Spec:** `docs/superpowers/specs/2026-09-09-archivo-de-marcas-design.md`
 
