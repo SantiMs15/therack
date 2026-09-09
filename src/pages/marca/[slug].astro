@@ -96,12 +96,18 @@ const marcaJson = serializar(
     {/* La foto de campana va debajo de la propuesta y no encima del nombre:
         quien llega aqui viene de un enlace que decia el nombre de la marca, y
         lo primero que necesita leer es de que va, no una imagen sin pie. */}
+    {/* `sizes` calca el ancho real de .contenedor en global.css, no un tope
+        inventado: max-width 87.5rem (--ancho-max) y padding-inline de 1rem,
+        2rem y 4rem por lado en sus tres tramos (48rem, 75rem). Si esos
+        valores cambian en global.css, esta lista tiene que moverse con
+        ellos o el navegador vuelve a pedir una imagen mas chica de la que
+        pinta. */}
     <Image
       class="marca__foto"
       src={imagen}
       alt={ficha.alt}
       widths={[640, 960, 1280]}
-      sizes="(min-width: 60rem) 60rem, 100vw"
+      sizes="(min-width: 87.5rem) 79.5rem, (min-width: 75rem) calc(100vw - 8rem), (min-width: 48rem) calc(100vw - 4rem), calc(100vw - 2rem)"
       loading="eager"
     />
 
