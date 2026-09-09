@@ -943,11 +943,13 @@ const marcaJson = serializar(
 Run: `grep -nE -- '--texto-tenue|--fuente-marca|--fuente-titulo|--linea|--espacio-4' src/styles/global.css`
 Expected: las cinco variables aparecen definidas. Si alguna no existe con ese nombre, sustitúyela por la que el proyecto sí define para ese papel; no inventes una nueva ni la declares aquí.
 
-- [ ] **Step 3: Escribir una ficha real para poder ver la página**
+- [ ] **Step 3: Escribir la ficha de Aimé Leon Dore**
 
-El archivo está vacío, así que no hay ruta que mirar. Necesitas una foto de campaña y su ficha. Pide al dueño de la tienda la imagen de una marca —la que quiera estrenar— y déjala en `src/assets/marcas/` en ratio 3:2.
+El archivo arranca vacío, así que no hay ruta que mirar hasta que haya una ficha. La marca con la que estrena el archivo es **Aimé Leon Dore**, decidida por el dueño de la tienda.
 
-Con la imagen en su sitio, rellena `archivo` en `src/data/fichas-marca.ts`. Ejemplo con datos reales de Aimé Leon Dore, para que se vea la forma exacta:
+La foto es **provisional**: `src/assets/marcas/placeholder-ciudad.jpg`, una silueta urbana en blanco y negro generada para este hueco, ya en 1800×1200 (3:2). No es material de la marca y **hay que reemplazarla por la campaña real antes de publicar**; el nombre del archivo lo dice para que nadie la dé por definitiva.
+
+Rellena `archivo` en `src/data/fichas-marca.ts`:
 
 ```ts
 const archivo: Record<string, unknown> = {
@@ -960,13 +962,15 @@ const archivo: Record<string, unknown> = {
       'Teddy Santis creció en Queens y montó la marca sin venir de la moda: abrió una tienda en el Lower East Side y se puso a vestir a la gente que ya conocía. Esa es toda la historia, y se nota en la ropa.',
       'La trajimos porque resuelve algo que en Colombia falta: prendas que se ven caras sin gritar el logo. Un polo de punto, una sudadera de peso, una gorra con la M de Mets bordada pequeña. Se ponen un lunes.',
     ],
-    imagen: 'aime-leon-dore-campana.jpg',
-    alt: 'Campaña de Aimé Leon Dore: dos personas en una cancha de baloncesto de Nueva York',
+    // PROVISIONAL: silueta urbana generada, no es material de la marca.
+    // Reemplazar por la campana real antes de publicar.
+    imagen: 'placeholder-ciudad.jpg',
+    alt: 'Siluetas de edificios de una ciudad en blanco y negro',
   },
 }
 ```
 
-Si el dueño todavía no ha decidido con qué marca estrenar, no inventes la ficha: deja el archivo vacío, salta al paso 5 y vuelve a este cuando la tengas. El build sigue siendo verde con el archivo vacío.
+El `alt` describe **la foto que hay**, no la que habrá: mientras el placeholder siga puesto, decir «campaña de Aimé Leon Dore» sería mentirle a quien usa un lector de pantalla. Cuando entre la foto real, cambian los dos campos a la vez.
 
 - [ ] **Step 4: Ver la página en el navegador**
 
