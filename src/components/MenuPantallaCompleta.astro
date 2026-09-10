@@ -13,17 +13,20 @@
  * que el spec y el DESIGN.md del proyecto prohiben expresamente.
  */
 import { marcasTodas } from '../data/marcas'
+import { hrefDeMarca } from '../lib/archivo-marcas'
 
 /**
- * El menu lista las MARCAS del catalogo, no las categorias: genero y tipo de
- * prenda ya se eligen en la barra de filtros de la rejilla, y repetirlos aqui
- * daria dos caminos para lo mismo. La marca no tiene desplegable propio
- * porque es lo que trae al cliente a la tienda, asi que se queda en el sitio
- * mas visible de la cabecera.
+ * El menu lista las MARCAS de la tienda, no las categorias: genero, prenda y
+ * ahora tambien marca se eligen en la barra de filtros de la rejilla, y
+ * repetirlos aqui daria dos caminos para lo mismo.
  *
- * Cada marca lleva a la portada con el filtro puesto. No hay una pagina por
- * marca: la rejilla de la portada ya sabe filtrar, y /marca/<slug> seria una
- * segunda ruta que mantener para pintar exactamente lo mismo.
+ * Aqui la marca no filtra: PRESENTA. Cada nombre lleva a la pagina donde se
+ * cuenta de donde viene esa marca y por que esta en la tienda, que es lo que
+ * el cliente que no la conoce necesita antes que ver diez prendas suyas.
+ *
+ * La marca sin ficha todavia no tiene esa pagina, asi que sigue llevando al
+ * filtro de la portada. Lo decide `hrefDeMarca`, en un solo sitio: el dia que
+ * se escriba su ficha, el menu cambia de destino sin tocar este archivo.
  *
  * La lista es la de marcas.ts, no la del catalogo: el menu anuncia lo que la
  * tienda vende, y una marca sin stock hoy lleva a una rejilla vacia que lo
@@ -32,11 +35,13 @@ import { marcasTodas } from '../data/marcas'
  */
 const enlaces = [
   ...marcasTodas().map((marca) => ({
-    href: `/?marca=${marca.valor}`,
+    href: hrefDeMarca(marca.valor),
     texto: marca.etiqueta,
     aparte: false,
   })),
-  // Tienda no es una marca: se separa para que no se lea como una mas.
+  // Ni el archivo ni la tienda son marcas: se separan para que no se lean
+  // como dos mas de la lista.
+  { href: '/marca/', texto: 'Archivo de marcas', aparte: true },
   { href: '/tienda/', texto: 'Tienda', aparte: true },
 ]
 ---
@@ -49,7 +54,7 @@ const enlaces = [
   data-menu-boton
 >
   <span class="boton-menu__textos">
-    <span>Marcas</span>
+    <span>Archivo de marcas</span>
     <span>Cerrar</span>
   </span>
   <span class="boton-menu__icono" aria-hidden="true">
@@ -63,7 +68,7 @@ const enlaces = [
 <div class="menu" id="menu-pantalla-completa" data-menu data-estado="cerrado">
   <div class="menu__velo" data-menu-cerrar></div>
 
-  <nav class="menu__panel" aria-label="Marcas de la tienda">
+  <nav class="menu__panel" aria-label="Archivo de marcas">
     <span class="menu__capa" aria-hidden="true"></span>
     <span class="menu__capa" aria-hidden="true"></span>
     <span class="menu__capa" aria-hidden="true"></span>
@@ -117,7 +122,19 @@ const enlaces = [
   }
   .boton-menu__textos span {
     display: block;
+    /* Sin esto, "Archivo de marcas" se partiria en dos lineas dentro de un
+       bloque de 1.5em con overflow oculto: la segunda linea se cortaria a
+       media altura en vez de empujar el boton. */
+    white-space: nowrap;
     transition: transform 400ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  /* El nombre del boton es largo y el logo mide 200 px fijos: en movil los
+     dos no caben en la misma fila al tamano de escritorio y la cabecera se
+     partia en dos. Se encoge el boton, no el nombre. A 12 px cabe desde los
+     375 px de ancho; por debajo de eso la cabecera vuelve a dos filas, que es
+     preferible a bajar mas la letra de un boton principal. */
+  @media (max-width: 480px) {
+    .boton-menu { font-size: 0.75rem; }
   }
   /* Con el menu abierto el boton queda sobre el panel oscuro: sin invertir
      el color seria texto #111 sobre negro, ilegible. */
