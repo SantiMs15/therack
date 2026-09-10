@@ -20,6 +20,23 @@ Si algo esta mal —falta el precio, la categoria no es una de las cuatro,
 una foto no existe— **el build falla y dice cual es el problema**. Eso es
 deliberado: prefiere un despliegue que no sale a una tienda con fichas rotas.
 
+## Anadir una marca al archivo
+
+1. Deja la foto de campana en `src/assets/marcas/`, en ratio **3:2 horizontal**.
+2. Anade una entrada a `archivo` en `src/data/fichas-marca.ts`, con el slug de
+   la marca por clave. El slug sale del nombre: "Aime Leon Dore" es
+   `aime-leon-dore`.
+3. `npm run build`.
+
+La ficha es opcional. La marca que no la tiene no tiene pagina, y su nombre en
+el menu sigue llevando al catalogo filtrado, como antes. En cuanto se escribe
+la ficha, el menu, la ficha de producto y el indice de `/marca/` la enlazan
+solos.
+
+Si algo esta mal —falta un campo, la propuesta pasa de 160 caracteres, el slug
+no coincide con ninguna marca de `marcas.ts`, la foto no existe— **el build
+falla y dice cual es el problema**.
+
 ## Pendiente antes de publicar
 
 Los valores marcados `PENDIENTE` en `src/config.ts`: telefono de WhatsApp,
