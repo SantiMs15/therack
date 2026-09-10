@@ -381,11 +381,11 @@ const catalogo: unknown[] = [
         slug: 'pristine',
         imagenes: [
           {
-            archivo: 'unisphere-tee-pristine-frente.jpg',
+            archivo: 'aime-leon-dore-unisphere-tee-pristine-frente.jpg',
             alt: 'Camiseta Aimé Leon Dore color crudo, vista frontal de la prenda sola con el cuello redondo acanalado y el escudo Unisphere en verde, pequeño, sobre el pecho',
           },
           {
-            archivo: 'unisphere-tee-pristine-espalda.jpg',
+            archivo: 'aime-leon-dore-unisphere-tee-pristine-espalda.jpg',
             alt: 'Camiseta Aimé Leon Dore color crudo, vista de espalda con el globo Unisphere y los árboles de Flushing Meadows estampados en verde oscuro sobre la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough',
             // Mismo criterio que el hoodie negro: manda la espalda, que es
             // donde va el estampado grande. El frente solo lleva el escudo
