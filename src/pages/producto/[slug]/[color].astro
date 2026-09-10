@@ -9,6 +9,8 @@ import { fichaMigas, fichaProducto, serializar, type Miga } from '../../../lib/d
 import { resolverImagen } from '../../../lib/imagenes-productos'
 import { formatearPrecio, resumir } from '../../../lib/formato'
 import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
+import { hrefDeMarca, tieneFicha } from '../../../lib/archivo-marcas'
+import { slugMarca } from '../../../lib/filtros'
 import { CONFIG, INSTAGRAM_URL } from '../../../config'
 
 export function getStaticPaths() {
@@ -28,6 +30,18 @@ const { producto, variante } = Astro.props
 // producto.nombre y el color por separado, y concatenarlos en el dato lo
 // dejaria diciendo "Crew Neck - Verde (Verde, talla S)".
 const titulo = `${producto.nombre} - ${variante.color}`
+
+/**
+ * Quien esta mirando la prenda es justo quien mas necesita saber quien es la
+ * marca. Si tiene pagina, el nombre lleva alli.
+ *
+ * Sin ficha se queda como texto plano y no como enlace al filtro: desde una
+ * ficha de producto, ir a la portada filtrada por su propia marca es volver
+ * casi al mismo sitio. Y un enlace a una pagina que no se genera seria un
+ * 404.
+ */
+const marcaSlug = producto.marca ? slugMarca(producto.marca) : null
+const hrefMarca = marcaSlug && tieneFicha(marcaSlug) ? hrefDeMarca(marcaSlug) : null
 
 /**
  * El titulo del navegador y del resultado de busqueda, que NO es el <h1>.
@@ -213,7 +227,11 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
     <div class="columna">
       <header class="encabezado">
         <h1>{titulo}</h1>
-        {producto.marca && <p class="marca">{producto.marca}</p>}
+        {producto.marca && (
+          <p class="marca">
+            {hrefMarca ? <a href={hrefMarca}>{producto.marca}</a> : producto.marca}
+          </p>
+        )}
       </header>
 
       <div class="detalle">
@@ -536,6 +554,14 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
      dos columnas eso no pasa, asi que se queda como estaba. */
   @media (max-width: 899px) {
     .marca { font-size: 1.125rem; }
+  }
+  /* Subrayado fino y del color del texto: es un enlace, pero no compite con
+     el nombre de la prenda que tiene encima. */
+  .marca a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
   }
   /* El doble que en la tarjeta del catalogo, y por encima del nombre de la
      prenda: en la ficha el precio es el dato que decide la compra. */
