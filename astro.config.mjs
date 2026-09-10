@@ -31,6 +31,10 @@ function ultimoCambio(archivo) {
 const CATALOGO = ultimoCambio('src/data/productos.ts')
 // /tienda no muestra prendas: envios, pagos y cambios salen de la config.
 const TIENDA = ultimoCambio('src/config.ts')
+// Las paginas de marca se pintan desde las fichas, asi que su fecha es la
+// fecha en que cambio lo que se lee en ellas. La foto de campana no cuenta:
+// cambiarla no cambia lo que la pagina dice.
+const ARCHIVO = ultimoCambio('src/data/fichas-marca.ts')
 
 export default defineConfig({
   site: 'https://therackstore.shop',
@@ -41,7 +45,14 @@ export default defineConfig({
   integrations: [
     sitemap({
       serialize(entrada) {
-        const fecha = entrada.url.endsWith('/tienda/') ? TIENDA : CATALOGO
+        // Se compara el pathname y no el final de la URL entera: con tres
+        // ramas, mirar sufijos es facil de romper.
+        const ruta = new URL(entrada.url).pathname
+        const fecha = ruta === '/tienda/'
+          ? TIENDA
+          : ruta.startsWith('/marca/')
+            ? ARCHIVO
+            : CATALOGO
         return fecha ? { ...entrada, lastmod: fecha } : entrada
       },
     }),
