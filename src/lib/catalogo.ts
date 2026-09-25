@@ -11,6 +11,7 @@ import {
   ETIQUETAS_TIPO,
   GENEROS,
   TIPOS,
+  enSale,
   generoDe,
   type Genero,
   type Producto,
@@ -74,6 +75,22 @@ export function tarjetasEnOrden(productos: readonly Producto[]): Tarjeta[] {
     base.map((tarjeta, i) => ({ ...tarjeta, turno: puestos[i]! })),
     ORDEN_POR_DEFECTO
   )
+}
+
+/**
+ * Las dos secciones del catalogo. Cada prenda esta en UNA: Exclusives es la
+ * coleccion a precio completo y Sale la rebajada, sin repetir fotos entre
+ * las dos. Lo decide `precioAntes` y nada mas.
+ *
+ * Las paginas de genero y de marca no pasan por aqui: muestran todo lo suyo,
+ * y la prenda rebajada se reconoce alli por su precio tachado.
+ */
+export function exclusivesDe(productos: readonly Producto[]): Producto[] {
+  return productos.filter((producto) => !enSale(producto))
+}
+
+export function saleDe(productos: readonly Producto[]): Producto[] {
+  return productos.filter(enSale)
 }
 
 /**

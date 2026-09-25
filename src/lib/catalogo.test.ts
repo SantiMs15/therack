@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { validarCatalogo, type Producto } from '../data/schema'
-import { descripcionDeCategoria, enumerar, generosDe, marcasDe, tiposDe } from './catalogo'
+import {
+  descripcionDeCategoria,
+  enumerar,
+  exclusivesDe,
+  generosDe,
+  marcasDe,
+  saleDe,
+  tiposDe,
+} from './catalogo'
 
 /**
  * Productos de mentira, pero pasados por el mismo validador que el catalogo
@@ -147,5 +155,30 @@ describe('descripcionDeCategoria', () => {
     const d = descripcionDeCategoria([], 'calzado', cierre)
     expect(d).toBe('Ropa de calzado. Envío gratis a toda Colombia.')
     expect(d).not.toContain('  ')
+  })
+})
+
+describe('exclusivesDe y saleDe', () => {
+  const catalogo = [
+    producto({ slug: 'a' }),
+    producto({ slug: 'b', precio: 70_000, precioAntes: 100_000 }),
+    producto({ slug: 'c' }),
+  ]
+
+  it('exclusives son las prendas a precio completo, en su orden', () => {
+    expect(exclusivesDe(catalogo).map((p) => p.slug)).toEqual(['a', 'c'])
+  })
+
+  it('sale son las rebajadas', () => {
+    expect(saleDe(catalogo).map((p) => p.slug)).toEqual(['b'])
+  })
+
+  it('cada prenda esta en una sola seccion, y ninguna se queda fuera', () => {
+    const repartidas = [...exclusivesDe(catalogo), ...saleDe(catalogo)].map((p) => p.slug).sort()
+    expect(repartidas).toEqual(['a', 'b', 'c'])
+  })
+
+  it('sin rebajas, sale queda vacia', () => {
+    expect(saleDe([producto({ slug: 'a' })])).toEqual([])
   })
 })

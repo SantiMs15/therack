@@ -178,6 +178,17 @@ const ProductoBase = z.strictObject({
   categoria: z.enum(CATEGORIAS),
   tipo: z.enum(TIPOS),
   precio: z.number().int('precio: debe ser entero').positive('precio: debe ser positivo'),
+  /**
+   * El precio de antes, cuando la prenda esta rebajada. Declararlo es lo que
+   * la manda a Sale: `precio` pasa a ser lo que se paga hoy y este se ve
+   * tachado al lado. Quitarlo la devuelve a Exclusives. No hay una lista
+   * aparte de prendas en sale que pueda contradecir al precio.
+   */
+  precioAntes: z
+    .number()
+    .int('precioAntes: debe ser entero')
+    .positive('precioAntes: debe ser positivo')
+    .optional(),
   tallas: z.array(TallaSchema).min(1, 'tallas: al menos una'),
   descripcion: z.string().min(1, 'descripcion: no puede estar vacia'),
   variantes: z.array(VarianteSchema).min(1, 'variantes: al menos un color'),
@@ -192,7 +203,12 @@ const ProductoBase = z.strictObject({
  * OJO: una lista vacia es `truthy` en JavaScript. Para saber si la prenda
  * tiene marca se mira `marcas.length`, nunca `if (producto.marcas)`.
  */
-export const ProductoSchema = ProductoBase.transform(({ marca, ...resto }) => ({
+export const ProductoSchema = ProductoBase.refine(
+  // Igual o menor no es una rebaja, y publicarla como tal seria mentirle al
+  // cliente con el precio tachado. Mejor que el build falle.
+  ({ precio, precioAntes }) => precioAntes === undefined || precioAntes > precio,
+  { message: 'precioAntes: debe ser mayor que precio', path: ['precioAntes'] }
+).transform(({ marca, ...resto }) => ({
   ...resto,
   marcas: marca === undefined ? [] : typeof marca === 'string' ? [marca] : marca,
 }))
@@ -255,4 +271,21 @@ export function tallasDisponibles(producto: Producto): Talla[] {
 export function ultimaTalla(producto: Producto): Talla | null {
   const quedan = tallasDisponibles(producto)
   return quedan.length === 1 ? quedan[0]! : null
+}
+
+/** Esta rebajada: tiene precio de antes. Es lo que la pone en Sale. */
+export function enSale(producto: Producto): boolean {
+  return producto.precioAntes !== undefined
+}
+
+/**
+ * El porcentaje rebajado, redondeado, para la etiqueta "−30 %". null si la
+ * prenda no esta en sale.
+ *
+ * Nunca 0: una rebaja de mil pesos sobre 390.000 redondea a cero, y una
+ * etiqueta "−0 %" junto a un precio tachado se lee como un error.
+ */
+export function descuento(producto: Producto): number | null {
+  if (producto.precioAntes === undefined) return null
+  return Math.max(1, Math.round((1 - producto.precio / producto.precioAntes) * 100))
 }

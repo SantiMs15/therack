@@ -3,11 +3,12 @@ import { Image, getImage } from 'astro:assets'
 import Layout from '../../../layouts/Layout.astro'
 import BotonWhatsApp from '../../../components/BotonWhatsApp.astro'
 import Migas from '../../../components/Migas.astro'
+import Precio from '../../../components/Precio.astro'
 import { productos } from '../../../data/productos'
 import { ETIQUETAS_CATEGORIA, ETIQUETAS_TIPO_UNA, ultimaTalla } from '../../../data/schema'
 import { fichaMigas, fichaProducto, serializar, type Miga } from '../../../lib/datos-estructurados'
 import { resolverImagen } from '../../../lib/imagenes-productos'
-import { formatearPrecio, resumir } from '../../../lib/formato'
+import { resumir } from '../../../lib/formato'
 import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
 import { hrefDeMarca, nombreDeMarcas } from '../../../lib/archivo-marcas'
 import { slugMarca } from '../../../lib/filtros'
@@ -273,7 +274,7 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
       </header>
 
       <div class="detalle">
-      <p class="precio">{formatearPrecio(producto.precio)}</p>
+      <Precio class="precio" producto={producto} />
       <p class="descripcion">{producto.descripcion}</p>
 
       {variante.disponible ? (

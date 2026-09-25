@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro'
 import RejillaProductos from '../components/RejillaProductos.astro'
 import { productos } from '../data/productos'
 import { fichaTienda, serializar } from '../lib/datos-estructurados'
-import { enumerar, marcasDe } from '../lib/catalogo'
+import { enumerar, exclusivesDe, marcasDe } from '../lib/catalogo'
 import { CONFIG, VENTA } from '../config'
 
 // Nombra las marcas que hay de verdad y las condiciones de venta, en vez de
@@ -37,7 +37,9 @@ const tiendaJson = serializar(
         entera por un problema que es de jerarquia, no de composicion. Un
         lector de pantalla y un buscador si lo reciben. */}
     <h1 class="visualmente-oculto">Ropa de marca en {CONFIG.ciudad}</h1>
-    <RejillaProductos productos={productos} ordenable />
+    {/* La portada es Exclusives: la coleccion a precio completo. Lo rebajado
+        vive en /sale/ y no se repite aqui. */}
+    <RejillaProductos productos={exclusivesDe(productos)} ordenable />
   </div>
 </Layout>
 

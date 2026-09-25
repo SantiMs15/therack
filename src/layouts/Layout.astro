@@ -14,6 +14,8 @@ import '../styles/global.css'
 import logoUrl from '../assets/logo-web.svg?url'
 import MenuPantallaCompleta, { type Enlace } from '../components/MenuPantallaCompleta.astro'
 import { marcasTodas } from '../data/marcas'
+import { productos } from '../data/productos'
+import { saleDe } from '../lib/catalogo'
 import { hrefDeMarca } from '../lib/archivo-marcas'
 import { CONFIG, INSTAGRAM_URL } from '../config'
 
@@ -82,17 +84,27 @@ const tarjeta = {
 const tituloCompleto = `${titulo} — ${CONFIG.nombre}`
 
 /**
- * El archivo de marcas es el unico sitio del que no se sale solo.
+ * Las dos secciones del catalogo, siempre a la vista: Exclusives, que es la
+ * portada, y Sale. Antes solo habia un enlace "Catalogo" y solo dentro del
+ * archivo de marcas; con dos secciones, desde la portada tambien hay que
+ * poder saltar a la otra.
  *
- * En la portada y en las fichas, la rejilla ES la pagina y el logo ya vuelve a
- * ella. Dentro de una marca, en cambio, se esta leyendo, y el camino de vuelta
- * al catalogo no estaba escrito en ninguna parte: para eso aparece aqui, y
- * solo aqui, un enlace que lo dice con todas las letras.
- *
- * Es un enlace y no un boton con panel como el del archivo: el catalogo es un
+ * Son enlaces y no un boton con panel como el del archivo: una seccion es un
  * sitio al que se va, no una lista entre la que elegir. Se distinguen a
  * proposito.
+ *
+ * Sale solo aparece si tiene prendas: su pagina no se genera vacia, y un
+ * enlace a ella seria un 404.
  */
+const ruta = Astro.url.pathname
+const secciones = [
+  { href: '/', texto: 'Exclusives', actual: ruta === '/' },
+  ...(saleDe(productos).length
+    ? [{ href: '/sale/', texto: 'Sale', actual: ruta.startsWith('/sale') }]
+    : []),
+]
+
+/** Las paginas del archivo entran fundidas; ver el script de mas abajo. */
 const enArchivo = Astro.url.pathname.startsWith('/marca/')
 
 /**
@@ -177,7 +189,11 @@ const enlacesArchivo: Enlace[] = [
           space-between y tres hijos sueltos, el del catalogo se habria
           quedado flotando en mitad de la cabecera. */}
       <div class="cabecera__acciones">
-        {enArchivo && <a class="enlace-catalogo" href="/">Catálogo</a>}
+        <nav class="secciones" aria-label="Catálogo">
+          {secciones.map(({ href, texto, actual }) => (
+            <a class="enlace-catalogo" href={href} aria-current={actual ? 'page' : undefined}>{texto}</a>
+          ))}
+        </nav>
         <MenuPantallaCompleta
           id="menu-archivo"
           rotulo="Archivo de marcas"
@@ -348,6 +364,19 @@ const enlacesArchivo: Enlace[] = [
   }
 
   .enlace-catalogo:hover { text-decoration: underline; }
+  /* La seccion en la que se esta, subrayada fija: el mismo gesto que el
+     hover, pero sin tener que pasar por encima. */
+  .enlace-catalogo[aria-current='page'] {
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  /* Entre las dos secciones, menos hueco que entre ellas y el archivo: son
+     dos destinos del mismo catalogo. */
+  .secciones {
+    display: flex;
+    gap: var(--espacio-2);
+  }
 
   /* Con el panel abierto el enlace queda sobre el velo oscuro. */
   :global(body[data-menu='abierto']) .enlace-catalogo { color: var(--fondo); }

@@ -1,0 +1,58 @@
+---
+import type { HTMLAttributes } from 'astro/types'
+import { descuento, type Producto } from '../data/schema'
+import { formatearPrecio } from '../lib/formato'
+
+/**
+ * El precio de una prenda, con su rebaja si la tiene.
+ *
+ * Lo comparten la tarjeta de la rejilla y la ficha: el tachado, el precio en
+ * burdeos y el "−30 %" tienen que decir lo mismo en los dos sitios. El tamano
+ * lo pone quien lo usa, con su propia clase, y por eso se reenvian `class` y
+ * el resto de atributos: sin ellos los estilos con ambito del padre no
+ * llegarian a este <p>.
+ */
+interface Props extends HTMLAttributes<'p'> {
+  producto: Producto
+}
+const { producto, class: clase, ...resto } = Astro.props
+const rebaja = descuento(producto)
+---
+<p class:list={[clase, { 'precio--sale': rebaja !== null }]} {...resto}>
+  {producto.precioAntes !== undefined && (
+    <>
+      {/* Un <s> no se anuncia como tachado en todos los lectores de pantalla:
+          sin estas dos palabras se oirian dos precios seguidos sin saber cual
+          se paga. */}
+      <span class="visualmente-oculto">Antes</span>
+      <s class="antes">{formatearPrecio(producto.precioAntes)}</s>
+      <span class="visualmente-oculto">, ahora</span>
+    </>
+  )}
+  <span class="actual">{formatearPrecio(producto.precio)}</span>
+  {rebaja !== null && <span class="descuento">−{rebaja} %</span>}
+</p>
+
+<style>
+  .precio--sale {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.5em;
+  }
+  /* Mas pequeno y en gris: se lee, pero el que manda es el de hoy. */
+  .antes {
+    font-size: 0.75em;
+    color: var(--texto-suave);
+  }
+  .precio--sale .actual { color: var(--burdeos); }
+  /* Misma voz que el aviso de ultima talla: Geist 500 en versalitas. Aqui
+     sin relleno, porque va en la linea del precio y no encima de una foto. */
+  .descuento {
+    font-family: var(--fuente-marca);
+    font-weight: 500;
+    font-size: max(0.6875rem, 0.45em);
+    letter-spacing: 0.08em;
+    color: var(--burdeos);
+  }
+</style>

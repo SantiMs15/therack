@@ -1,0 +1,75 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import RejillaProductos from '../../components/RejillaProductos.astro'
+import { productos } from '../../data/productos'
+import { descuento } from '../../data/schema'
+import { enumerar, marcasDe, saleDe, tarjetasEnOrden } from '../../lib/catalogo'
+import {
+  fichaCategoria,
+  fichaMigas,
+  serializar,
+  type Miga,
+} from '../../lib/datos-estructurados'
+import { VENTA } from '../../config'
+
+/**
+ * /sale/: las prendas rebajadas, las que tienen `precioAntes`.
+ *
+ * Ruta con parametro de resto y no un sale.astro a secas porque asi puede NO
+ * generarse: una pagina fija se publica siempre, y sin prendas rebajadas
+ * saldria vacia y entraria en el sitemap. Con `raiz: undefined` la unica ruta
+ * que devuelve es /sale/ misma, y solo cuando hay algo que ensenar. Es la
+ * misma regla que las categorias sin prendas, y la misma que decide si la
+ * cabecera enlaza aqui.
+ */
+export function getStaticPaths() {
+  return saleDe(productos).length ? [{ params: { raiz: undefined } }] : []
+}
+
+const rebajadas = saleDe(productos)
+
+// "hasta −40 %" y no un porcentaje por prenda: en una linea de resultado de
+// busqueda cabe un dato, y el que hace clicar es el mayor.
+const maximo = Math.max(...rebajadas.map((producto) => descuento(producto)!))
+const marcas = enumerar(marcasDe(rebajadas).map((m) => m.etiqueta))
+const descripcion =
+  `Sale: ${marcas ? `${marcas} ` : 'prendas '}con hasta ${maximo} % de descuento. ` +
+  `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
+
+if (!Astro.site) {
+  throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
+}
+const migas: Miga[] = [{ nombre: 'Inicio', ruta: '/' }, { nombre: 'Sale' }]
+const migasJson = serializar(fichaMigas(migas, Astro.site))
+
+// Mismo listado que las categorias, desde la misma funcion que ordena la
+// rejilla: lo que se declara es lo que se ve, en su orden.
+const listadoJson = serializar(
+  fichaCategoria({
+    nombre: 'Sale',
+    descripcion,
+    url: new URL('/sale/', Astro.site).href,
+    urls: tarjetasEnOrden(rebajadas).map(
+      ({ producto, variante }) =>
+        new URL(`/producto/${producto.slug}/${variante.slug}/`, Astro.site).href
+    ),
+  })
+)
+---
+<Layout titulo="Sale" descripcion={descripcion}>
+  <script type="application/ld+json" is:inline set:html={migasJson}></script>
+  <script type="application/ld+json" is:inline set:html={listadoJson}></script>
+
+  <div class="contenedor catalogo-pagina">
+    {/* Oculto a la vista por lo mismo que en la portada y las categorias: es
+        la misma rejilla con otras prendas, y un titular que las otras no
+        tienen haria saltar la composicion. La seccion ya se ve marcada en la
+        cabecera. */}
+    <h1 class="visualmente-oculto">Sale</h1>
+    <RejillaProductos productos={rebajadas} ordenable conGeneros={false} />
+  </div>
+</Layout>
+
+<style>
+  .catalogo-pagina { padding-block: var(--espacio-2) var(--espacio-4); }
+</style>

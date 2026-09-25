@@ -18,12 +18,19 @@ interface Props {
    * marca que el visitante vino a ver.
    */
   marcaContexto?: string | null
+  /**
+   * Ofrecer el desplegable de genero. Ese desplegable navega a
+   * /catalogo/<genero>/, que muestra TODO lo de ese genero: desde Sale
+   * sacaria al cliente de la seccion sin avisar, asi que ahi se apaga.
+   */
+  conGeneros?: boolean
 }
 const {
   productos,
   ordenable = false,
   generoActivo = null,
   marcaContexto = null,
+  conGeneros = true,
 } = Astro.props
 
 // Se ordena en el build, no en el navegador: el HTML sale ya en el orden que
@@ -49,7 +56,7 @@ const ordenadas = tarjetasEnOrden(productos)
           marca sin stock llegue y lo diga. */}
       {ordenable && (
         <FiltrosProductos
-          generos={generosDe(CATALOGO)}
+          generos={conGeneros ? generosDe(CATALOGO) : []}
           tipos={tiposDe(productos)}
           marcas={marcasDe(productos)}
           marcasValidas={marcasTodas()}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validarCatalogo } from './schema'
+import { descuento, enSale, validarCatalogo } from './schema'
 
 /**
  * La forma minima que acepta el validador. Cada test cambia solo lo que
@@ -48,5 +48,44 @@ describe('marcas de un producto', () => {
 
   it('rechaza una marca vacia dentro de la lista', () => {
     expect(() => producto({ marca: ['Lacoste', ''] })).toThrow(/marca/)
+  })
+})
+
+describe('precio de sale', () => {
+  it('sin precioAntes la prenda no esta en sale', () => {
+    const p = producto({})
+    expect(p.precioAntes).toBeUndefined()
+    expect(enSale(p)).toBe(false)
+  })
+
+  it('con precioAntes mayor que el precio, esta en sale', () => {
+    expect(enSale(producto({ precio: 70000, precioAntes: 100000 }))).toBe(true)
+  })
+
+  it('rechaza un precioAntes igual al precio: no es una rebaja', () => {
+    expect(() => producto({ precio: 100000, precioAntes: 100000 })).toThrow(/precioAntes/)
+  })
+
+  it('rechaza un precioAntes menor que el precio: seria una subida', () => {
+    expect(() => producto({ precio: 100000, precioAntes: 90000 })).toThrow(/precioAntes/)
+  })
+
+  it('rechaza un precioAntes con decimales', () => {
+    expect(() => producto({ precio: 70000, precioAntes: 100000.5 })).toThrow(/precioAntes/)
+  })
+})
+
+describe('descuento', () => {
+  it('es el porcentaje rebajado, redondeado', () => {
+    expect(descuento(producto({ precio: 70000, precioAntes: 100000 }))).toBe(30)
+    expect(descuento(producto({ precio: 290000, precioAntes: 390000 }))).toBe(26)
+  })
+
+  it('nunca dice 0 %: una rebaja minima se anuncia como 1 %', () => {
+    expect(descuento(producto({ precio: 389000, precioAntes: 390000 }))).toBe(1)
+  })
+
+  it('sin sale no hay descuento', () => {
+    expect(descuento(producto({}))).toBeNull()
   })
 })

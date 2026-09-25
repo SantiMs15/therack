@@ -3,7 +3,7 @@ import { Image } from 'astro:assets'
 import { ultimaTalla, type Producto, type Variante } from '../data/schema'
 import { nombreDeMarcas } from '../lib/archivo-marcas'
 import { resolverImagen } from '../lib/imagenes-productos'
-import { formatearPrecio } from '../lib/formato'
+import Precio from './Precio.astro'
 
 interface Props {
   producto: Producto
@@ -99,7 +99,7 @@ const ultima = variante.disponible ? ultimaTalla(producto) : null
     <a class="enlace" href={enlace}>{producto.nombre} - {variante.color}</a>
   </h3>
   {nombreMarca && <p class="marca">{nombreMarca}</p>}
-  <p class="precio">{formatearPrecio(producto.precio)}</p>
+  <Precio class="precio" producto={producto} />
 </article>
 
 <style>
@@ -205,6 +205,8 @@ const ultima = variante.disponible ? ultimaTalla(producto) : null
   .nombre,
   .marca,
   .precio { text-align: center; }
+  /* Con rebaja el precio es una fila flexible, y ahi centra justify. */
+  .precio { justify-content: center; }
 
   .nombre {
     font-family: var(--fuente-ui);

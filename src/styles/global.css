@@ -5,8 +5,9 @@
   --texto: #111111;
   --texto-suave: #57534E;
   --linea: #E7E5E4;
-  /* Solo para avisar de lo que falta: una talla agotada. Es el unico color
-     de la paleta, asi que se gasta donde tiene que frenar al que lee. */
+  /* Solo para avisar: lo que falta (una talla agotada, la ultima) y lo que
+     esta rebajado. Es el unico color de la paleta, asi que se gasta donde
+     tiene que frenar al que lee. */
   --burdeos: #7B1E2E;
 
   --fuente-titular: 'Instrument Serif', Georgia, serif;

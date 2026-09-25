@@ -39,6 +39,27 @@ Si algo esta mal —falta un campo, la propuesta pasa de 160 caracteres, el slug
 no coincide con ninguna marca de `marcas.ts`, la foto no existe— **el build
 falla y dice cual es el problema**.
 
+## Poner una prenda en Sale
+
+El catalogo tiene dos secciones: **Exclusives** (la portada, `/`) y **Sale**
+(`/sale/`). Cada prenda esta en una sola. Para rebajar una, en
+`src/data/productos.ts` se baja `precio` al precio nuevo y se anade
+`precioAntes` con el de siempre:
+
+```ts
+precio: 269000,
+precioAntes: 385000,
+```
+
+La prenda sale de la portada, entra en `/sale/` y se ve con el precio de antes
+tachado, el nuevo en burdeos y el descuento (`−30 %`). En las paginas de
+genero y de marca sigue apareciendo, con ese mismo precio. Para quitar la
+rebaja se borra `precioAntes` y se devuelve `precio` a su valor.
+
+Mientras ninguna prenda tenga `precioAntes`, `/sale/` no se genera y la
+cabecera no la enlaza. Si `precioAntes` no es mayor que `precio`, el build
+falla.
+
 ## Pendiente antes de publicar
 
 Los valores marcados `PENDIENTE` en `src/config.ts`: telefono de WhatsApp,
