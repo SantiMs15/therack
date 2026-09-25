@@ -9,7 +9,7 @@ import { fichaMigas, fichaProducto, serializar, type Miga } from '../../../lib/d
 import { resolverImagen } from '../../../lib/imagenes-productos'
 import { formatearPrecio, resumir } from '../../../lib/formato'
 import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
-import { hrefDeMarca, tieneFicha } from '../../../lib/archivo-marcas'
+import { hrefDeMarca, nombreDeMarcas } from '../../../lib/archivo-marcas'
 import { slugMarca } from '../../../lib/filtros'
 import { CONFIG, INSTAGRAM_URL } from '../../../config'
 
@@ -33,15 +33,17 @@ const titulo = `${producto.nombre} - ${variante.color}`
 
 /**
  * Quien esta mirando la prenda es justo quien mas necesita saber quien es la
- * marca. Si tiene pagina, el nombre lleva alli.
+ * marca, asi que el nombre lleva a su pagina del archivo. Todas la tienen: la
+ * que aun no tiene ficha escrita presenta alli su nombre y sus piezas.
  *
- * Sin ficha se queda como texto plano y no como enlace al filtro: desde una
- * ficha de producto, ir a la portada filtrada por su propia marca es volver
- * casi al mismo sitio. Y un enlace a una pagina que no se genera seria un
- * 404.
+ * Una colaboracion lleva dos, y cada una enlaza a la suya: quien llego
+ * desde New Balance tiene aqui su camino de vuelta, y quien no conocia a
+ * Aimé Leon Dore tiene por donde ir a averiguarlo.
  */
-const marcaSlug = producto.marca ? slugMarca(producto.marca) : null
-const hrefMarca = marcaSlug && tieneFicha(marcaSlug) ? hrefDeMarca(marcaSlug) : null
+const marcasEnlazadas = producto.marcas.map((nombre) => ({
+  nombre,
+  href: hrefDeMarca(slugMarca(nombre)),
+}))
 
 /**
  * El titulo del navegador y del resultado de busqueda, que NO es el <h1>.
@@ -55,7 +57,7 @@ const hrefMarca = marcaSlug && tieneFicha(marcaSlug) ? hrefDeMarca(marcaSlug) : 
  * Se queda corto a proposito: con el " — The Rack store" que anade el layout
  * el mas largo ronda los 55 caracteres, por debajo de donde Google corta.
  */
-const tituloBuscador = [ETIQUETAS_TIPO_UNA[producto.tipo], producto.marca]
+const tituloBuscador = [ETIQUETAS_TIPO_UNA[producto.tipo], nombreDeMarcas(producto.marcas)]
   .filter(Boolean)
   .join(' ') + ` · ${variante.color}`
 
@@ -141,6 +143,20 @@ const fichaJson = serializar(
  * La categoria de una prenda siempre tiene pagina: /catalogo/<categoria> se
  * genera para las categorias con prendas, y esta prenda es una de ellas.
  *
+ * La marca es el tercer escalon, y esta aqui porque a esta ficha se llega por
+ * dos sitios. Quien viene del catalogo sube por la categoria; quien viene del
+ * archivo -- que es quien acaba de leer QUIEN es la marca y ha bajado a ver
+ * sus piezas -- no tenia por donde volver: el rastro decia Inicio > Hombre >
+ * prenda y el archivo no aparecia. El nombre de la marca junto al titulo si
+ * lleva a su pagina, pero eso es un enlace para ir, no para volver, y nadie
+ * busca ahi el camino de vuelta.
+ *
+ * Un solo rastro para los dos caminos, y no uno segun de donde se venga: la
+ * pagina se genera en el build, es la misma para todos, y el BreadcrumbList
+ * tiene que decir lo mismo que se ve.
+ *
+ * La prenda sin marca -- las hay -- se queda con el rastro de siempre.
+ *
  * El ultimo escalon es el nombre del fabricante a secas, sin el color: el
  * rastro dice donde cae la pagina, y el color ya lo dicen el h1 y el
  * selector de mas abajo.
@@ -151,6 +167,21 @@ const migas: Miga[] = [
     nombre: ETIQUETAS_CATEGORIA[producto.categoria],
     ruta: `/catalogo/${producto.categoria}/`,
   },
+  ...(marcasEnlazadas.length
+    ? [
+        {
+          nombre: marcasEnlazadas[0]!.nombre,
+          ruta: marcasEnlazadas[0]!.href,
+          /* Con una sola marca no hay nada que repartir y el escalon se pinta
+             como siempre. Con dos, las dos se ven y las dos vuelven: quien
+             bajo desde New Balance no tiene por que salir por Aimé Leon
+             Dore. */
+          ...(marcasEnlazadas.length > 1
+            ? { partes: marcasEnlazadas.map(({ nombre, href }) => ({ nombre, ruta: href })) }
+            : {}),
+        },
+      ]
+    : []),
   { nombre: producto.nombre },
 ]
 const migasJson = serializar(fichaMigas(migas, Astro.site))
@@ -227,9 +258,16 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
     <div class="columna">
       <header class="encabezado">
         <h1>{titulo}</h1>
-        {producto.marca && (
+        {marcasEnlazadas.length > 0 && (
           <p class="marca">
-            {hrefMarca ? <a href={hrefMarca}>{producto.marca}</a> : producto.marca}
+            {marcasEnlazadas.map(({ nombre, href }, i) => (
+              <>
+                {/* La cruz separa, no se lee: un lector de pantalla ya anuncia
+                    dos enlaces distintos, y "por" entre medias solo estorba. */}
+                {i > 0 && <span aria-hidden="true"> × </span>}
+                <a href={href}>{nombre}</a>
+              </>
+            ))}
           </p>
         )}
       </header>

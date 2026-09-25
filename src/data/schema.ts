@@ -149,11 +149,32 @@ export const TallaSchema = z
 
 export type Talla = z.infer<typeof TallaSchema>
 
-export const ProductoSchema = z.strictObject({
+/**
+ * De quien es una prenda. Se escribe como texto -- `marca: 'Lacoste'` -- y
+ * como lista cuando es una colaboracion: `marca: ['Aimé Leon Dore', 'New
+ * Balance']`.
+ *
+ * Un solo campo para las dos formas, y no una `marca` mas una
+ * `colaboracion`: serian dos sitios donde mirar para responder la misma
+ * pregunta, y el dia que alguien rellene solo uno la prenda desaparece de
+ * media tienda.
+ *
+ * El orden de la lista es el que se escribe, y es el que se ve: la primera
+ * manda donde solo cabe una (el reparto de la rejilla, el escalon de las
+ * migas).
+ */
+const MarcaSchema = z.union([
+  z.string().min(1, 'marca: no puede estar vacia si se declara'),
+  z
+    .array(z.string().min(1, 'marca: ninguna marca de la lista puede estar vacia'))
+    .min(1, 'marca: la lista no puede estar vacia'),
+])
+
+const ProductoBase = z.strictObject({
   slug: z.string().regex(SLUG, 'slug: solo minusculas, numeros y guiones'),
   nombre: z.string().min(1, 'nombre: no puede estar vacio'),
   /** Opcional: no toda prenda de la tienda es de marca conocida. */
-  marca: z.string().min(1, 'marca: no puede estar vacia si se declara').optional(),
+  marca: MarcaSchema.optional(),
   categoria: z.enum(CATEGORIAS),
   tipo: z.enum(TIPOS),
   precio: z.number().int('precio: debe ser entero').positive('precio: debe ser positivo'),
@@ -162,6 +183,19 @@ export const ProductoSchema = z.strictObject({
   variantes: z.array(VarianteSchema).min(1, 'variantes: al menos un color'),
   destacado: z.boolean(),
 })
+
+/**
+ * Fuera del validador, una prenda ya no tiene `marca`: tiene `marcas`, una
+ * lista, vacia si no es de marca conocida. Asi nadie tiene que preguntarse si
+ * lo que recibe es un texto, una lista o nada -- se recorre y ya.
+ *
+ * OJO: una lista vacia es `truthy` en JavaScript. Para saber si la prenda
+ * tiene marca se mira `marcas.length`, nunca `if (producto.marcas)`.
+ */
+export const ProductoSchema = ProductoBase.transform(({ marca, ...resto }) => ({
+  ...resto,
+  marcas: marca === undefined ? [] : typeof marca === 'string' ? [marca] : marca,
+}))
 
 export type Producto = z.infer<typeof ProductoSchema>
 

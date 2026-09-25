@@ -6,8 +6,9 @@
  * abria un panel -- y le da a un buscador una pagina que enumera la curaduria
  * de la tienda en vez de tener que deducirla de las fichas de producto.
  *
- * Lista solo las marcas CON ficha. Las otras no tienen pagina a la que
- * enlazar, y una entrada muerta en un indice es peor que una entrada menos.
+ * Lista TODAS las marcas de la tienda: todas tienen pagina. La que aun no
+ * tiene ficha escrita se dice, en vez de esconderse -- el archivo cuenta lo
+ * que la tienda trae, y una marca sin texto sigue siendo una marca que trae.
  */
 import Layout from '../../layouts/Layout.astro'
 import Migas from '../../components/Migas.astro'
@@ -65,10 +66,16 @@ const descripcion =
           <li>
             <a href={`/marca/${entrada.slug}/`}>
               <h2>{entrada.nombre}</h2>
-              <p class="archivo__datos">
-                {entrada.ficha.pais} · {entrada.ficha.anio}
-              </p>
-              <p class="archivo__propuesta">{entrada.ficha.propuesta}</p>
+              {entrada.ficha ? (
+                <>
+                  <p class="archivo__datos">
+                    {entrada.ficha.pais} · {entrada.ficha.anio}
+                  </p>
+                  <p class="archivo__propuesta">{entrada.ficha.propuesta}</p>
+                </>
+              ) : (
+                <p class="archivo__datos">Ficha en camino</p>
+              )}
             </a>
           </li>
         ))}

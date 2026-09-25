@@ -1,9 +1,19 @@
 import { describe, it, expect } from 'vitest'
 import { SIN_FILTROS, hayFiltros, pasa, slugMarca, type Filtrable } from './filtros'
 
-const hoodieLacosteHombre: Filtrable = { genero: 'hombre', tipo: 'hoodie', marca: 'lacoste' }
-const camisetaTommyMujer: Filtrable = { genero: 'mujer', tipo: 'camiseta', marca: 'tommy-hilfiger' }
-const zapatoSinMarca: Filtrable = { genero: null, tipo: 'sweater', marca: null }
+const hoodieLacosteHombre: Filtrable = { genero: 'hombre', tipo: 'hoodie', marcas: ['lacoste'] }
+const camisetaTommyMujer: Filtrable = {
+  genero: 'mujer',
+  tipo: 'camiseta',
+  marcas: ['tommy-hilfiger'],
+}
+const zapatoSinMarca: Filtrable = { genero: null, tipo: 'sweater', marcas: [] }
+// La colaboracion: una prenda, dos marcas, y tiene que salir por las dos.
+const sweaterColaboracion: Filtrable = {
+  genero: 'hombre',
+  tipo: 'sweater',
+  marcas: ['aime-leon-dore', 'new-balance'],
+}
 
 describe('pasa', () => {
   it('sin filtros pasa todo', () => {
@@ -34,16 +44,24 @@ describe('pasa', () => {
     const filtros = { genero: 'hombre' as const, tipo: 'hoodie' as const, marca: 'lacoste' }
     expect(pasa(hoodieLacosteHombre, filtros)).toBe(true)
     // Cumple genero y tipo, pero no la marca: no pasa.
-    expect(pasa({ ...hoodieLacosteHombre, marca: 'essentials' }, filtros)).toBe(false)
+    expect(pasa({ ...hoodieLacosteHombre, marcas: ['essentials'] }, filtros)).toBe(false)
   })
 
   it('marca, genero y tipo se acumulan: no es la suma de los tres', () => {
-    const hoodieLacosteHombre = { genero: 'hombre' as const, tipo: 'hoodie' as const, marca: 'lacoste' }
-    const hoodieNikeHombre = { genero: 'hombre' as const, tipo: 'hoodie' as const, marca: 'nike' }
+    const hoodieLacosteHombre = {
+      genero: 'hombre' as const,
+      tipo: 'hoodie' as const,
+      marcas: ['lacoste'],
+    }
+    const hoodieNikeHombre = {
+      genero: 'hombre' as const,
+      tipo: 'hoodie' as const,
+      marcas: ['nike'],
+    }
     const camisetaLacosteHombre = {
       genero: 'hombre' as const,
       tipo: 'camiseta' as const,
-      marca: 'lacoste',
+      marcas: ['lacoste'],
     }
     const filtros = { genero: 'hombre' as const, tipo: 'hoodie' as const, marca: 'lacoste' }
 
@@ -58,6 +76,20 @@ describe('pasa', () => {
 
   it('una prenda sin marca cae fuera de cualquier filtro de marca', () => {
     expect(pasa(zapatoSinMarca, { ...SIN_FILTROS, marca: 'lacoste' })).toBe(false)
+  })
+
+  it('una colaboracion pasa el filtro de CUALQUIERA de sus dos marcas', () => {
+    expect(pasa(sweaterColaboracion, { ...SIN_FILTROS, marca: 'aime-leon-dore' })).toBe(true)
+    expect(pasa(sweaterColaboracion, { ...SIN_FILTROS, marca: 'new-balance' })).toBe(true)
+  })
+
+  it('la colaboracion no pasa el filtro de una marca que no es suya', () => {
+    expect(pasa(sweaterColaboracion, { ...SIN_FILTROS, marca: 'lacoste' })).toBe(false)
+  })
+
+  it('la segunda marca no la cuela en los otros filtros', () => {
+    const filtros = { genero: 'mujer' as const, tipo: null, marca: 'new-balance' }
+    expect(pasa(sweaterColaboracion, filtros)).toBe(false)
   })
 })
 

@@ -39,7 +39,17 @@ export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha)
     // internos, asi que sirve el par slug+color: identifica una pieza
     // concreta, es unico por construccion y no cambia con el tiempo.
     sku: `${producto.slug}-${variante.slug}`,
-    ...(producto.marca ? { brand: { '@type': 'Brand', name: producto.marca } } : {}),
+    // Sin marca no se declara `brand`: uno vacio es peor que ninguno. Con
+    // una, un objeto, que es lo que ya publican las prendas de siempre. Con
+    // dos -- una colaboracion -- la lista, que es lo que schema.org espera.
+    ...(producto.marcas.length
+      ? {
+          brand:
+            producto.marcas.length === 1
+              ? { '@type': 'Brand', name: producto.marcas[0] }
+              : producto.marcas.map((marca) => ({ '@type': 'Brand', name: marca })),
+        }
+      : {}),
     offers: {
       '@type': 'Offer',
       url,
@@ -233,6 +243,17 @@ export function fichaArchivo({ url, urls }: { url: string; urls: readonly string
 /** Un escalon del camino. El ultimo no lleva ruta: ya se esta ahi. */
 export interface Miga {
   nombre: string
+  /**
+   * Cuando el escalon lleva a mas de un sitio: una prenda de dos marcas se
+   * alcanza desde las dos, y quien vino de cualquiera de ellas tiene que
+   * poder volver por donde entro.
+   *
+   * Solo cambia lo que se VE. Al schema va `nombre` + `ruta`, uno solo: un
+   * BreadcrumbList es un camino, y dos destinos en la misma posicion serian
+   * dos caminos. Por eso el escalon sigue declarando los suyos aunque traiga
+   * `partes`, y quien lo escribe pone ahi el primero.
+   */
+  partes?: { nombre: string; ruta: string }[]
   /**
    * Ruta del sitio, con barra final. RELATIVA a proposito: es lo que va en el
    * href que se pinta, y una absoluta ahi mandaria al dominio de produccion

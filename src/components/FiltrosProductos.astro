@@ -632,7 +632,9 @@ const { generos, tipos, marcas, marcasValidas, generoActivo = null } = Astro.pro
           turno: Number(li.dataset.turno),
           genero: (li.dataset.genero as Genero | undefined) ?? null,
           tipo: li.dataset.tipo as Tipo,
-          marca: li.dataset.marca ?? null,
+          // Una prenda puede tener dos marcas: el atributo trae los slugs
+          // separados por espacio, y basta con que una case con el filtro.
+          marcas: (li.dataset.marca ?? '').split(' ').filter(Boolean),
         }
       })
 

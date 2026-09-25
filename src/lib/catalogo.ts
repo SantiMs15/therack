@@ -29,7 +29,8 @@ export interface Tarjeta {
   destacado: boolean
   genero: Genero | null
   tipo: Tipo
-  marca: string | null
+  /** Los slugs de sus marcas. Vacia si la prenda no es de marca conocida. */
+  marcas: string[]
   turno: number
 }
 
@@ -60,10 +61,15 @@ export function tarjetasEnOrden(productos: readonly Producto[]): Tarjeta[] {
       destacado: tarjeta.producto.destacado,
       genero: generoDe(tarjeta.producto.categoria),
       tipo: tarjeta.producto.tipo,
-      marca: tarjeta.producto.marca ? slugMarca(tarjeta.producto.marca) : null,
+      marcas: tarjeta.producto.marcas.map(slugMarca),
     }))
 
-  const puestos = turnos(base)
+  /* El reparto por marcas solo entiende de una: es una cola por marca, y una
+     prenda no puede estar en dos colas sin salir dos veces en la rejilla. Se
+     reparte por la PRIMERA, que es la que la prenda lleva delante. */
+  const puestos = turnos(
+    base.map((tarjeta) => ({ marca: tarjeta.marcas[0] ?? null, destacado: tarjeta.destacado }))
+  )
   return ordenar(
     base.map((tarjeta, i) => ({ ...tarjeta, turno: puestos[i]! })),
     ORDEN_POR_DEFECTO
@@ -79,7 +85,9 @@ export function tarjetasEnOrden(productos: readonly Producto[]): Tarjeta[] {
 export function marcasDe(productos: readonly Producto[]): Opcion[] {
   const porSlug = new Map<string, string>()
   for (const producto of productos) {
-    if (producto.marca) porSlug.set(slugMarca(producto.marca), producto.marca)
+    // Todas las suyas: una colaboracion tiene que salir en el desplegable de
+    // las dos marcas, no solo en el de la que lleva delante.
+    for (const marca of producto.marcas) porSlug.set(slugMarca(marca), marca)
   }
   return [...porSlug]
     .map(([valor, etiqueta]) => ({ valor, etiqueta }))

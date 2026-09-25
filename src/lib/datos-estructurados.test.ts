@@ -74,6 +74,20 @@ describe('fichaProducto', () => {
       .toEqual({ '@type': 'Brand', name: 'Tommy Hilfiger' })
   })
 
+  it('una colaboracion declara las dos marcas, en el orden escrito', () => {
+    const f = ficha(catalogo({ marca: ['Aimé Leon Dore', 'New Balance'] })) as any
+    expect(f.brand).toEqual([
+      { '@type': 'Brand', name: 'Aimé Leon Dore' },
+      { '@type': 'Brand', name: 'New Balance' },
+    ])
+  })
+
+  it('con una sola marca brand sigue siendo un objeto, no una lista de uno', () => {
+    // Google acepta las dos formas, pero envolver lo de siempre en una lista
+    // cambiaria el schema de las trece prendas que ya estan publicadas.
+    expect(Array.isArray((ficha(catalogo()) as any).brand)).toBe(false)
+  })
+
   it('omite brand del todo cuando la prenda no tiene marca', () => {
     // `marca` es opcional en el catalogo. Un brand vacio o nulo es peor que
     // ninguno: Google lo lee como campo mal declarado.
@@ -223,6 +237,28 @@ describe('fichaMigas', () => {
     { nombre: 'Puffer Jacket' },
   ]
   const migas = (camino = CAMINO) => fichaMigas(camino, SITIO) as any
+
+  it('un escalon de varias marcas viaja al schema con UNA sola, la primera', () => {
+    // El rastro que se ve puede ofrecer dos caminos de vuelta; un
+    // BreadcrumbList no: cada posicion es un sitio, y declarar dos seria
+    // decir que la prenda cuelga de los dos a la vez.
+    const f = migas([
+      { nombre: 'Inicio', ruta: '/' },
+      {
+        nombre: 'Aimé Leon Dore',
+        ruta: '/marca/aime-leon-dore/',
+        partes: [
+          { nombre: 'Aimé Leon Dore', ruta: '/marca/aime-leon-dore/' },
+          { nombre: 'New Balance', ruta: '/marca/new-balance/' },
+        ],
+      },
+      { nombre: 'Geo Print Crewneck' },
+    ])
+    expect(f.itemListElement).toHaveLength(3)
+    expect(f.itemListElement[1].name).toBe('Aimé Leon Dore')
+    expect(f.itemListElement[1].item).toBe('https://therackstore.shop/marca/aime-leon-dore/')
+    expect('partes' in f.itemListElement[1]).toBe(false)
+  })
 
   it('declara un BreadcrumbList con un escalon por miga', () => {
     const f = migas()

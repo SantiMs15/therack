@@ -398,6 +398,115 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+
+  {
+    slug: 'unisphere-waffle-thermal',
+    nombre: 'Long-Sleeve Unisphere Waffle Thermal',
+    marca: 'Aimé Leon Dore',
+    categoria: 'hombre',
+    // Buzo y no camiseta: el waffle es termico y pesa como una prenda de
+    // abrigo, y en Bogota quien la busca escribe "buzo", no "camiseta manga
+    // larga". El tipo es lo que nombra el titulo de la ficha en el buscador.
+    tipo: 'buzo',
+    precio: 660000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Buzo Aimé Leon Dore en punto waffle azul marino, cuello redondo acanalado y puños y bajo en rib. Lleva el escudo Unisphere de Queens estampado en crudo: pequeño sobre el pecho y en grande en la espalda, con la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'aime-leon-dore-unisphere-waffle-thermal-azul-marino-frente.jpg',
+            alt: 'Buzo Aimé Leon Dore de punto waffle azul marino, vista frontal de la prenda sola con el cuello redondo acanalado y el escudo Unisphere en crudo, pequeño, sobre el pecho',
+          },
+          {
+            archivo: 'aime-leon-dore-unisphere-waffle-thermal-azul-marino-espalda.jpg',
+            alt: 'Buzo Aimé Leon Dore de punto waffle azul marino, vista de espalda con el globo Unisphere y los árboles de Flushing Meadows estampados en crudo sobre la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough',
+            // Mismo criterio que la Unisphere Tee: manda la espalda, que es
+            // donde va el estampado grande. El frente solo lleva el escudo
+            // pequeño y en la rejilla pasaria por un buzo azul liso.
+            portada: true,
+          },
+          {
+            archivo: 'aime-leon-dore-unisphere-waffle-thermal-azul-marino-modelo-espalda.jpg',
+            alt: 'Buzo Aimé Leon Dore de punto waffle azul marino puesto, plano medio de un modelo de espaldas que lo lleva con vaqueros claros',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'souvenir-tee',
+    nombre: 'Aimé Souvenir Tee',
+    marca: 'Aimé Leon Dore',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 390000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Camiseta Aimé Leon Dore en algodón blanco, cuello redondo acanalado y corte recto. Lleva AIMÉ en letra universitaria azul arqueada sobre el pecho, con NYC dentro de un óvalo azul marino debajo.',
+    variantes: [
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        // Una sola foto: la prenda lleva el estampado delante y la espalda va
+        // lisa. La tarjeta esconde sola las flechas cuando no hay segunda
+        // foto que rotar.
+        imagenes: [
+          {
+            archivo: 'aime-leon-dore-souvenir-tee-blanco-frente.jpg',
+            alt: 'Camiseta Aimé Leon Dore blanca, vista frontal de la prenda sola con la palabra AIMÉ en letra universitaria azul arqueada y NYC dentro de un óvalo azul marino debajo',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'geo-print-crewneck',
+    nombre: 'Off-White New Balance Geo Print Crewneck',
+    /* La primera colaboracion del catalogo: la prenda es de las dos marcas,
+       no de una con la otra invitada. Sale al filtrar por cualquiera de las
+       dos y esta en las dos paginas del archivo. Dentro de una de esas dos
+       paginas se presenta con el nombre de esa marca; fuera, con los dos. */
+    marca: ['Aimé Leon Dore', 'New Balance'],
+    categoria: 'hombre',
+    tipo: 'sweater',
+    precio: 580000,
+    // Solo del medio de la escala. Las puntas siguen a la vista, tachadas: el
+    // rango que cubre la prenda es informacion util aunque hoy falte una talla.
+    tallas: TALLAS_HOMBRE.map((talla) => ({
+      talla,
+      disponible: talla === 'S' || talla === 'M' || talla === 'L',
+    })),
+    descripcion:
+      'Suéter Aimé Leon Dore × New Balance en punto de algodón color hueso, cuello redondo acanalado y puños y bajo en rib. Lleva el globo terráqueo de New Balance tramado en puntos grises, que cruza el pecho y baja por una manga, y la firma AIMÉ tejida abajo a la derecha.',
+    variantes: [
+      {
+        color: 'Off-White',
+        slug: 'off-white',
+        imagenes: [
+          {
+            archivo: 'aime-leon-dore-geo-print-crewneck-off-white-frente.jpg',
+            alt: 'Suéter Aimé Leon Dore × New Balance color hueso, vista frontal de la prenda sola con el globo terráqueo tramado en puntos grises cruzando el pecho y la firma AIMÉ tejida abajo a la derecha',
+          },
+          {
+            archivo: 'aime-leon-dore-geo-print-crewneck-off-white-espalda.jpg',
+            alt: 'Suéter Aimé Leon Dore × New Balance color hueso, vista de espalda con la otra mitad del globo tramado en puntos grises, que sigue desde el hombro hasta la manga',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
 ]
 
 export const productos: Producto[] = validarCatalogo(catalogo)

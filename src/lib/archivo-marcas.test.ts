@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { archivoDeMarcas, hrefDeMarca, tieneFicha } from './archivo-marcas'
+import { archivoDeMarcas, hrefDeMarca, nombreDeMarcas, tieneFicha } from './archivo-marcas'
 import type { FichaMarca } from '../data/fichas-marca'
 
 const MARCAS_DE_PRUEBA = ['Nike', 'Aimé Leon Dore', 'Represent'] as const
@@ -32,19 +32,24 @@ describe('tieneFicha', () => {
 })
 
 describe('hrefDeMarca', () => {
-  it('con ficha lleva a su pagina, con barra final', () => {
-    expect(hrefDeMarca('aime-leon-dore', FICHAS_DE_PRUEBA)).toBe('/marca/aime-leon-dore/')
+  it('lleva a su pagina, con barra final', () => {
+    expect(hrefDeMarca('aime-leon-dore')).toBe('/marca/aime-leon-dore/')
   })
 
-  it('sin ficha lleva al filtro de la portada, como antes del archivo', () => {
-    expect(hrefDeMarca('nike', FICHAS_DE_PRUEBA)).toBe('/?marca=nike')
+  it('la marca sin ficha lleva al mismo sitio: su pagina, no un filtro', () => {
+    expect(hrefDeMarca('nike')).toBe('/marca/nike/')
   })
 })
 
 describe('archivoDeMarcas', () => {
-  it('lista solo las marcas con ficha', () => {
+  it('lista todas las marcas, tengan ficha o no', () => {
     const entradas = archivoDeMarcas(FICHAS_DE_PRUEBA, MARCAS_DE_PRUEBA)
-    expect(entradas.map((e) => e.slug)).toEqual(['aime-leon-dore', 'represent'])
+    expect(entradas.map((e) => e.slug)).toEqual(['aime-leon-dore', 'nike', 'represent'])
+  })
+
+  it('la marca sin ficha viene con la ficha en nulo, no fuera de la lista', () => {
+    const entradas = archivoDeMarcas(FICHAS_DE_PRUEBA, MARCAS_DE_PRUEBA)
+    expect(entradas.find((e) => e.slug === 'nike')?.ficha).toBeNull()
   })
 
   it('devuelve el nombre con su tilde, no el slug', () => {
@@ -60,10 +65,42 @@ describe('archivoDeMarcas', () => {
 
   it('trae la ficha entera, para que el indice pinte pais y ano', () => {
     const entradas = archivoDeMarcas(FICHAS_DE_PRUEBA, MARCAS_DE_PRUEBA)
-    expect(entradas[1]?.ficha.pais).toBe('Reino Unido')
+    expect(entradas.find((e) => e.slug === 'represent')?.ficha?.pais).toBe('Reino Unido')
   })
 
-  it('con el archivo vacio no devuelve nada', () => {
-    expect(archivoDeMarcas({}, MARCAS_DE_PRUEBA)).toEqual([])
+  it('sin ninguna ficha escrita sigue habiendo una pagina por marca', () => {
+    const entradas = archivoDeMarcas({}, MARCAS_DE_PRUEBA)
+    expect(entradas.map((e) => e.slug)).toEqual(['aime-leon-dore', 'nike', 'represent'])
+    expect(entradas.every((e) => e.ficha === null)).toBe(true)
+  })
+})
+
+describe('nombreDeMarcas', () => {
+  const colaboracion = ['Aimé Leon Dore', 'New Balance']
+
+  it('una sola marca se dice tal cual', () => {
+    expect(nombreDeMarcas(['Lacoste'])).toBe('Lacoste')
+  })
+
+  it('sin marca no dice nada', () => {
+    expect(nombreDeMarcas([])).toBe('')
+  })
+
+  it('sin contexto, la colaboracion se dice entera', () => {
+    expect(nombreDeMarcas(colaboracion)).toBe('Aimé Leon Dore × New Balance')
+  })
+
+  it('dentro de la pagina de una de las dos, manda esa', () => {
+    expect(nombreDeMarcas(colaboracion, 'new-balance')).toBe('New Balance')
+    expect(nombreDeMarcas(colaboracion, 'aime-leon-dore')).toBe('Aimé Leon Dore')
+  })
+
+  it('un contexto que no es suyo se ignora: se dicen las dos', () => {
+    expect(nombreDeMarcas(colaboracion, 'lacoste')).toBe('Aimé Leon Dore × New Balance')
+  })
+
+  it('el contexto no estorba a la prenda de una sola marca', () => {
+    expect(nombreDeMarcas(['Lacoste'], 'lacoste')).toBe('Lacoste')
+    expect(nombreDeMarcas(['Lacoste'], 'nike')).toBe('Lacoste')
   })
 })

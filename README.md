@@ -28,10 +28,12 @@ deliberado: prefiere un despliegue que no sale a una tienda con fichas rotas.
    `aime-leon-dore`.
 3. `npm run build`.
 
-La ficha es opcional. La marca que no la tiene no tiene pagina, y su nombre en
-el menu sigue llevando al catalogo filtrado, como antes. En cuanto se escribe
-la ficha, el menu, la ficha de producto y el indice de `/marca/` la enlazan
-solos.
+La ficha es opcional. TODA marca de `marcas.ts` tiene pagina en `/marca/<slug>/`
+y el menu, la ficha de producto y el indice llevan a ella; lo que la ficha
+cambia es lo que se lee al llegar. Sin ficha, la pagina presenta el nombre, la
+foto de reserva y las piezas de esa marca, y dice que el texto esta en camino.
+En cuanto se escribe, aparecen pais, ano, fundador, la propuesta, el porque y
+los datos estructurados de marca.
 
 Si algo esta mal —falta un campo, la propuesta pasa de 160 caracteres, el slug
 no coincide con ninguna marca de `marcas.ts`, la foto no existe— **el build

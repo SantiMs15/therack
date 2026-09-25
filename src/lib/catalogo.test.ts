@@ -32,6 +32,24 @@ describe('marcasDe', () => {
     producto({ slug: 'd', marca: 'Essentials' }),
   ]
 
+  it('una colaboracion aporta sus DOS marcas a la lista', () => {
+    const conColaboracion = [
+      producto({ slug: 'e', marca: ['Aimé Leon Dore', 'New Balance'] }),
+    ]
+    expect(marcasDe(conColaboracion)).toEqual([
+      { valor: 'aime-leon-dore', etiqueta: 'Aimé Leon Dore' },
+      { valor: 'new-balance', etiqueta: 'New Balance' },
+    ])
+  })
+
+  it('la marca que solo aparece en una colaboracion no se repite si tambien va sola', () => {
+    const catalogo = [
+      producto({ slug: 'a', marca: 'New Balance' }),
+      producto({ slug: 'b', marca: ['Aimé Leon Dore', 'New Balance'] }),
+    ]
+    expect(marcasDe(catalogo).map((m) => m.valor)).toEqual(['aime-leon-dore', 'new-balance'])
+  })
+
   it('no repite marcas y las devuelve en orden alfabetico', () => {
     expect(marcasDe(catalogo)).toEqual([
       { valor: 'essentials', etiqueta: 'Essentials' },

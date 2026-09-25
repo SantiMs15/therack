@@ -20,13 +20,18 @@ import type { Genero, Tipo } from '../data/schema'
  * Lo minimo que necesita una tarjeta para poder filtrarse. Igual que con el
  * orden, el script lo reconstruye leyendo atributos `data-` del <li>.
  *
- * `genero` puede faltar: calzado y accesorios no lo tienen. `marca` tambien:
- * no toda prenda de la tienda es de marca conocida.
+ * `genero` puede faltar: calzado y accesorios no lo tienen. `marcas` puede
+ * venir vacia: no toda prenda de la tienda es de marca conocida.
+ *
+ * `marcas` es una lista y no un texto porque una colaboracion es de dos --
+ * Aimé Leon Dore x New Balance -- y tiene que salir al filtrar por cualquiera
+ * de las dos. La lista lleva SLUGS, no nombres: es lo que viaja en la URL y
+ * lo que el script lee del atributo `data-`.
  */
 export interface Filtrable {
   genero: Genero | null
   tipo: Tipo
-  marca: string | null
+  marcas: string[]
 }
 
 /** null en un campo significa "sin filtrar por eso", no "sin valor". */
@@ -42,7 +47,8 @@ export const SIN_FILTROS: Filtros = { genero: null, tipo: null, marca: null }
 export function pasa(tarjeta: Filtrable, filtros: Filtros): boolean {
   if (filtros.genero && tarjeta.genero !== filtros.genero) return false
   if (filtros.tipo && tarjeta.tipo !== filtros.tipo) return false
-  if (filtros.marca && tarjeta.marca !== filtros.marca) return false
+  // `includes` y no igualdad: basta con que UNA de sus marcas sea la pedida.
+  if (filtros.marca && !tarjeta.marcas.includes(filtros.marca)) return false
   return true
 }
 

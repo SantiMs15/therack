@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets'
 import { ultimaTalla, type Producto, type Variante } from '../data/schema'
+import { nombreDeMarcas } from '../lib/archivo-marcas'
 import { resolverImagen } from '../lib/imagenes-productos'
 import { formatearPrecio } from '../lib/formato'
 
@@ -16,10 +17,24 @@ interface Props {
    * verdad manda llega mas tarde que si solo estuviera ella.
    */
   principal?: boolean
+  /**
+   * El slug de la marca cuya pagina esta pintando esta tarjeta, si la hay.
+   * Solo cambia algo para una colaboracion: dentro de /marca/new-balance/ la
+   * prenda se presenta como New Balance y no como las dos.
+   */
+  marcaContexto?: string | null
 }
-const { producto, variante, prioridad = false, principal = false } = Astro.props
+const {
+  producto,
+  variante,
+  prioridad = false,
+  principal = false,
+  marcaContexto = null,
+} = Astro.props
 
-const alternativoPorDefecto = [producto.marca, producto.nombre, variante.color]
+const nombreMarca = nombreDeMarcas(producto.marcas, marcaContexto)
+
+const alternativoPorDefecto = [nombreMarca, producto.nombre, variante.color]
   .filter(Boolean)
   .join(' ')
 
@@ -83,7 +98,7 @@ const ultima = variante.disponible ? ultimaTalla(producto) : null
         un <a>, que ni es HTML valido ni dejaria pulsar las flechas. */}
     <a class="enlace" href={enlace}>{producto.nombre} - {variante.color}</a>
   </h3>
-  {producto.marca && <p class="marca">{producto.marca}</p>}
+  {nombreMarca && <p class="marca">{nombreMarca}</p>}
   <p class="precio">{formatearPrecio(producto.precio)}</p>
 </article>
 

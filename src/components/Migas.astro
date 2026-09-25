@@ -24,7 +24,17 @@ const { migas } = Astro.props
   <ol>
     {migas.map((miga) => (
       <li>
-        {miga.ruta ? (
+        {miga.partes ? (
+          /* Un escalon con dos destinos: la prenda de dos marcas. Van dentro
+             del mismo <li> y no en uno cada uno, que diria que una marca
+             cuelga de la otra. */
+          miga.partes.map(({ nombre, ruta }, i) => (
+            <>
+              {i > 0 && <span class="migas__y" aria-hidden="true">×</span>}
+              <a href={ruta}>{nombre}</a>
+            </>
+          ))
+        ) : miga.ruta ? (
           <a href={miga.ruta}>{miga.nombre}</a>
         ) : (
           /* El ultimo escalon no es un enlace: lleva a donde ya se esta. */
@@ -62,6 +72,13 @@ const { migas } = Astro.props
   .migas li + li::before {
     content: '›';
     margin-inline-end: 0.6ch;
+    color: var(--linea);
+  }
+
+  /* La cruz entre dos marcas del mismo escalon. Del color de la linea, como
+     el separador de escalones: no es una palabra del rastro, es puntuacion. */
+  .migas__y {
+    margin-inline: 0.5ch;
     color: var(--linea);
   }
 

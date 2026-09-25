@@ -1,7 +1,11 @@
 ---
 /**
  * Menu a pantalla completa: boton en la cabecera que despliega un panel con
- * los enlaces del sitio.
+ * los enlaces que se le pasen.
+ *
+ * No sabe que lista pinta: recibe `enlaces` y un `id` propio. Hoy la cabecera
+ * monta uno solo, el del archivo de marcas; la lista vive en Layout.astro,
+ * que es donde se decide que ensena la cabecera.
  *
  * Portado de un componente React + GSAP conservando su comportamiento (capas
  * de fondo escalonadas, enlaces que suben rotando, icono que gira, texto del
@@ -12,49 +16,40 @@
  * La paleta se pasa a la del sitio: el original usaba indigo, violeta y rosa,
  * que el spec y el DESIGN.md del proyecto prohiben expresamente.
  */
-import { marcasTodas } from '../data/marcas'
-import { hrefDeMarca } from '../lib/archivo-marcas'
+export interface Enlace {
+  href: string
+  texto: string
+  /** Se descuelga del bloque: no es una entrada mas de la lista de arriba. */
+  aparte?: boolean
+}
+
+interface Props {
+  /** Id del panel. Lo apunta el aria-controls del boton, y con dos menus en
+      la misma pagina es lo que empareja cada boton con el suyo. */
+  id: string
+  /** Texto del boton y nombre del panel para el lector de pantalla. */
+  rotulo: string
+  enlaces: Enlace[]
+}
+
+const { id, rotulo, enlaces } = Astro.props
 
 /**
- * El menu lista las MARCAS de la tienda, no las categorias: genero, prenda y
- * ahora tambien marca se eligen en la barra de filtros de la rejilla, y
- * repetirlos aqui daria dos caminos para lo mismo.
- *
- * Aqui la marca no filtra: PRESENTA. Cada nombre lleva a la pagina donde se
- * cuenta de donde viene esa marca y por que esta en la tienda, que es lo que
- * el cliente que no la conoce necesita antes que ver diez prendas suyas.
- *
- * La marca sin ficha todavia no tiene esa pagina, asi que sigue llevando al
- * filtro de la portada. Lo decide `hrefDeMarca`, en un solo sitio: el dia que
- * se escriba su ficha, el menu cambia de destino sin tocar este archivo.
- *
- * La lista es la de marcas.ts, no la del catalogo: el menu anuncia lo que la
- * tienda vende, y una marca sin stock hoy lleva a una rejilla vacia que lo
- * dice. Esconderla hasta que entre la primera prenda seria contar menos de lo
- * que hay.
+ * Con pocas entradas las dos columnas de escritorio parten una lista que ya
+ * cabia de sobra en una: se reservan para el archivo, que pasa de veinte.
  */
-const enlaces = [
-  ...marcasTodas().map((marca) => ({
-    href: hrefDeMarca(marca.valor),
-    texto: marca.etiqueta,
-    aparte: false,
-  })),
-  // Ni el archivo ni la tienda son marcas: se separan para que no se lean
-  // como dos mas de la lista.
-  { href: '/marca/', texto: 'Archivo de marcas', aparte: true },
-  { href: '/tienda/', texto: 'Tienda', aparte: true },
-]
+const enColumnas = enlaces.length > 8
 ---
 
 <button
   type="button"
   class="boton-menu"
   aria-expanded="false"
-  aria-controls="menu-pantalla-completa"
+  aria-controls={id}
   data-menu-boton
 >
   <span class="boton-menu__textos">
-    <span>Archivo de marcas</span>
+    <span>{rotulo}</span>
     <span>Cerrar</span>
   </span>
   <span class="boton-menu__icono" aria-hidden="true">
@@ -65,10 +60,10 @@ const enlaces = [
   </span>
 </button>
 
-<div class="menu" id="menu-pantalla-completa" data-menu data-estado="cerrado">
+<div class="menu" id={id} data-menu data-estado="cerrado">
   <div class="menu__velo" data-menu-cerrar></div>
 
-  <nav class="menu__panel" aria-label="Archivo de marcas">
+  <nav class="menu__panel" aria-label={rotulo}>
     <span class="menu__capa" aria-hidden="true"></span>
     <span class="menu__capa" aria-hidden="true"></span>
     <span class="menu__capa" aria-hidden="true"></span>
@@ -78,7 +73,7 @@ const enlaces = [
         el que se moviera fuera el panel se irian con el texto y dejarian el
         hueco a la vista. */}
     <div class="menu__desplazable">
-    <ul class="menu__lista">
+    <ul class:list={['menu__lista', { 'menu__lista--columnas': enColumnas }]}>
       {enlaces.map((e, i) => (
         <li
           class:list={['menu__item', { 'menu__item--aparte': e.aparte }]}
@@ -249,9 +244,9 @@ const enlaces = [
      lee un indice. La entrada aparte -- Tienda -- se saca de las columnas
      para que siga colgando debajo de todo. */
   @media (min-width: 768px) {
-    .menu__lista { columns: 2; column-gap: var(--espacio-4); }
-    .menu__item { break-inside: avoid; }
-    .menu__item--aparte { column-span: all; }
+    .menu__lista--columnas { columns: 2; column-gap: var(--espacio-4); }
+    .menu__lista--columnas .menu__item { break-inside: avoid; }
+    .menu__lista--columnas .menu__item--aparte { column-span: all; }
   }
 
   /* Cada enlace vive en una ventana que recorta: el texto sube desde abajo
@@ -327,11 +322,14 @@ const enlaces = [
 <script>
   // Unico JavaScript de este componente: abrir, cerrar y devolver el foco.
   // La animacion entera vive en CSS.
-  const menu = document.querySelector<HTMLElement>('[data-menu]')
+  //
+  // El panel se busca por el aria-controls del boton y no por [data-menu]: el
+  // id lo pone quien monta el componente, asi que el emparejamiento sigue
+  // siendo el correcto el dia que la cabecera monte un segundo menu.
   const boton = document.querySelector<HTMLButtonElement>('[data-menu-boton]')
-  const velo = document.querySelector<HTMLElement>('[data-menu-cerrar]')
+  const menu = document.getElementById(boton?.getAttribute('aria-controls') ?? '')
 
-  if (menu && boton) {
+  if (boton && menu) {
     const enlaces = menu.querySelectorAll<HTMLAnchorElement>('.menu__enlace')
 
     const abrir = (si: boolean) => {
@@ -351,7 +349,9 @@ const enlaces = [
     abrir(false)
 
     boton.addEventListener('click', () => abrir(menu.dataset.estado !== 'abierto'))
-    velo?.addEventListener('click', () => abrir(false))
+    menu
+      .querySelector<HTMLElement>('[data-menu-cerrar]')
+      ?.addEventListener('click', () => abrir(false))
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && menu.dataset.estado === 'abierto') abrir(false)
     })

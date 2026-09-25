@@ -12,8 +12,19 @@ interface Props {
   ordenable?: boolean
   /** Genero de la pagina, o null en la portada. Lo marca el desplegable. */
   generoActivo?: Genero | null
+  /**
+   * El slug de la marca de la pagina, cuando la rejilla vive dentro de una.
+   * Se lo pasa a cada tarjeta para que una colaboracion se presente por la
+   * marca que el visitante vino a ver.
+   */
+  marcaContexto?: string | null
 }
-const { productos, ordenable = false, generoActivo = null } = Astro.props
+const {
+  productos,
+  ordenable = false,
+  generoActivo = null,
+  marcaContexto = null,
+} = Astro.props
 
 // Se ordena en el build, no en el navegador: el HTML sale ya en el orden que
 // se ve al entrar, y las cuatro primeras fotos pueden marcarse como
@@ -72,7 +83,7 @@ const ordenadas = tarjetasEnOrden(productos)
           otra, y no solo las tarjetas. */}
       <div class="resultados" data-resultados>
       <ul class="rejilla" data-rejilla>
-        {ordenadas.map(({ producto, variante, indice, turno, precio, destacado, genero, tipo, marca }, i) => (
+        {ordenadas.map(({ producto, variante, indice, turno, precio, destacado, genero, tipo, marcas }, i) => (
           <li
             data-indice={indice}
             data-turno={turno}
@@ -80,13 +91,18 @@ const ordenadas = tarjetasEnOrden(productos)
             data-destacado={destacado ? '1' : '0'}
             data-genero={genero ?? undefined}
             data-tipo={tipo}
-            data-marca={marca ?? undefined}
+            {/* Separadas por espacio, que es como el script las parte. Una
+                colaboracion lleva las dos, y asi pasa el filtro de cualquiera
+                de ellas sin que el navegador tenga que saber que es una
+                colaboracion. */}
+            data-marca={marcas.length ? marcas.join(' ') : undefined}
           >
             <TarjetaProducto
               producto={producto}
               variante={variante}
               prioridad={i < 4}
               principal={i === 0}
+              marcaContexto={marcaContexto}
             />
           </li>
         ))}
@@ -122,10 +138,14 @@ const ordenadas = tarjetasEnOrden(productos)
   @media (min-width: 768px) {
     .rejilla {
       grid-template-columns: repeat(3, 1fr);
-      /* 6rem: por encima del token mas grande (--espacio-4, 4rem). A cuatro
-         columnas es lo que hace que cada prenda se lea aislada en vez de en
-         bloque, a costa de unos 25px de ancho por tarjeta. */
-      gap: 6rem;
+      /* 4.5rem: por encima del token mas grande (--espacio-4, 4rem), que es
+         lo que mantiene la prenda leyendose aislada en vez de en bloque.
+         Estuvo en 6rem y la foto salia perdiendo: el hueco es lo unico de lo
+         que puede crecer la tarjeta -- el contenedor y el numero de columnas
+         no se tocan -- y a 4.5rem cada celda gana un 7% de ancho sin que la
+         rejilla se lea como un bloque. La foto sigue en 3:4, que es el ratio
+         exacto de los archivos, asi que crece entera y no se recorta nada. */
+      gap: 4.5rem;
     }
   }
 
