@@ -576,27 +576,4 @@ const catalogo: unknown[] = [
   },
 ]
 
-/**
- * PLACEHOLDER DE SALE. Copias de prendas de arriba a mitad de precio, para
- * ver la seccion llena mientras no haya rebajas de verdad. La original se
- * queda en Exclusives; la copia lleva `-sale` en el slug para no chocar con
- * ella. Borrar este bloque (y el spread de abajo) el dia que se rebaje algo
- * real.
- */
-const PLACEHOLDER_SALE = [
-  'crew-neck-lacoste',
-  'striped-cable-knit-polo',
-  'essentials-fleece-hoodie',
-  'mixed-media-puffer-jacket',
-  'unisphere-tee',
-  'geo-print-crewneck',
-]
-
-const placeholdersSale = catalogo
-  .filter((p) => PLACEHOLDER_SALE.includes((p as { slug: string }).slug))
-  .map((p) => {
-    const { slug, precio } = p as { slug: string; precio: number }
-    return { ...(p as object), slug: `${slug}-sale`, precio: Math.round(precio / 2), precioAntes: precio }
-  })
-
-export const productos: Producto[] = validarCatalogo([...catalogo, ...placeholdersSale])
+export const productos: Producto[] = validarCatalogo(catalogo)

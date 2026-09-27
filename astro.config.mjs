@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process'
 import { defineConfig } from 'astro/config'
 import sitemap from '@astrojs/sitemap'
+import { productos } from './src/data/productos.ts'
+import { enSale } from './src/data/schema.ts'
 
 /**
  * Fecha del ultimo commit que toco un archivo.
@@ -36,6 +38,11 @@ const TIENDA = ultimoCambio('src/config.ts')
 // cambiarla no cambia lo que la pagina dice.
 const ARCHIVO = ultimoCambio('src/data/fichas-marca.ts')
 
+// /sale/ se publica siempre, pero sin rebajas lleva noindex: meterla en el
+// sitemap seria pedirle a Google que indexe una pagina que le dice que no.
+// La misma regla que `saleDe`, desde la misma funcion.
+const HAY_SALE = productos.some(enSale)
+
 export default defineConfig({
   site: 'https://therackstore.shop',
   build: { format: 'directory' },
@@ -44,6 +51,7 @@ export default defineConfig({
   // sale de `npm run build` como un archivo mas de dist/.
   integrations: [
     sitemap({
+      filter: (url) => HAY_SALE || new URL(url).pathname !== '/sale/',
       serialize(entrada) {
         // Se compara el pathname y no el final de la URL entera: con tres
         // ramas, mirar sufijos es facil de romper.

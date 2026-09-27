@@ -14,8 +14,6 @@ import '../styles/global.css'
 import logoUrl from '../assets/logo-web.svg?url'
 import MenuPantallaCompleta, { type Enlace } from '../components/MenuPantallaCompleta.astro'
 import { marcasTodas } from '../data/marcas'
-import { productos } from '../data/productos'
-import { saleDe } from '../lib/catalogo'
 import { hrefDeMarca } from '../lib/archivo-marcas'
 import { CONFIG, INSTAGRAM_URL } from '../config'
 
@@ -29,6 +27,13 @@ interface Props {
    * tampoco existe.
    */
   sinCanonica?: boolean
+  /**
+   * Pagina que existe pero hoy no tiene nada que ensenar a un buscador. Hoy
+   * solo Sale sin rebajas: se queda publicada para que el enlace de la
+   * cabecera no lleve a un 404, pero una pagina vacia indexada resta al
+   * sitio entero. `follow` para que los enlaces de la pagina sigan contando.
+   */
+  indexable?: boolean
   /**
    * Foto para la tarjeta que se pinta al compartir el enlace. URL absoluta.
    * Sin ella va el logo sobre el gris del sitio, que es lo correcto para la
@@ -46,6 +51,7 @@ const {
   titulo,
   descripcion = 'Tienda de ropa en ' + CONFIG.ciudad,
   sinCanonica = false,
+  indexable = true,
   imagen,
   imagenAlt,
   imagenAncho,
@@ -93,14 +99,13 @@ const tituloCompleto = `${titulo} — ${CONFIG.nombre}`
  * sitio al que se va, no una lista entre la que elegir. Se distinguen a
  * proposito.
  *
- * Sale solo aparece si tiene prendas: su pagina no se genera vacia, y un
- * enlace a ella seria un 404.
+ * Sale sale siempre, tenga prendas o no: la seccion es parte de la tienda
+ * aunque hoy no haya rebajas, y su pagina se publica siempre (vacia, con
+ * noindex), asi que el enlace nunca lleva a un 404.
  */
 const ruta = Astro.url.pathname
 const secciones = [
-  ...(saleDe(productos).length
-    ? [{ href: '/sale/', texto: 'Sale', actual: ruta.startsWith('/sale') }]
-    : []),
+  { href: '/sale/', texto: 'Sale', actual: ruta.startsWith('/sale') },
   { href: '/', texto: 'Exclusives', actual: ruta === '/' },
 ]
 
@@ -148,6 +153,7 @@ const enlacesArchivo: Enlace[] = [
     <title>{tituloCompleto}</title>
     <meta name="description" content={descripcion} />
     {!sinCanonica && <link rel="canonical" href={canonica.href} />}
+    {!indexable && <meta name="robots" content="noindex, follow" />}
 
     <meta property="og:type" content={tipo} />
     <meta property="og:site_name" content={CONFIG.nombre} />
