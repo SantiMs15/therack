@@ -54,7 +54,7 @@ const enlace = `/producto/${producto.slug}/${variante.slug}/`
 
 // Si la prenda esta agotada no hay ultima talla que anunciar: lo que falta ya
 // lo dice el aviso de abajo, y dos avisos sobre la misma foto se estorban.
-const ultima = variante.disponible ? ultimaTalla(producto) : null
+const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
 ---
 <article class="tarjeta">
   <div class="marco" data-galeria data-indice={indiceInicial}>

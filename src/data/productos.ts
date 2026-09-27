@@ -507,6 +507,96 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+  {
+    slug: 'astronaut-tee',
+    nombre: 'Astronaut Tee',
+    marca: 'KidSuper Studios',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 220000,
+    // Una sola pieza, en M: mismo criterio que la chaqueta Tommy, sin la
+    // escala entera tachada.
+    tallas: ['M'],
+    descripcion:
+      'Camiseta KidSuper Studios en algodón color crudo, cuello redondo acanalado y corte holgado de hombro caído. Lleva al frente un astronauta pintado a mano en acuarela, flotando con un libro abierto, y la firma de la marca con la leyenda A discovery tour of our universe.',
+    variantes: [
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        imagenes: [
+          {
+            archivo: 'kidsuper-studios-astronaut-tee-blanco-frente.jpg',
+            alt: 'Camiseta KidSuper Studios color crudo, vista frontal de la prenda sola con un astronauta en acuarela azul y amarillo flotando con un libro abierto y la firma de la marca en azul a la derecha',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+  {
+    slug: 'twitch-studded-crewneck-t-shirt',
+    nombre: 'Twitch Studded Crewneck T-Shirt',
+    marca: 'Pleasures',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 220000,
+    // M y L son las del blanco; el negro declara las suyas abajo.
+    tallas: ['M', 'L'],
+    descripcion:
+      'Camiseta Pleasures en algodón, cuello redondo acanalado y corte holgado. Cruza el pecho el logo Pleasures en letra gótica arqueada, aplicado en cuero sintético negro y tachonado con remaches plateados. En negro con lavado desgastado o en blanco.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'pleasures-twitch-studded-crewneck-t-shirt-negro-frente.jpg',
+            alt: 'Camiseta Pleasures negra desgastada, vista frontal de la prenda sola con el logo Pleasures en letra gótica arqueada, aplicado en cuero negro con remaches plateados, y la etiqueta roja en el cuello',
+          },
+        ],
+        // Una sola pieza en negro: sin la L, que es del blanco, y sin
+        // tacharla, que daria a entender que puede volver.
+        tallas: ['M'],
+        disponible: true,
+      },
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        imagenes: [
+          {
+            archivo: 'pleasures-twitch-studded-crewneck-t-shirt-blanco-frente.jpg',
+            alt: 'Camiseta Pleasures blanca, vista frontal de la prenda sola con el logo Pleasures en letra gótica arqueada, aplicado en cuero negro con remaches plateados, y la etiqueta roja en el cuello',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
 ]
 
-export const productos: Producto[] = validarCatalogo(catalogo)
+/**
+ * PLACEHOLDER DE SALE. Copias de prendas de arriba a mitad de precio, para
+ * ver la seccion llena mientras no haya rebajas de verdad. La original se
+ * queda en Exclusives; la copia lleva `-sale` en el slug para no chocar con
+ * ella. Borrar este bloque (y el spread de abajo) el dia que se rebaje algo
+ * real.
+ */
+const PLACEHOLDER_SALE = [
+  'crew-neck-lacoste',
+  'striped-cable-knit-polo',
+  'essentials-fleece-hoodie',
+  'mixed-media-puffer-jacket',
+  'unisphere-tee',
+  'geo-print-crewneck',
+]
+
+const placeholdersSale = catalogo
+  .filter((p) => PLACEHOLDER_SALE.includes((p as { slug: string }).slug))
+  .map((p) => {
+    const { slug, precio } = p as { slug: string; precio: number }
+    return { ...(p as object), slug: `${slug}-sale`, precio: Math.round(precio / 2), precioAntes: precio }
+  })
+
+export const productos: Producto[] = validarCatalogo([...catalogo, ...placeholdersSale])

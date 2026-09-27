@@ -115,21 +115,6 @@ export const ImagenSchema = z
 export type Imagen = z.infer<typeof ImagenSchema>
 
 /**
- * Una variante es un color concreto de una prenda. Cada una tiene sus
- * propias fotos, su propia disponibilidad y su propia pagina, para que el
- * enlace que viaja en el mensaje de WhatsApp lleve al color exacto que el
- * cliente miraba y no a una ficha generica donde tenga que volver a elegir.
- */
-export const VarianteSchema = z.strictObject({
-  color: z.string().min(1, 'color: no puede estar vacio'),
-  slug: z.string().regex(SLUG, 'variante.slug: solo minusculas, numeros y guiones'),
-  imagenes: z.array(ImagenSchema).min(1, 'imagenes: al menos una'),
-  disponible: z.boolean(),
-})
-
-export type Variante = z.infer<typeof VarianteSchema>
-
-/**
  * Una talla. Se acepta el nombre suelto, que se da por disponible, o un
  * objeto que declara `disponible: false`: la talla agotada sigue apareciendo
  * en la ficha, tachada, porque el rango que cubre la prenda es informacion
@@ -148,6 +133,26 @@ export const TallaSchema = z
   )
 
 export type Talla = z.infer<typeof TallaSchema>
+
+/**
+ * Una variante es un color concreto de una prenda. Cada una tiene sus
+ * propias fotos, su propia disponibilidad y su propia pagina, para que el
+ * enlace que viaja en el mensaje de WhatsApp lleve al color exacto que el
+ * cliente miraba y no a una ficha generica donde tenga que volver a elegir.
+ *
+ * `tallas` es opcional: sin ella el color tiene las de la prenda, que es lo
+ * normal. Se declara cuando un color tiene otras piezas que el resto, como la
+ * Twitch de Pleasures, que en negro queda en M y en blanco en M y L.
+ */
+export const VarianteSchema = z.strictObject({
+  color: z.string().min(1, 'color: no puede estar vacio'),
+  slug: z.string().regex(SLUG, 'variante.slug: solo minusculas, numeros y guiones'),
+  imagenes: z.array(ImagenSchema).min(1, 'imagenes: al menos una'),
+  tallas: z.array(TallaSchema).min(1, 'variante.tallas: al menos una si se declara').optional(),
+  disponible: z.boolean(),
+})
+
+export type Variante = z.infer<typeof VarianteSchema>
 
 /**
  * De quien es una prenda. Se escribe como texto -- `marca: 'Lacoste'` -- y
@@ -253,9 +258,17 @@ export function validarCatalogo(datos: unknown[]): Producto[] {
   return productos
 }
 
+/**
+ * Las tallas de un color: las suyas si las declara, las de la prenda si no.
+ * Sin variante, las de la prenda.
+ */
+export function tallasDe(producto: Producto, variante?: Variante): Talla[] {
+  return variante?.tallas ?? producto.tallas
+}
+
 /** Las tallas que hoy se pueden pedir. Las agotadas siguen en la ficha, tachadas. */
-export function tallasDisponibles(producto: Producto): Talla[] {
-  return producto.tallas.filter((talla) => talla.disponible)
+export function tallasDisponibles(producto: Producto, variante?: Variante): Talla[] {
+  return tallasDe(producto, variante).filter((talla) => talla.disponible)
 }
 
 /**
@@ -268,8 +281,8 @@ export function tallasDisponibles(producto: Producto): Talla[] {
  * Cero tallas disponibles no es "ultima talla" sino agotado, que la ficha ya
  * resuelve por su cuenta con `variante.disponible`.
  */
-export function ultimaTalla(producto: Producto): Talla | null {
-  const quedan = tallasDisponibles(producto)
+export function ultimaTalla(producto: Producto, variante?: Variante): Talla | null {
+  const quedan = tallasDisponibles(producto, variante)
   return quedan.length === 1 ? quedan[0]! : null
 }
 

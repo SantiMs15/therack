@@ -103,7 +103,7 @@ const enColumnas = enlaces.length > 8
     padding: 0.25rem 0;
     color: var(--texto);
     font: inherit;
-    font-size: 0.9375rem;
+    font-size: 1.0566rem;
     cursor: pointer;
   }
 
@@ -332,7 +332,8 @@ const enColumnas = enlaces.length > 8
   if (boton && menu) {
     const enlaces = menu.querySelectorAll<HTMLAnchorElement>('.menu__enlace')
 
-    const abrir = (si: boolean) => {
+    const abrir = (si: boolean, enfocar = true) => {
+      const estabaAbierto = menu.dataset.estado === 'abierto'
       menu.dataset.estado = si ? 'abierto' : 'cerrado'
       // La cabecera es un ancestro y CSS no puede seleccionar hacia arriba:
       // se marca el estado en <body> para que pueda volverse transparente.
@@ -343,10 +344,21 @@ const enColumnas = enlaces.length > 8
       enlaces.forEach((a) => a.setAttribute('tabindex', si ? '0' : '-1'))
       document.body.style.overflow = si ? 'hidden' : ''
       if (si) enlaces[0]?.focus()
-      else boton.focus()
+      // El foco vuelve al boton solo al CERRAR un menu abierto. El
+      // abrir(false) del arranque no cierra nada: si enfocara, el boton
+      // saldria recuadrado por el anillo de foco nada mas cargar la pagina.
+      else if (estabaAbierto && enfocar) boton.focus()
     }
 
     abrir(false)
+
+    // Se sale a una marca desde el menu abierto, y con Atras el navegador
+    // devuelve la pagina de su cache con el menu todavia abierto encima. Se
+    // cierra sin animar (las transiciones estan congeladas, ver el Layout) y
+    // sin mover el foco: nadie ha pulsado cerrar.
+    addEventListener('pageshow', (evento) => {
+      if (evento.persisted && menu.dataset.estado === 'abierto') abrir(false, false)
+    })
 
     boton.addEventListener('click', () => abrir(menu.dataset.estado !== 'abierto'))
     menu

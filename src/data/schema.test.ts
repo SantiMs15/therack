@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { descuento, enSale, validarCatalogo } from './schema'
+import { descuento, enSale, tallasDe, ultimaTalla, validarCatalogo } from './schema'
 
 /**
  * La forma minima que acepta el validador. Cada test cambia solo lo que
@@ -87,5 +87,40 @@ describe('descuento', () => {
 
   it('sin sale no hay descuento', () => {
     expect(descuento(producto({}))).toBeNull()
+  })
+})
+
+describe('tallas de un color', () => {
+  const conDosColores = () =>
+    producto({
+      tallas: ['M', 'L'],
+      variantes: [
+        { color: 'Negro', slug: 'negro', imagenes: ['a.jpg'], tallas: ['M'], disponible: true },
+        { color: 'Blanco', slug: 'blanco', imagenes: ['b.jpg'], disponible: true },
+      ],
+    })
+
+  it('el color que declara tallas usa las suyas', () => {
+    const p = conDosColores()
+    expect(tallasDe(p, p.variantes[0]).map((t) => t.talla)).toEqual(['M'])
+  })
+
+  it('el color que no las declara hereda las de la prenda', () => {
+    const p = conDosColores()
+    expect(tallasDe(p, p.variantes[1]).map((t) => t.talla)).toEqual(['M', 'L'])
+  })
+
+  it('la ultima talla se cuenta por color, no por prenda', () => {
+    const p = conDosColores()
+    expect(ultimaTalla(p, p.variantes[0])?.talla).toBe('M')
+    expect(ultimaTalla(p, p.variantes[1])).toBeNull()
+  })
+
+  it('rechaza una lista de tallas vacia en el color', () => {
+    expect(() =>
+      producto({
+        variantes: [{ color: 'Negro', slug: 'negro', imagenes: ['a.jpg'], tallas: [], disponible: true }],
+      })
+    ).toThrow(/tallas/)
   })
 })

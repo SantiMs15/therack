@@ -158,3 +158,14 @@ img { max-width: 100%; display: block; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Pagina que vuelve con el boton Atras desde la cache del navegador (bfcache).
+   Vuelve tal como se fue: apagada por el fundido de salida, con el menu
+   abierto o con el barrido de la ficha tapandola. El script del Layout la
+   devuelve a su estado de reposo, y mientras lo hace no se anima nada: la
+   pagina tiene que aparecer ya quieta, no deshaciendo la salida a la vista. */
+html[data-restaurando] *,
+html[data-restaurando] *::before,
+html[data-restaurando] *::after {
+  transition: none !important;
+}

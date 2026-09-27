@@ -5,7 +5,7 @@ import BotonWhatsApp from '../../../components/BotonWhatsApp.astro'
 import Migas from '../../../components/Migas.astro'
 import Precio from '../../../components/Precio.astro'
 import { productos } from '../../../data/productos'
-import { ETIQUETAS_CATEGORIA, ETIQUETAS_TIPO_UNA, ultimaTalla } from '../../../data/schema'
+import { ETIQUETAS_CATEGORIA, ETIQUETAS_TIPO_UNA, tallasDe, ultimaTalla } from '../../../data/schema'
 import { fichaMigas, fichaProducto, serializar, type Miga } from '../../../lib/datos-estructurados'
 import { resolverImagen } from '../../../lib/imagenes-productos'
 import { resumir } from '../../../lib/formato'
@@ -93,7 +93,7 @@ if (!Astro.site) {
 }
 // Solo se anuncia sobre una variante que se puede pedir: si el color esta
 // agotado la ficha no llega a pintar las tallas.
-const ultima = variante.disponible ? ultimaTalla(producto) : null
+const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
 // Con barra final: el build usa `format: 'directory'`, asi que esa es la forma
 // canonica. Sin ella el servidor redirige, y ademas el enlace no coincidiria
 // con el canonical ni con el `offers.url` del schema.
@@ -302,7 +302,7 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
               {/* Nace vacio: el estado contesta a una eleccion, no la adelanta. */}
               <span class="tallas__estado" data-talla-estado aria-live="polite"></span>
             </legend>
-            {producto.tallas.map(({ talla, disponible }) => (
+            {tallasDe(producto, variante).map(({ talla, disponible }) => (
               <label>
                 {/* Deshabilitada: la agotada no se puede elegir. El clic sobre
                     la etiqueta si llega al script, que es lo que permite

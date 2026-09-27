@@ -884,10 +884,18 @@ const { generos, tipos, marcas, marcasValidas, generoActivo = null } = Astro.pro
       // llega se pinta ya apagada (script inline de RejillaProductos) y aqui
       // abajo se enciende. El fundido de ida y el de vuelta son los mismos que
       // usa el filtrado.
+      //
+      // Exclusives y Sale, en la cabecera, entran por el mismo camino: las dos
+      // son esta misma rejilla con otras prendas, y saltar entre ellas es lo
+      // mismo que cambiar de genero. Se buscan en el documento y no en `raiz`
+      // porque viven en el Layout, fuera de la barra de filtros.
       {
-        const enlacesGenero = raiz.querySelectorAll<HTMLAnchorElement>(
-          '[data-desplegable]:not([data-desplegable-filtro]) a[data-opcion]'
-        )
+        const enlacesGenero = [
+          ...raiz.querySelectorAll<HTMLAnchorElement>(
+            '[data-desplegable]:not([data-desplegable-filtro]) a[data-opcion]'
+          ),
+          ...document.querySelectorAll<HTMLAnchorElement>('a[data-seccion]'),
+        ]
 
         for (const enlace of enlacesGenero) {
           enlace.addEventListener('click', (evento) => {
@@ -903,6 +911,9 @@ const { generos, tipos, marcas, marcasValidas, generoActivo = null } = Astro.pro
             }
             // Sin animaciones, sin espera: se navega y ya.
             if (quietud.matches) return
+            // La seccion en la que ya se esta: apagar la rejilla para volver a
+            // la misma pagina seria un parpadeo sin viaje.
+            if (enlace.href === location.href) return
 
             evento.preventDefault()
             try {

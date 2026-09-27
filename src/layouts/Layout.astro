@@ -98,10 +98,10 @@ const tituloCompleto = `${titulo} — ${CONFIG.nombre}`
  */
 const ruta = Astro.url.pathname
 const secciones = [
-  { href: '/', texto: 'Exclusives', actual: ruta === '/' },
   ...(saleDe(productos).length
     ? [{ href: '/sale/', texto: 'Sale', actual: ruta.startsWith('/sale') }]
     : []),
+  { href: '/', texto: 'Exclusives', actual: ruta === '/' },
 ]
 
 /** Las paginas del archivo entran fundidas; ver el script de mas abajo. */
@@ -191,7 +191,7 @@ const enlacesArchivo: Enlace[] = [
       <div class="cabecera__acciones">
         <nav class="secciones" aria-label="Catálogo">
           {secciones.map(({ href, texto, actual }) => (
-            <a class="enlace-catalogo" href={href} aria-current={actual ? 'page' : undefined}>{texto}</a>
+            <a class:list={['enlace-catalogo', { 'enlace-catalogo--sale': href === '/sale/' }]} href={href} aria-current={actual ? 'page' : undefined} data-seccion>{texto}</a>
           ))}
         </nav>
         <MenuPantallaCompleta
@@ -293,6 +293,44 @@ const enlacesArchivo: Enlace[] = [
         })
       }
 
+      // --- El boton Atras ---
+      // El navegador guarda la pagina en su cache al salir (bfcache) y con
+      // Atras la devuelve TAL COMO SE FUE: con el body a opacidad 0 del
+      // fundido de salida, la rejilla apagada del cambio de seccion o el
+      // barrido de la ficha tapandolo todo. Se veia una pagina en blanco.
+      //
+      // Al irse se congelan las transiciones -- ya no se ve, no cuesta nada --
+      // y al volver se quitan las marcas de los fundidos con la pagina quieta.
+      // El menu se cierra solo con el mismo aviso (MenuPantallaCompleta).
+      {
+        const raiz = document.documentElement
+
+        addEventListener('pagehide', () => {
+          raiz.dataset.restaurando = ''
+        })
+
+        addEventListener('pageshow', (evento) => {
+          if (!evento.persisted) {
+            delete raiz.dataset.restaurando
+            return
+          }
+          delete raiz.dataset.saliendo
+          delete raiz.dataset.entrando
+          delete raiz.dataset.filtrando
+          delete raiz.dataset.barrido
+          for (const resultados of document.querySelectorAll<HTMLElement>('[data-resultados]')) {
+            delete resultados.dataset.cambiando
+          }
+          // Dos fotogramas, como al encender: el primero pinta el reposo sin
+          // animar, y solo despues vuelven las transiciones.
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              delete raiz.dataset.restaurando
+            })
+          })
+        })
+      }
+
       // --- La vuelta ---
       if (document.documentElement.hasAttribute('data-entrando')) {
         // Dos fotogramas: el primero deja que el navegador pinte el estado
@@ -360,7 +398,16 @@ const enlacesArchivo: Enlace[] = [
     position: relative;
     z-index: 30;
     color: var(--texto);
-    font-size: 0.9375rem;
+    font-size: 1.0566rem;
+  }
+
+  /* Sale en burdeos, el color de la rebaja en la rejilla y la ficha: el
+     enlace ya dice lo que se va a encontrar. */
+  .enlace-catalogo--sale {
+    color: var(--burdeos);
+    /* Mayusculas por CSS y no en el texto: un lector de pantalla lee "Sale",
+       no deletrea S-A-L-E. */
+    text-transform: uppercase;
   }
 
   .enlace-catalogo:hover { text-decoration: underline; }
@@ -371,11 +418,13 @@ const enlacesArchivo: Enlace[] = [
     text-underline-offset: 0.3em;
   }
 
-  /* Entre las dos secciones, menos hueco que entre ellas y el archivo: son
-     dos destinos del mismo catalogo. */
-  .secciones {
+  /* Entre las dos secciones, el mismo hueco que entre ellas y el archivo:
+     los tres rotulos a igual distancia. `inherit` y no el valor copiado, para
+     que el recorte de movil de .cabecera__acciones llegue tambien aqui.
+     `.cabecera` delante para ganarle al `.cabecera nav` de mas abajo. */
+  .cabecera .secciones {
     display: flex;
-    gap: var(--espacio-2);
+    gap: inherit;
   }
 
   /* Con el panel abierto el enlace queda sobre el velo oscuro. */
@@ -393,7 +442,7 @@ const enlacesArchivo: Enlace[] = [
   .cabecera nav { display: flex; gap: var(--espacio-2); flex-wrap: wrap; }
   :global(body[data-menu='abierto']) .cabecera { background: transparent; }
 
-  .cabecera nav a { font-size: 0.9375rem; }
+  .cabecera nav a { font-size: 1.0566rem; }
   :global(body[data-menu='abierto']) .cabecera { background: transparent; }
 
   .cabecera nav a:hover { text-decoration: underline; }

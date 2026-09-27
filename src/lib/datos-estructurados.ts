@@ -24,7 +24,7 @@ export interface DatosFicha {
 export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha) {
   // Agotado es tanto la variante marcada como tal como la que se quedo sin
   // ninguna talla pedible: por fuera es lo mismo, no se puede comprar.
-  const tallas = tallasDisponibles(producto)
+  const tallas = tallasDisponibles(producto, variante)
   const hayStock = variante.disponible && tallas.length > 0
 
   return {
