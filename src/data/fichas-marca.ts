@@ -104,6 +104,20 @@ const archivo: Record<string, unknown> = {
     imagen: 'placeholder-ciudad.jpg',
     alt: 'Siluetas de edificios de una ciudad en blanco y negro',
   },
+  'eme-studios': {
+    pais: 'España',
+    anio: 2017,
+    fundador: 'Conra Martínez y Gabriel Morón',
+    propuesta: 'Streetwear de Elche hecho en España y Portugal: cortes sin género, líneas limpias y drops que se agotan.',
+    porQue: [
+      'Conra Martínez y Gabriel Morón la montaron en Elche en 2017 sin tienda ni distribuidor, solo con redes y lanzamientos cada dos semanas. Tardaron siete años en abrir la primera tienda física, en Madrid. Su lema es Always Grateful, un agradecimiento a la comunidad que la sostuvo.',
+      'La trajimos porque demuestra que una marca que habla español puede competir con las americanas: prendas sobrias, sin género y fabricadas en Europa. En Colombia casi todo el mundo la conoce por Instagram; aquí la puedes tocar.',
+    ],
+    // PROVISIONAL: silueta urbana generada, no es material de la marca.
+    // Reemplazar por la campana real antes de publicar.
+    imagen: 'placeholder-ciudad.jpg',
+    alt: 'Siluetas de edificios de una ciudad en blanco y negro',
+  },
 }
 
 export const FICHAS = validarFichas(archivo, MARCAS)
