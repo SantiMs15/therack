@@ -19,16 +19,21 @@ export function formatearPrecio(valor: number): string {
  * Recorta un texto para la meta description, que es donde un buscador corta
  * hacia los 155 caracteres y deja la frase a medias.
  *
- * Prefiere cerrar en un punto: una descripcion completa hasta la primera
- * frase se lee mejor que una frase larga cortada con puntos suspensivos. Solo
- * si la primera frase ya se pasa recorta por palabra.
+ * Prefiere cerrar en un punto: una frase completa se lee mejor que una
+ * cortada con puntos suspensivos. Pero solo si ese punto aprovecha tres
+ * cuartos del espacio: la primera frase de una ficha es la generica (tela,
+ * cuello, corte) y la que distingue la prenda es la segunda, asi que parar
+ * pronto dejaba un resultado igual para media tienda. Si no, sigue y recorta
+ * por palabra.
  */
 export function resumir(texto: string, maximo: number): string {
   if (texto.length <= maximo) return texto
 
   const punto = texto.lastIndexOf('. ', maximo)
-  if (punto > maximo * 0.5) return texto.slice(0, punto + 1)
+  if (punto > maximo * 0.75) return texto.slice(0, punto + 1)
 
   const espacio = texto.lastIndexOf(' ', maximo - 1)
-  return texto.slice(0, espacio > 0 ? espacio : maximo - 1).trimEnd() + '…'
+  // Sin la coma o los dos puntos en que caiga el corte: "arqueada,…" se lee
+  // como un error.
+  return texto.slice(0, espacio > 0 ? espacio : maximo - 1).replace(/[\s,;:]+$/, '') + '…'
 }

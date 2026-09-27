@@ -55,6 +55,18 @@ export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha)
       url,
       priceCurrency: VENTA.moneda,
       price: producto.precio,
+      // Rebajada, el precio de antes va como tachado: es lo que deja que el
+      // resultado de busqueda ensene la rebaja y no solo el precio final.
+      ...(producto.precioAntes
+        ? {
+            priceSpecification: {
+              '@type': 'UnitPriceSpecification',
+              priceType: 'https://schema.org/StrikethroughPrice',
+              price: producto.precioAntes,
+              priceCurrency: VENTA.moneda,
+            },
+          }
+        : {}),
       availability: hayStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: VENTA.condicion,
       seller: { '@type': 'Organization', name: CONFIG.nombre },

@@ -130,6 +130,21 @@ describe('fichaProducto', () => {
       expect(o().url).toBe(URL_FICHA)
     })
 
+    it('una prenda rebajada declara el precio de antes como tachado', () => {
+      const oferta = (ficha(catalogo({ precio: 195_000, precioAntes: 390_000 })) as any).offers
+      expect(oferta.price).toBe(195_000)
+      expect(oferta.priceSpecification).toEqual({
+        '@type': 'UnitPriceSpecification',
+        priceType: 'https://schema.org/StrikethroughPrice',
+        price: 390_000,
+        priceCurrency: 'COP',
+      })
+    })
+
+    it('una prenda a precio completo no declara precio tachado', () => {
+      expect(o()).not.toHaveProperty('priceSpecification')
+    })
+
     it('declara la ropa como nueva', () => {
       expect(o().itemCondition).toBe('https://schema.org/NewCondition')
     })

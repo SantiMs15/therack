@@ -171,16 +171,83 @@ export function descripcionDeCategoria(
   quienes: string,
   cierre: string
 ): string {
-  const marcas = marcasDe(productos).map((m) => m.etiqueta)
+  const marcas = marcasPorPeso(productos)
+  const tipos = tiposDe(productos).map((t) => t.etiqueta.toLowerCase())
+  const resto = `${tipos.length ? ` ${capitalizar(enumerar(tipos))}.` : ''} ${cierre}`
+
+  if (!marcas.length) return `Ropa de ${quienes}.${resto}`
+  return marcasQueQuepan(marcas, (lista) => `Ropa de ${quienes} de ${lista}.${resto}`)
+}
+
+/**
+ * Las marcas de un catalogo, de la que mas prendas tiene a la que menos.
+ *
+ * Para las descripciones, no para el menu: cuando no caben todas, las que se
+ * nombran tienen que ser las que el que llega va a encontrar de verdad. A
+ * igualdad, alfabetico, para que el orden no dependa del de la lista.
+ */
+export function marcasPorPeso(productos: readonly Producto[]): string[] {
+  const cuenta = new Map<string, number>()
+  for (const producto of productos) {
+    for (const marca of producto.marcas) cuenta.set(marca, (cuenta.get(marca) ?? 0) + 1)
+  }
+  return [...cuenta]
+    .sort(([a, na], [b, nb]) => nb - na || a.localeCompare(b, 'es'))
+    .map(([marca]) => marca)
+}
+
+/**
+ * Compone un texto con tantas marcas como quepan en `maximo` caracteres.
+ *
+ * Con todas si caben. Si no, va soltando las ultimas y cierra con "y más":
+ * enumerar las siete marcas de la tienda dejaba la portada en 174 caracteres
+ * y a Google cortando el envio, que es lo que hace clicar. Nunca baja de una.
+ */
+export function marcasQueQuepan(
+  marcas: readonly string[],
+  componer: (lista: string) => string,
+  maximo = 160
+): string {
+  for (let n = marcas.length; n >= 1; n--) {
+    const lista = n === marcas.length ? enumerar(marcas) : `${marcas.slice(0, n).join(', ')} y más`
+    const texto = componer(lista)
+    if (texto.length <= maximo || n === 1) return texto
+  }
+  return componer('')
+}
+
+/**
+ * La meta description de una pagina de marca.
+ *
+ * Todas compartian "X en The Rack store: las piezas de la marca disponibles
+ * en Colombia", y la de la marca con ficha era solo su propuesta, sin el
+ * nombre ni el pais: justo las dos palabras con las que se busca ("lacoste
+ * colombia"). Ahora abre con las dos, sigue con la propuesta si la hay y
+ * nombra los tipos de prenda que hay de verdad.
+ *
+ * Si no cabe en los ~160 caracteres de un resultado, sobra el cierre: las
+ * condiciones de venta se repiten en todo el sitio, la propuesta no.
+ *
+ * Sin piezas y sin ficha no se anuncia envio de nada: se dice lo unico que
+ * es cierto.
+ */
+export function descripcionDeMarca(
+  nombre: string,
+  propuesta: string | undefined,
+  productos: readonly Producto[],
+  cierre: string
+): string {
+  if (!productos.length && !propuesta) {
+    return `${nombre} en el archivo de marcas de The Rack store.`
+  }
   const tipos = tiposDe(productos).map((t) => t.etiqueta.toLowerCase())
 
-  const partes = [`Ropa de ${quienes}`]
-  if (marcas.length) partes.push(` de ${enumerar(marcas)}`)
-  partes.push('.')
-  if (tipos.length) partes.push(` ${capitalizar(enumerar(tipos))}.`)
-  partes.push(` ${cierre}`)
+  const partes = [`${nombre} en Colombia.`]
+  if (propuesta) partes.push(propuesta)
+  if (tipos.length) partes.push(`${capitalizar(enumerar(tipos))}.`)
 
-  return partes.join('')
+  const conCierre = [...partes, cierre].join(' ')
+  return conCierre.length <= 160 ? conCierre : partes.join(' ')
 }
 
 function capitalizar(texto: string): string {

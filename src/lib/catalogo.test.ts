@@ -2,10 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { validarCatalogo, type Producto } from '../data/schema'
 import {
   descripcionDeCategoria,
+  descripcionDeMarca,
   enumerar,
   exclusivesDe,
   generosDe,
   marcasDe,
+  marcasPorPeso,
+  marcasQueQuepan,
   saleDe,
   tiposDe,
 } from './catalogo'
@@ -155,6 +158,68 @@ describe('descripcionDeCategoria', () => {
     const d = descripcionDeCategoria([], 'calzado', cierre)
     expect(d).toBe('Ropa de calzado. Envío gratis a toda Colombia.')
     expect(d).not.toContain('  ')
+  })
+})
+
+describe('marcasQueQuepan', () => {
+  const componer = (lista: string) => `Ropa de ${lista}. Envío gratis.`
+
+  it('si caben todas las nombra todas, con su "y"', () => {
+    expect(marcasQueQuepan(['Lacoste', 'Dime'], componer, 160)).toBe('Ropa de Lacoste y Dime. Envío gratis.')
+  })
+
+  it('si no caben suelta las ultimas y cierra con "y más"', () => {
+    const d = marcasQueQuepan(['Lacoste', 'Tommy Hilfiger', 'Aimé Leon Dore'], componer, 55)
+    expect(d).toBe('Ropa de Lacoste, Tommy Hilfiger y más. Envío gratis.')
+  })
+
+  it('nunca se queda sin ninguna marca', () => {
+    expect(marcasQueQuepan(['Maison Mihara Yasuhiro', 'Dime'], componer, 10))
+      .toBe('Ropa de Maison Mihara Yasuhiro y más. Envío gratis.')
+  })
+})
+
+describe('marcasPorPeso', () => {
+  it('ordena por numero de prendas, y a igualdad por nombre', () => {
+    const catalogo = [
+      producto({ slug: 'a', marca: 'Tommy Hilfiger' }),
+      producto({ slug: 'b', marca: 'Lacoste' }),
+      producto({ slug: 'c', marca: 'Lacoste' }),
+      producto({ slug: 'd', marca: 'Dime' }),
+    ]
+    expect(marcasPorPeso(catalogo)).toEqual(['Lacoste', 'Dime', 'Tommy Hilfiger'])
+  })
+})
+
+describe('descripcionDeMarca', () => {
+  const piezas = [
+    producto({ slug: 'a', marca: 'Lacoste', tipo: 'buzo' }),
+    producto({ slug: 'b', marca: 'Lacoste', tipo: 'polo' }),
+  ]
+  const cierre = 'Envío gratis a toda Colombia en 10 a 15 días.'
+
+  it('sin ficha nombra la marca, el pais y lo que hay de ella', () => {
+    expect(descripcionDeMarca('Lacoste', undefined, piezas, cierre))
+      .toBe('Lacoste en Colombia. Buzos y polos. Envío gratis a toda Colombia en 10 a 15 días.')
+  })
+
+  it('con ficha mete la propuesta despues del nombre', () => {
+    expect(descripcionDeMarca('Lacoste', 'Tenis de pista llevado a la calle.', piezas, cierre))
+      .toBe('Lacoste en Colombia. Tenis de pista llevado a la calle. Buzos y polos. Envío gratis a toda Colombia en 10 a 15 días.')
+  })
+
+  it('si no cabe en un resultado de busqueda suelta el cierre antes que la propuesta', () => {
+    const larga = 'El Nueva York de los noventa hecho ropa de todos los días, sin gritar el logo.'
+    const d = descripcionDeMarca('Aimé Leon Dore', larga, piezas, cierre)
+    expect(d.length).toBeLessThanOrEqual(160)
+    expect(d).toContain(larga)
+    expect(d).not.toContain('Envío')
+  })
+
+  it('sin piezas ni ficha no promete prendas que no hay', () => {
+    const d = descripcionDeMarca('Nike', undefined, [], cierre)
+    expect(d).not.toContain('Envío')
+    expect(d).toContain('Nike')
   })
 })
 

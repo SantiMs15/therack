@@ -228,6 +228,7 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
             widths={[600, 900, 1200]}
             sizes="(max-width: 767px) 100vw, 50vw"
             loading={i === 0 ? 'eager' : 'lazy'}
+            fetchpriority={i === 0 ? 'high' : undefined}
           />
         </button>
       ))}
@@ -715,7 +716,13 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
     color: var(--texto-suave);
   }
 
-  .descripcion { color: var(--texto-suave); max-width: 55ch; }
+  /* La descripcion es texto corrido: en typewriter cansaba leerla, asi que
+     va en la sans limpia que ya usa la marca. */
+  .descripcion {
+    font-family: var(--fuente-marca);
+    color: var(--texto-suave);
+    max-width: 55ch;
+  }
   .colores { margin-block: var(--espacio-3) var(--espacio-2); }
   .etiqueta {
     display: block;

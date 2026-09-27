@@ -22,7 +22,8 @@ import Migas from '../../components/Migas.astro'
 import RejillaProductos from '../../components/RejillaProductos.astro'
 import { productos } from '../../data/productos'
 import { archivoDeMarcas, type EntradaArchivo } from '../../lib/archivo-marcas'
-import { tarjetasEnOrden } from '../../lib/catalogo'
+import { descripcionDeMarca, tarjetasEnOrden } from '../../lib/catalogo'
+import { VENTA } from '../../config'
 import { slugMarca } from '../../lib/filtros'
 import { resolverImagenMarca } from '../../lib/imagenes-marcas'
 import { resolverLogoMarca } from '../../lib/logos-marcas'
@@ -64,12 +65,14 @@ const alt = ficha?.alt ?? `Fotografía de campaña de ${nombre}`
    en texto, que es lo que hacia hasta ahora. */
 const logo = resolverLogoMarca(slug)
 
-/* La descripcion del buscador: con ficha manda la propuesta, que se escribio
-   para hacer los dos trabajos. Sin ficha se dice lo unico que es cierto: que
-   aqui estan sus piezas. */
-const descripcion = ficha
-  ? ficha.propuesta
-  : `${nombre} en The Rack store: las piezas de la marca disponibles en Colombia.`
+/* La descripcion del buscador: nombre y pais delante, que es como se busca,
+   y detras la propuesta y lo que hay de la marca. */
+const descripcion = descripcionDeMarca(
+  nombre,
+  ficha?.propuesta,
+  suyas,
+  `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
+)
 
 const migas: Miga[] = [
   { nombre: 'Inicio', ruta: '/' },

@@ -37,8 +37,24 @@ describe('resumir', () => {
   })
 
   it('cierra en el punto cuando hay uno util', () => {
-    const t = 'Primera frase completa. Segunda frase que ya no cabe entera aqui dentro.'
-    expect(resumir(t, 40)).toBe('Primera frase completa.')
+    const t = 'Primera frase completa y bastante larga. Segunda frase que ya no cabe entera.'
+    expect(resumir(t, 45)).toBe('Primera frase completa y bastante larga.')
+  })
+
+  it('no deja una coma colgando antes de los puntos suspensivos', () => {
+    const r = resumir('Cruza el pecho el logo en letra gótica, aplicado en cuero', 40)
+    expect(r).toBe('Cruza el pecho el logo en letra gótica…')
+  })
+
+  it('no se queda en una primera frase corta si cabe parte de la segunda', () => {
+    // La primera frase de una ficha es la generica (tela, cuello, corte) y
+    // la que distingue la prenda es la segunda: cortar en el primer punto
+    // dejaba un resultado de busqueda igual para media tienda.
+    const t = 'Camiseta Pleasures en algodón. Lleva el logo gótico tachonado con remaches.'
+    const r = resumir(t, 50)
+    expect(r.startsWith('Camiseta Pleasures en algodón. Lleva el')).toBe(true)
+    expect(r.endsWith('…')).toBe(true)
+    expect(r.length).toBeLessThanOrEqual(50)
   })
 
   it('recorta por palabra si la primera frase ya se pasa', () => {

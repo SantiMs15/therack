@@ -38,6 +38,13 @@ const QUIENES: Record<Categoria, string> = {
   calzado: 'calzado',
   accesorios: 'accesorios',
 }
+/** El <title>: "Hombre" a secas no es algo que se escriba en un buscador. */
+const TITULOS: Record<Categoria, string> = {
+  mujer: 'Ropa de marca para mujer',
+  hombre: 'Ropa de marca para hombre',
+  calzado: 'Calzado de marca',
+  accesorios: 'Accesorios de marca',
+}
 const cierre = `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
 const descripcion = descripcionDeCategoria(deLaCategoria, QUIENES[categoria], cierre)
 
@@ -72,7 +79,7 @@ const listadoJson = serializar(
   })
 )
 ---
-<Layout titulo={ETIQUETAS_CATEGORIA[categoria]} descripcion={descripcion}>
+<Layout titulo={TITULOS[categoria]} descripcion={descripcion}>
   <script type="application/ld+json" is:inline set:html={migasJson}></script>
   <script type="application/ld+json" is:inline set:html={listadoJson}></script>
 

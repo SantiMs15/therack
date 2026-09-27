@@ -3,14 +3,18 @@ import Layout from '../layouts/Layout.astro'
 import RejillaProductos from '../components/RejillaProductos.astro'
 import { productos } from '../data/productos'
 import { fichaTienda, serializar } from '../lib/datos-estructurados'
-import { enumerar, exclusivesDe, marcasDe } from '../lib/catalogo'
+import { exclusivesDe, marcasPorPeso, marcasQueQuepan } from '../lib/catalogo'
 import { CONFIG, VENTA } from '../config'
 
 // Nombra las marcas que hay de verdad y las condiciones de venta, en vez de
-// la generica de 24 caracteres que compartia con media web.
-const descripcion =
-  `Ropa de marca en ${CONFIG.ciudad}: ${enumerar(marcasDe(productos).map((m) => m.etiqueta))}. ` +
-  `Envío gratis a toda Colombia y cambios hasta ${VENTA.cambios.dias} días.`
+// la generica de 24 caracteres que compartia con media web. Las que caben,
+// empezando por las que mas prendas tienen.
+const descripcion = marcasQueQuepan(
+  marcasPorPeso(productos),
+  (lista) =>
+    `Ropa de marca en ${CONFIG.ciudad}: ${lista}. ` +
+    `Envío gratis a toda Colombia y cambios hasta ${VENTA.cambios.dias} días.`
+)
 
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
@@ -24,7 +28,8 @@ const tiendaJson = serializar(
   })
 )
 ---
-<Layout titulo="Inicio" descripcion={descripcion}>
+{/* "Inicio" no lo busca nadie, y es la pagina con mas autoridad del sitio. */}
+<Layout titulo="Ropa de marca importada en Colombia" descripcion={descripcion}>
   <script type="application/ld+json" is:inline set:html={tiendaJson}></script>
 
   <div class="contenedor portada">
