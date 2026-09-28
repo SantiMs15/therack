@@ -155,6 +155,14 @@ const enlacesArchivo: Enlace[] = [
     {!sinCanonica && <link rel="canonical" href={canonica.href} />}
     {!indexable && <meta name="robots" content="noindex, follow" />}
 
+    {/* El isotipo sin el punto: es el doble de ancho que de alto, y sin el
+        punto crece un cuarto en una pestana cuadrada. El SVG cambia de negro a blanco con el tema del sistema;
+        el .ico es para quien no lee SVG, y el PNG con fondo negro es el
+        acceso directo de iOS, que rellenaria el transparente por su cuenta. */}
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
     <meta property="og:type" content={tipo} />
     <meta property="og:site_name" content={CONFIG.nombre} />
     <meta property="og:locale" content="es_CO" />

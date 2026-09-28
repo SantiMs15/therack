@@ -40,6 +40,12 @@ export const FichaMarcaSchema = z.strictObject({
   imagen: z.string().min(1, 'imagen: no puede estar vacia'),
   alt: z.string().min(1, 'alt: no puede estar vacio'),
   /**
+   * Video de la portada, en public/videos/. Opcional: se reproduce mudo y en
+   * bucle detras del logo, y `imagen` queda como su poster y como la foto de
+   * quien pide menos movimiento.
+   */
+  video: z.string().min(1, 'video: no puede estar vacio').optional(),
+  /**
    * Fotos de la galeria que va junto al texto. Opcional: sin ella la pagina
    * se queda como estaba. De 2 a 6 porque es un acordeon -- con una sola no
    * hay nada que abrir, y con mas de 6 las cerradas se quedan en rayas.
@@ -50,8 +56,6 @@ export const FichaMarcaSchema = z.strictObject({
         /** Archivo en src/assets/marcas/, como `imagen`. */
         imagen: z.string().min(1, 'imagen: no puede estar vacia'),
         alt: z.string().min(1, 'alt: no puede estar vacio'),
-        titulo: z.string().min(1, 'titulo: no puede estar vacio'),
-        categoria: z.string().min(1, 'categoria: no puede estar vacia'),
       })
     )
     .min(2, 'galeria: al menos 2 fotos')
@@ -126,23 +130,21 @@ const archivo: Record<string, unknown> = {
     pais: 'España',
     anio: 2017,
     fundador: 'Conra Martínez y Gabriel Morón',
-    propuesta: 'Streetwear de Elche hecho en España y Portugal: cortes sin género, líneas limpias y drops que se agotan.',
+    propuesta: 'Streetwear de Elche fabricado entre España y Portugal. Cortes sin género y drops que se agotan.',
     porQue: [
-      'Conra Martínez y Gabriel Morón la montaron en Elche en 2017 sin tienda ni distribuidor, solo con redes y lanzamientos cada dos semanas. Tardaron siete años en abrir la primera tienda física, en Madrid. Su lema es Always Grateful, un agradecimiento a la comunidad que la sostuvo.',
-      'La trajimos porque demuestra que una marca que habla español puede competir con las americanas: prendas sobrias, sin género y fabricadas en Europa. En Colombia casi todo el mundo la conoce por Instagram; aquí la puedes tocar.',
+      'Conra Martínez y Gabriel Morón la montaron en Elche en 2017. No tenían tienda ni distribuidor: vendían por redes y sacaban algo nuevo cada dos semanas. La primera tienda física, en Madrid, llegó siete años después. Su lema, Always Grateful, va para la gente que les compró desde el principio.',
+      'Se puede decir que abrió una tendencia, y hoy muchas marcas se miran en ella. La trajimos porque toma cortes que ya estaban encasillados para cierto público y los rejuvenece.',
     ],
-    // PROVISIONAL: silueta urbana generada, no es material de la marca.
-    // Reemplazar por la campana real antes de publicar.
-    imagen: 'placeholder-ciudad.jpg',
-    alt: 'Siluetas de edificios de una ciudad en blanco y negro',
-    // PROVISIONAL: fotos de ejemplo de la galeria de 21st.dev, no son de la
-    // marca. Reemplazar por su lookbook antes de publicar.
+    // Primer fotograma del video: es lo que se ve mientras carga.
+    imagen: 'eme-studios-portada.jpg',
+    alt: 'Un avión cruza un cielo azul dejando dos estelas',
+    video: 'eme-studios-portada.mp4',
     galeria: [
-      { imagen: 'placeholder-galeria-01.jpg', alt: 'Luces de neón de noche', titulo: 'Neón', categoria: 'Fotografía' },
-      { imagen: 'placeholder-galeria-02.jpg', alt: 'Edificio brutalista de hormigón', titulo: 'Brutalismo urbano', categoria: 'Arquitectura' },
-      { imagen: 'placeholder-galeria-03.jpg', alt: 'Arte abstracto de pintura fluida', titulo: 'Fluido abstracto', categoria: 'Diseño' },
-      { imagen: 'placeholder-galeria-04.jpg', alt: 'Bosque con niebla', titulo: 'Naturaleza en silencio', categoria: 'Paisaje' },
-      { imagen: 'placeholder-galeria-05.jpg', alt: 'Tecnología futurista', titulo: 'Tecnología futura', categoria: 'Innovación' },
+      { imagen: 'eme-studios-galeria-01.jpg', alt: 'Chico con rastas, cárdigan de rayas azules y verdes y camiseta gris de Eme Studios, delante de una estantería de libros' },
+      { imagen: 'eme-studios-galeria-02.jpg', alt: 'Dos personas de espaldas caminan de noche por Madrid; una lleva una chaqueta negra con Emestudios Madrid Always Grateful' },
+      { imagen: 'eme-studios-galeria-03.jpg', alt: 'Chica rubia con chaqueta de chándal blanca y granate de Eme Studios y pantalón cargo marrón, en un salón con discos' },
+      { imagen: 'eme-studios-galeria-04.jpg', alt: 'Pareja con pantalones de paracaídas rojos contra una pared azul y amarilla' },
+      { imagen: 'eme-studios-galeria-05.jpg', alt: 'Chica de espaldas con un jersey azul marino con Studios tejido en granate y blanco' },
     ],
   },
 }

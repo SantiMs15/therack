@@ -55,7 +55,7 @@ describe('validarFichas', () => {
 
   describe('galeria', () => {
     function foto(n: number) {
-      return { imagen: `foto-${n}.jpg`, alt: `Foto ${n}`, titulo: `Titulo ${n}`, categoria: 'Campaña' }
+      return { imagen: `foto-${n}.jpg`, alt: `Foto ${n}` }
     }
 
     it('es opcional: una ficha sin galeria sigue siendo valida', () => {
