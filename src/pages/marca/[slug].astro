@@ -316,8 +316,10 @@ const marcaJson = ficha
   }
 
   /* Medida de lectura: los parrafos son el sitio donde se convence, y a todo
-     el ancho de la pagina no se leen. */
+     el ancho de la pagina no se leen. Van en la sans de la descripcion de
+     las prendas: es texto corrido, y en typewriter cansaba igual. */
   .marca__texto {
+    font-family: var(--fuente-marca);
     max-width: 62ch;
     margin-block: var(--espacio-3);
   }
