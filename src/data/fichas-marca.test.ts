@@ -53,6 +53,39 @@ describe('validarFichas', () => {
     expect(() => validarFichas({ nike: sinTexto }, MARCAS_DE_PRUEBA)).toThrow(/porQue/)
   })
 
+  describe('galeria', () => {
+    function foto(n: number) {
+      return { imagen: `foto-${n}.jpg`, alt: `Foto ${n}`, titulo: `Titulo ${n}`, categoria: 'Campaña' }
+    }
+
+    it('es opcional: una ficha sin galeria sigue siendo valida', () => {
+      const fichas = validarFichas({ nike: fichaValida() }, MARCAS_DE_PRUEBA)
+      expect(fichas.nike?.galeria).toBeUndefined()
+    })
+
+    it('acepta de 2 a 6 fotos', () => {
+      const ficha = { ...fichaValida(), galeria: [foto(1), foto(2), foto(3)] }
+      const fichas = validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)
+      expect(fichas.nike?.galeria).toHaveLength(3)
+    })
+
+    it('rechaza una galeria de una sola foto: no hay acordeon que abrir', () => {
+      const ficha = { ...fichaValida(), galeria: [foto(1)] }
+      expect(() => validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)).toThrow(/galeria/)
+    })
+
+    it('rechaza mas de 6 fotos: las cerradas quedarian como rayas', () => {
+      const ficha = { ...fichaValida(), galeria: [1, 2, 3, 4, 5, 6, 7].map(foto) }
+      expect(() => validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)).toThrow(/galeria/)
+    })
+
+    it('rechaza una foto sin alt, y nombra el campo', () => {
+      const { alt, ...sinAlt } = foto(2)
+      const ficha = { ...fichaValida(), galeria: [foto(1), sinAlt] }
+      expect(() => validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)).toThrow(/galeria\.1\.alt/)
+    })
+  })
+
   it('rechaza un campo de mas: un nombre mal escrito no se ignora en silencio', () => {
     const conSobra = { ...fichaValida(), pias: 'Estados Unidos' }
     expect(() => validarFichas({ nike: conSobra }, MARCAS_DE_PRUEBA)).toThrow()

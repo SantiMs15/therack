@@ -1,0 +1,212 @@
+---
+/**
+ * GALERIA ELASTICA: un acordeon de fotos que se abre hacia la que se mira.
+ *
+ * Una foto abierta ocupa cuatro partes del ancho y las demas una cada una.
+ * Pasar el raton, tocar o llegar con el tabulador abre otra: las tres cosas
+ * hacen lo mismo porque en movil no hay hover y con teclado no hay puntero.
+ *
+ * El HTML sale completo del servidor con la primera del medio abierta, asi
+ * que sin JS la galeria se ve igual -- solo deja de cambiar.
+ */
+import { Image } from 'astro:assets'
+import { resolverImagenMarca } from '../lib/imagenes-marcas'
+import type { FichaMarca } from '../data/fichas-marca'
+
+interface Props {
+  fotos: NonNullable<FichaMarca['galeria']>
+}
+
+const { fotos } = Astro.props
+/* Abre la del medio: con las cerradas a los dos lados se entiende de un
+   vistazo que las demas tambien se abren. */
+const inicial = Math.floor(fotos.length / 2)
+---
+
+<div class="galeria" data-galeria>
+  {fotos.map((foto, i) => (
+    <figure class="galeria__item" data-activa={i === inicial ? '' : undefined} tabindex="0">
+      {/* La columna abierta en desktop mide como mucho ~ media pagina, y en
+          movil la ventana entera. */}
+      <Image
+        class="galeria__foto"
+        src={resolverImagenMarca(foto.imagen)}
+        alt={foto.alt}
+        widths={[480, 800, 1200]}
+        sizes="(min-width: 900px) 40vw, 100vw"
+      />
+      <figcaption class="galeria__pie">
+        <span class="galeria__categoria">{foto.categoria}</span>
+        <span class="galeria__titulo">{foto.titulo}</span>
+      </figcaption>
+      {/* El titulo en vertical de la cerrada es decorado: el de verdad ya
+          esta en el figcaption. */}
+      <span class="galeria__rotulo" aria-hidden="true">
+        <span class="galeria__rotulo-largo">{foto.titulo}</span>
+        <span class="galeria__rotulo-corto">{String(i + 1).padStart(2, '0')}</span>
+      </span>
+    </figure>
+  ))}
+</div>
+
+<script>
+  for (const galeria of document.querySelectorAll<HTMLElement>('[data-galeria]')) {
+    const items = galeria.querySelectorAll<HTMLElement>('.galeria__item')
+    const abrir = (item: HTMLElement) => {
+      for (const otro of items) otro.toggleAttribute('data-activa', otro === item)
+    }
+    for (const item of items) {
+      item.addEventListener('mouseenter', () => abrir(item))
+      item.addEventListener('click', () => abrir(item))
+      item.addEventListener('focus', () => abrir(item))
+    }
+  }
+</script>
+
+<style>
+  .galeria {
+    --curva: cubic-bezier(0.25, 1, 0.5, 1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-1);
+    height: 500px;
+  }
+
+  @media (min-width: 900px) {
+    .galeria {
+      flex-direction: row;
+      gap: var(--espacio-2);
+      height: 600px;
+    }
+  }
+
+  .galeria__item {
+    position: relative;
+    flex: 1;
+    /* Sin esto el flex-item no baja de lo que mide la foto dentro y las
+       cerradas no llegan a cerrarse. */
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--texto);
+    filter: brightness(0.5);
+    transition: flex 700ms var(--curva), filter 700ms var(--curva);
+  }
+
+  .galeria__item:hover { filter: brightness(0.75); }
+
+  .galeria__item[data-activa] {
+    flex: 4;
+    filter: brightness(1);
+  }
+
+  .galeria__item:focus-visible {
+    outline: 2px solid var(--texto);
+    outline-offset: 3px;
+  }
+
+  .galeria__foto {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.1);
+    transition: transform 1000ms var(--curva);
+  }
+
+  .galeria__item[data-activa] .galeria__foto { transform: scale(1); }
+
+  /* Degradado para que el pie se lea: solo en la abierta, que es la unica
+     que lo muestra. */
+  .galeria__item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.2) 45%, transparent);
+    opacity: 0;
+    transition: opacity 500ms;
+  }
+
+  .galeria__item[data-activa]::after { opacity: 1; }
+
+  .galeria__pie {
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--espacio-1);
+    padding: var(--espacio-2);
+    color: #FFFFFF;
+    opacity: 0;
+    transform: translateY(3rem);
+    transition: opacity 500ms, transform 500ms;
+  }
+
+  /* Entra con retraso: primero se abre la columna, despues aparece el texto,
+     y asi no se ve el titulo partiendose en una columna aun estrecha. */
+  .galeria__item[data-activa] .galeria__pie {
+    opacity: 1;
+    transform: none;
+    transition-delay: 200ms;
+  }
+
+  .galeria__categoria {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    font-family: var(--fuente-marca);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .galeria__titulo {
+    font-family: var(--fuente-titular);
+    font-size: clamp(1.5rem, 1rem + 2vw, 2.75rem);
+    line-height: 1;
+  }
+
+  .galeria__rotulo {
+    position: absolute;
+    bottom: var(--espacio-2);
+    left: 50%;
+    z-index: 1;
+    color: #FFFFFF;
+    font-family: var(--fuente-marca);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    transition: opacity 500ms 500ms;
+  }
+
+  .galeria__item[data-activa] .galeria__rotulo {
+    opacity: 0;
+    transition-delay: 0ms;
+  }
+
+  /* En movil las cerradas son franjas bajas: cabe el numero, no el titulo. */
+  .galeria__rotulo-largo { display: none; }
+
+  @media (min-width: 900px) {
+    .galeria__pie { padding: var(--espacio-3); }
+    .galeria__rotulo { bottom: var(--espacio-3); font-size: 1rem; }
+    .galeria__rotulo-largo { display: block; writing-mode: vertical-rl; }
+    .galeria__rotulo-corto { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .galeria__item,
+    .galeria__foto,
+    .galeria__item::after,
+    .galeria__pie,
+    .galeria__rotulo { transition: none; }
+  }
+</style>

@@ -39,6 +39,24 @@ export const FichaMarcaSchema = z.strictObject({
   /** Archivo en src/assets/marcas/, en ratio 3:2 horizontal. */
   imagen: z.string().min(1, 'imagen: no puede estar vacia'),
   alt: z.string().min(1, 'alt: no puede estar vacio'),
+  /**
+   * Fotos de la galeria que va junto al texto. Opcional: sin ella la pagina
+   * se queda como estaba. De 2 a 6 porque es un acordeon -- con una sola no
+   * hay nada que abrir, y con mas de 6 las cerradas se quedan en rayas.
+   */
+  galeria: z
+    .array(
+      z.strictObject({
+        /** Archivo en src/assets/marcas/, como `imagen`. */
+        imagen: z.string().min(1, 'imagen: no puede estar vacia'),
+        alt: z.string().min(1, 'alt: no puede estar vacio'),
+        titulo: z.string().min(1, 'titulo: no puede estar vacio'),
+        categoria: z.string().min(1, 'categoria: no puede estar vacia'),
+      })
+    )
+    .min(2, 'galeria: al menos 2 fotos')
+    .max(6, 'galeria: maximo 6 fotos')
+    .optional(),
 })
 
 export type FichaMarca = z.infer<typeof FichaMarcaSchema>
@@ -117,6 +135,15 @@ const archivo: Record<string, unknown> = {
     // Reemplazar por la campana real antes de publicar.
     imagen: 'placeholder-ciudad.jpg',
     alt: 'Siluetas de edificios de una ciudad en blanco y negro',
+    // PROVISIONAL: fotos de ejemplo de la galeria de 21st.dev, no son de la
+    // marca. Reemplazar por su lookbook antes de publicar.
+    galeria: [
+      { imagen: 'placeholder-galeria-01.jpg', alt: 'Luces de neón de noche', titulo: 'Neón', categoria: 'Fotografía' },
+      { imagen: 'placeholder-galeria-02.jpg', alt: 'Edificio brutalista de hormigón', titulo: 'Brutalismo urbano', categoria: 'Arquitectura' },
+      { imagen: 'placeholder-galeria-03.jpg', alt: 'Arte abstracto de pintura fluida', titulo: 'Fluido abstracto', categoria: 'Diseño' },
+      { imagen: 'placeholder-galeria-04.jpg', alt: 'Bosque con niebla', titulo: 'Naturaleza en silencio', categoria: 'Paisaje' },
+      { imagen: 'placeholder-galeria-05.jpg', alt: 'Tecnología futurista', titulo: 'Tecnología futura', categoria: 'Innovación' },
+    ],
   },
 }
 

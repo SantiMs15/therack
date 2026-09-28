@@ -19,6 +19,7 @@
 import { Image } from 'astro:assets'
 import Layout from '../../layouts/Layout.astro'
 import Migas from '../../components/Migas.astro'
+import GaleriaElastica from '../../components/GaleriaElastica.astro'
 import RejillaProductos from '../../components/RejillaProductos.astro'
 import { productos } from '../../data/productos'
 import { archivoDeMarcas, type EntradaArchivo } from '../../lib/archivo-marcas'
@@ -139,32 +140,40 @@ const marcaJson = ficha
   <div class="contenedor marca-pagina">
     <Migas migas={migas} />
 
-    <div class="marca__cabecera">
-      {ficha ? (
-        <>
-          {/* Pais, ano y fundador en una linea: es la credencial de la marca,
-              no el argumento. El argumento viene debajo. */}
-          <p class="marca__datos">
-            <span>{ficha.pais}</span>
-            <span aria-hidden="true">·</span>
-            <span>{ficha.anio}</span>
-            <span aria-hidden="true">·</span>
-            <span>{ficha.fundador}</span>
-          </p>
-          <p class="marca__propuesta">{ficha.propuesta}</p>
-        </>
-      ) : (
-        /* Se dice que falta en vez de disimularlo con relleno: quien llega
-           aqui merece saber si esta viendo todo lo que hay. */
-        <p class="marca__pendiente">La ficha de {nombre} todavía se está escribiendo.</p>
-      )}
-    </div>
+    {/* Con galeria, el texto y las fotos van lado a lado en pantalla ancha:
+        se lee la marca mientras se la mira. Sin galeria el texto se queda
+        solo, a su medida de lectura, como estaba. */}
+    <div class:list={['marca__cuerpo', { 'marca__cuerpo--galeria': ficha?.galeria }]}>
+      <div class="marca__relato">
+        <div class="marca__cabecera">
+          {ficha ? (
+            <>
+              {/* Pais, ano y fundador en una linea: es la credencial de la marca,
+                  no el argumento. El argumento viene debajo. */}
+              <p class="marca__datos">
+                <span>{ficha.pais}</span>
+                <span aria-hidden="true">·</span>
+                <span>{ficha.anio}</span>
+                <span aria-hidden="true">·</span>
+                <span>{ficha.fundador}</span>
+              </p>
+              <p class="marca__propuesta">{ficha.propuesta}</p>
+            </>
+          ) : (
+            /* Se dice que falta en vez de disimularlo con relleno: quien llega
+               aqui merece saber si esta viendo todo lo que hay. */
+            <p class="marca__pendiente">La ficha de {nombre} todavía se está escribiendo.</p>
+          )}
+        </div>
 
-    {ficha && (
-      <div class="marca__texto">
-        {ficha.porQue.map((parrafo) => <p>{parrafo}</p>)}
+        {ficha && (
+          <div class="marca__texto">
+            {ficha.porQue.map((parrafo) => <p>{parrafo}</p>)}
+          </div>
+        )}
       </div>
-    )}
+      {ficha?.galeria && <GaleriaElastica fotos={ficha.galeria} />}
+    </div>
 
     {enOrden.length > 0 ? (
       <section class="marca__piezas">
@@ -192,6 +201,27 @@ const marcaJson = ficha
   .marca-pagina { padding-block: var(--espacio-2) var(--espacio-4); }
 
   .marca__cabecera { margin-block: var(--espacio-3); }
+
+  /* La galeria se pone a la altura de la cabecera, no del parrafo: el margen
+     de arriba de la cabecera pasa al cuerpo para que las dos columnas
+     arranquen en la misma linea. */
+  .marca__cuerpo--galeria {
+    display: grid;
+    gap: var(--espacio-3);
+    margin-block: var(--espacio-3);
+  }
+
+  .marca__cuerpo--galeria .marca__cabecera { margin-block-start: 0; }
+
+  @media (min-width: 900px) {
+    /* El texto se queda en su medida de lectura y la galeria se lleva el
+       resto: es la parte que crece con la pantalla. */
+    .marca__cuerpo--galeria {
+      grid-template-columns: minmax(0, 62ch) minmax(0, 1fr);
+      gap: var(--espacio-4);
+      align-items: start;
+    }
+  }
 
   /* Foto y nombre en la MISMA celda de una rejilla de una sola celda: se
      apilan sin sacar el nombre del flujo, asi que la altura de la portada
