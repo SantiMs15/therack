@@ -17,7 +17,7 @@ import { TALLAS_HOMBRE, TALLAS_MUJER, validarCatalogo, type Producto } from './s
 const catalogo: unknown[] = [
 
   {
-    slug: 'intarsia-wool-sweater',
+    slug: 'lacoste-intarsia-wool-sweater',
     nombre: 'Intarsia Branded Wool Sweater',
     marca: 'Lacoste',
     categoria: 'hombre',
@@ -47,7 +47,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'multi-print-fleece-hoodie',
+    slug: 'lacoste-multi-print-fleece-hoodie',
     nombre: 'Multi Print Fleece Hoodie',
     marca: 'Lacoste',
     categoria: 'hombre',
@@ -80,7 +80,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'striped-cable-knit-polo',
+    slug: 'lacoste-striped-cable-knit-polo',
     nombre: 'Striped Cable Knit Polo',
     marca: 'Lacoste',
     categoria: 'mujer',
@@ -123,7 +123,7 @@ const catalogo: unknown[] = [
     destacado: true,
   },
   {
-    slug: 'crew-neck-lacoste',
+    slug: 'lacoste-classic-printed-crew-neck',
     nombre: 'Classic Printed Crew Neck',
     marca: 'Lacoste',
     categoria: 'hombre',
@@ -167,7 +167,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'classic-quarter-zip-sweater',
+    slug: 'tommy-hilfiger-classic-quarter-zip-sweater',
     nombre: 'Classic Quarter-Zip Sweater',
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
@@ -201,7 +201,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'quarter-zip-sweater',
+    slug: 'tommy-hilfiger-quarter-zip-sweater',
     nombre: 'Quarter-Zip Sweater',
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
@@ -231,7 +231,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'crewneck-favorite-t-shirt',
+    slug: 'tommy-hilfiger-crewneck-favorite-t-shirt',
     nombre: 'Crewneck Favorite T-Shirt',
     marca: 'Tommy Hilfiger',
     categoria: 'mujer',
@@ -303,7 +303,7 @@ const catalogo: unknown[] = [
     destacado: true,
   },
   {
-    slug: 'mixed-media-puffer-jacket',
+    slug: 'tommy-hilfiger-mixed-media-puffer-jacket',
     nombre: "Men's Mixed-Media Puffer Jacket",
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
@@ -366,7 +366,7 @@ const catalogo: unknown[] = [
     destacado: true,
   },
   {
-    slug: 'unisphere-tee',
+    slug: 'aime-leon-dore-unisphere-tee',
     nombre: 'Unisphere Tee',
     marca: 'Aimé Leon Dore',
     categoria: 'hombre',
@@ -400,7 +400,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'unisphere-waffle-thermal',
+    slug: 'aime-leon-dore-unisphere-waffle-thermal',
     nombre: 'Long-Sleeve Unisphere Waffle Thermal',
     marca: 'Aimé Leon Dore',
     categoria: 'hombre',
@@ -441,7 +441,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'souvenir-tee',
+    slug: 'aime-leon-dore-souvenir-tee',
     nombre: 'Aimé Souvenir Tee',
     marca: 'Aimé Leon Dore',
     categoria: 'hombre',
@@ -470,7 +470,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'geo-print-crewneck',
+    slug: 'aime-leon-dore-new-balance-geo-print-crewneck',
     nombre: 'Off-White New Balance Geo Print Crewneck',
     /* La primera colaboracion del catalogo: la prenda es de las dos marcas,
        no de una con la otra invitada. Sale al filtrar por cualquiera de las
@@ -508,7 +508,7 @@ const catalogo: unknown[] = [
     destacado: true,
   },
   {
-    slug: 'astronaut-tee',
+    slug: 'kidsuper-studios-astronaut-tee',
     nombre: 'Astronaut Tee',
     marca: 'KidSuper Studios',
     categoria: 'hombre',
@@ -535,7 +535,7 @@ const catalogo: unknown[] = [
     destacado: true,
   },
   {
-    slug: 'twitch-studded-crewneck-t-shirt',
+    slug: 'pleasures-twitch-studded-crewneck-t-shirt',
     nombre: 'Twitch Studded Crewneck T-Shirt',
     marca: 'Pleasures',
     categoria: 'hombre',
@@ -576,7 +576,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'pinstripe-night-sky-knit-sweater',
+    slug: 'eme-studios-pinstripe-night-sky-knit-sweater',
     nombre: 'Pinstripe Night Sky Knit Sweater',
     marca: 'Eme Studios',
     // Unisex: sale en hombre y en mujer.
