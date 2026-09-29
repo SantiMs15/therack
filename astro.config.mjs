@@ -43,9 +43,33 @@ const ARCHIVO = ultimoCambio('src/data/fichas-marca.ts')
 // La misma regla que `saleDe`, desde la misma funcion.
 const HAY_SALE = productos.some(enSale)
 
+/**
+ * En desarrollo, las fotos se sirven por /_image con la ruta del archivo en
+ * la URL y un Cache-Control de un ano. Como las fotos se reemplazan con el
+ * mismo nombre, el navegador seguia pintando la version vieja aunque el
+ * servidor ya tuviera la nueva. Solo afecta a `astro dev`: el build pone un
+ * hash del contenido en cada nombre, asi que alli la cache larga es correcta.
+ */
+const fotosSinCacheEnDev = {
+  name: 'fotos-sin-cache-en-dev',
+  configureServer(server) {
+    server.middlewares.use((req, res, next) => {
+      if (req.url?.startsWith('/_image')) {
+        const setHeader = res.setHeader.bind(res)
+        res.setHeader = (nombre, valor) =>
+          nombre.toLowerCase() === 'cache-control'
+            ? setHeader(nombre, 'no-store')
+            : setHeader(nombre, valor)
+      }
+      next()
+    })
+  },
+}
+
 export default defineConfig({
   site: 'https://therackstore.shop',
   build: { format: 'directory' },
+  vite: { plugins: [fotosSinCacheEnDev] },
   // El sitemap se genera solo a partir de las rutas del build y del `site` de
   // arriba. Hay que regenerarlo con cada despliegue, que es lo que ya pasa:
   // sale de `npm run build` como un archivo mas de dist/.

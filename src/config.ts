@@ -34,7 +34,17 @@ export const VENTA = {
   envio: { costo: 0 },
   /** Dias que tarda en llegar, de minimo a maximo. */
   entrega: { minimo: 10, maximo: 15 },
-  cambios: { dias: 30 },
+  /**
+   * Cambios, no devoluciones de dinero. El cliente manda la prenda por
+   * mensajeria y paga ese envio: por eso `ReturnFeesCustomerResponsibility` y
+   * no `ReturnShippingFees`, que pediria declarar un monto fijo que no existe
+   * -- depende de la transportadora que elija.
+   */
+  cambios: {
+    dias: 30,
+    costo: 'https://schema.org/ReturnFeesCustomerResponsibility',
+    metodo: 'https://schema.org/ReturnByMail',
+  },
   /**
    * Como se paga. El identificador es el de GoodRelations, que es el
    * vocabulario que schema.org usa para metodos de pago; el texto es para

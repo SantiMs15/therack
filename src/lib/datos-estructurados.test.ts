@@ -4,6 +4,7 @@ import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
 import {
   fichaArchivo,
   fichaCategoria,
+  fichaGrupo,
   fichaMarca,
   fichaMigas,
   fichaProducto,
@@ -164,6 +165,12 @@ describe('fichaProducto', () => {
       expect(d.applicableCountry).toBe('CO')
     })
 
+    it('el cambio va por mensajeria y el envio lo paga el cliente', () => {
+      const d = o().hasMerchantReturnPolicy
+      expect(d.returnMethod).toBe('https://schema.org/ReturnByMail')
+      expect(d.returnFees).toBe('https://schema.org/ReturnFeesCustomerResponsibility')
+    })
+
     it('declara el plazo de entrega completo en transitTime', () => {
       const t = o().shippingDetails.deliveryTime.transitTime
       expect(t.minValue).toBe(VENTA.entrega.minimo)
@@ -194,6 +201,67 @@ describe('fichaProducto', () => {
       }
     }
     recorrer(f)
+  })
+})
+
+describe('fichaGrupo', () => {
+  const p = () =>
+    catalogo({
+      variantes: [
+        { color: 'Negro', slug: 'negro', imagenes: ['a.jpg'], disponible: true },
+        { color: 'Verde', slug: 'verde', imagenes: ['b.jpg'], disponible: true },
+      ],
+    })
+  const grupo = (i = 0) => {
+    const prod = p()
+    return fichaGrupo({
+      producto: prod,
+      variante: prod.variantes[i]!,
+      url: `https://therackstore.shop/producto/chaqueta-puffer/${prod.variantes[i]!.slug}/`,
+      imagenes: FOTOS,
+    }) as any
+  }
+
+  it('declara un ProductGroup que varia por color', () => {
+    const g = grupo()
+    expect(g['@context']).toBe('https://schema.org')
+    expect(g['@type']).toBe('ProductGroup')
+    expect(g.name).toBe('Puffer Jacket')
+    expect(g.productGroupID).toBe('chaqueta-puffer')
+    expect(g.variesBy).toEqual(['https://schema.org/color'])
+    expect(g.brand).toEqual({ '@type': 'Brand', name: 'Tommy Hilfiger' })
+  })
+
+  it('lista todos los colores, en el orden del catalogo', () => {
+    expect(grupo().hasVariant).toHaveLength(2)
+  })
+
+  it('la variante de la pagina va completa y apunta al grupo', () => {
+    const v = grupo(1).hasVariant[1]
+    expect(v['@type']).toBe('Product')
+    expect(v.sku).toBe('chaqueta-puffer-verde')
+    expect(v.inProductGroupWithID).toBe('chaqueta-puffer')
+    expect(v.offers.url).toBe('https://therackstore.shop/producto/chaqueta-puffer/verde/')
+    expect('@context' in v).toBe(false)
+  })
+
+  it('las otras variantes van solo con su URL absoluta', () => {
+    expect(grupo(1).hasVariant[0]).toEqual({
+      '@type': 'Product',
+      url: 'https://therackstore.shop/producto/chaqueta-puffer/negro/',
+    })
+  })
+
+  it('sin marca, el grupo tampoco declara brand', () => {
+    const prod = catalogo({
+      marca: undefined,
+      variantes: [
+        { color: 'Negro', slug: 'negro', imagenes: ['a.jpg'], disponible: true },
+        { color: 'Verde', slug: 'verde', imagenes: ['b.jpg'], disponible: true },
+      ],
+    })
+    const g = fichaGrupo({ producto: prod, variante: prod.variantes[0]!, url: URL_FICHA, imagenes: FOTOS })
+    expect('brand' in g).toBe(false)
   })
 })
 
@@ -237,6 +305,12 @@ describe('fichaTienda', () => {
   it('declara Colombia como zona de venta y el pago en texto', () => {
     expect(t().areaServed).toEqual({ '@type': 'Country', name: 'Colombia' })
     expect(t().paymentAccepted).toBe(VENTA.pago.texto)
+  })
+
+  it('declara la misma politica de cambios que las fichas', () => {
+    const d = t().hasMerchantReturnPolicy
+    expect(d).toEqual((ficha(catalogo()) as any).offers.hasMerchantReturnPolicy)
+    expect(d.merchantReturnDays).toBe(VENTA.cambios.dias)
   })
 
   it('da el telefono como punto de contacto', () => {
@@ -380,6 +454,19 @@ describe('fichaMarca', () => {
     const ficha = fichaMarca({ ...base, urls: [] }) as any
     expect(ficha.about.founder).toEqual({ '@type': 'Person', name: 'Teddy Santis' })
     expect(ficha.about.foundingLocation).toEqual({ '@type': 'Place', name: 'Estados Unidos' })
+  })
+
+  it('con varios fundadores declara una Person por cada uno', () => {
+    const ficha = fichaMarca({ ...base, fundador: ['Conra Martínez', 'Gabriel Morón'], urls: [] }) as any
+    expect(ficha.about.founder).toEqual([
+      { '@type': 'Person', name: 'Conra Martínez' },
+      { '@type': 'Person', name: 'Gabriel Morón' },
+    ])
+  })
+
+  it('con ciudad el Place dice ciudad y pais', () => {
+    const ficha = fichaMarca({ ...base, ciudad: 'Queens', urls: [] }) as any
+    expect(ficha.about.foundingLocation.name).toBe('Queens, Estados Unidos')
   })
 
   it('lista las piezas en el orden en que se ven', () => {

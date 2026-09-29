@@ -16,14 +16,14 @@
  * para el mismo gesto, y quien no conoce la marca -- que es justo quien pulsa
  * su nombre -- acababa viendo prendas sin saber de quien eran.
  */
-import { Image } from 'astro:assets'
+import { Image, getImage } from 'astro:assets'
 import Layout from '../../layouts/Layout.astro'
 import Migas from '../../components/Migas.astro'
 import GaleriaElastica from '../../components/GaleriaElastica.astro'
 import RejillaProductos from '../../components/RejillaProductos.astro'
 import { productos } from '../../data/productos'
 import { archivoDeMarcas, type EntradaArchivo } from '../../lib/archivo-marcas'
-import { descripcionDeMarca, tarjetasEnOrden } from '../../lib/catalogo'
+import { descripcionDeMarca, enumerar, tarjetasEnOrden } from '../../lib/catalogo'
 import { VENTA } from '../../config'
 import { slugMarca } from '../../lib/filtros'
 import { resolverImagenMarca } from '../../lib/imagenes-marcas'
@@ -72,8 +72,21 @@ const descripcion = descripcionDeMarca(
   nombre,
   ficha?.propuesta,
   suyas,
-  `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
+  `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`,
+  'Envío gratis a toda Colombia.'
 )
+
+/* El titulo del buscador: el nombre y "en Colombia", que es como se busca,
+   y detras lo que es la marca si la ficha lo dice. */
+const titulo = ficha?.titular ? `${nombre} en Colombia: ${ficha.titular}` : `${nombre} en Colombia`
+
+/* La tarjeta al compartir el enlace es la portada de la marca, recortada al
+   1200x630 que piden WhatsApp e Instagram. Sin ella salia el logo de la
+   tienda, igual para las veinticinco marcas. */
+const tarjeta = await getImage({ src: imagen, width: 1200, height: 630, fit: 'cover', format: 'jpg' })
+
+/* Los fundadores en la linea de datos: "A y B" cuando son varios. */
+const fundadores = typeof ficha?.fundador === 'string' ? ficha.fundador : enumerar(ficha?.fundador ?? [])
 
 const migas: Miga[] = [
   { nombre: 'Inicio', ruta: '/' },
@@ -92,6 +105,7 @@ const marcaJson = ficha
         propuesta: ficha.propuesta,
         url: new URL(`/marca/${slug}/`, Astro.site).href,
         pais: ficha.pais,
+        ciudad: ficha.ciudad,
         anio: ficha.anio,
         fundador: ficha.fundador,
         imagen: new URL(imagen.src, Astro.site).href,
@@ -104,7 +118,14 @@ const marcaJson = ficha
   : null
 ---
 
-<Layout titulo={`${nombre} en Colombia`} descripcion={descripcion}>
+<Layout
+  titulo={titulo}
+  descripcion={descripcion}
+  imagen={new URL(tarjeta.src, Astro.site).href}
+  imagenAlt={alt}
+  imagenAncho={1200}
+  imagenAlto={630}
+>
   <script type="application/ld+json" is:inline set:html={migasJson}></script>
   {marcaJson && <script type="application/ld+json" is:inline set:html={marcaJson}></script>}
 
@@ -167,11 +188,11 @@ const marcaJson = ficha
               {/* Pais, ano y fundador en una linea: es la credencial de la marca,
                   no el argumento. El argumento viene debajo. */}
               <p class="marca__datos">
-                <span>{ficha.pais}</span>
+                <span>{ficha.ciudad ? `${ficha.ciudad}, ${ficha.pais}` : ficha.pais}</span>
                 <span aria-hidden="true">·</span>
                 <span>{ficha.anio}</span>
                 <span aria-hidden="true">·</span>
-                <span>{ficha.fundador}</span>
+                <span>{fundadores}</span>
               </p>
               <p class="marca__propuesta">{ficha.propuesta}</p>
             </>
@@ -184,6 +205,9 @@ const marcaJson = ficha
 
         {ficha && (
           <div class="marca__texto">
+            {/* El relato con su titular: sin el, la pagina saltaba del h1 a
+                los parrafos y el buscador no tenia como leer de que van. */}
+            <h2 class="marca__texto-titulo">Por qué trajimos {nombre} a Colombia</h2>
             {ficha.porQue.map((parrafo) => <p>{parrafo}</p>)}
           </div>
         )}
@@ -346,6 +370,15 @@ const marcaJson = ficha
   }
 
   .marca__texto p + p { margin-block-start: var(--espacio-2); }
+
+  /* Titular de seccion, no de pagina: la typewriter de la propuesta pero a
+     tamano de lectura, para que no compita con ella. */
+  .marca__texto-titulo {
+    margin-block: 0 var(--espacio-2);
+    font-family: var(--fuente-titular);
+    font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+    line-height: 1.2;
+  }
 
   /* Del tamano de la propuesta a la que sustituye, pero en el gris de los
      datos: ocupa su sitio sin sonar como si fuera el argumento de la marca. */

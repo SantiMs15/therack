@@ -216,6 +216,13 @@ describe('descripcionDeMarca', () => {
     expect(d).not.toContain('Envío')
   })
 
+  it('si el cierre largo no cabe prueba el corto antes de soltarlo', () => {
+    const propuesta = 'Streetwear de Elche fabricado entre España y Portugal. Cortes sin género y drops que se agotan.'
+    const d = descripcionDeMarca('Eme Studios', propuesta, [], cierre, 'Envío gratis a toda Colombia.')
+    expect(d).toBe(`Eme Studios en Colombia. ${propuesta} Envío gratis a toda Colombia.`)
+    expect(d.length).toBeLessThanOrEqual(160)
+  })
+
   it('sin piezas ni ficha no promete prendas que no hay', () => {
     const d = descripcionDeMarca('Nike', undefined, [], cierre)
     expect(d).not.toContain('Envío')

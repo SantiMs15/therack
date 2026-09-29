@@ -6,7 +6,7 @@ import Migas from '../../../components/Migas.astro'
 import Precio from '../../../components/Precio.astro'
 import { productos } from '../../../data/productos'
 import { ETIQUETAS_CATEGORIA, ETIQUETAS_TIPO_UNA, tallasDe, ultimaTalla } from '../../../data/schema'
-import { fichaMigas, fichaProducto, serializar, type Miga } from '../../../lib/datos-estructurados'
+import { fichaGrupo, fichaMigas, fichaProducto, serializar, type Miga } from '../../../lib/datos-estructurados'
 import { resolverImagen } from '../../../lib/imagenes-productos'
 import { resumir } from '../../../lib/formato'
 import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
@@ -134,8 +134,11 @@ const iPortada = Math.max(0, variante.imagenes.findIndex((foto) => foto.portada)
 // Ficha estructurada para el buscador. La arma datos-estructurados.ts, que
 // esta cubierto por tests: son datos que no se ven en la pagina, asi que un
 // error ahi no lo nota nadie hasta que Google rechaza la ficha.
+// Con mas de un color va como grupo, para que Google lea una prenda en
+// varios colores y no varias prendas sueltas.
+const datosFicha = { producto, variante, url, imagenes: absolutas }
 const fichaJson = serializar(
-  fichaProducto({ producto, variante, url, imagenes: absolutas })
+  producto.variantes.length > 1 ? fichaGrupo(datosFicha) : fichaProducto(datosFicha)
 )
 
 /**
@@ -165,8 +168,8 @@ const fichaJson = serializar(
 const migas: Miga[] = [
   { nombre: 'Inicio', ruta: '/' },
   {
-    nombre: ETIQUETAS_CATEGORIA[producto.categoria],
-    ruta: `/catalogo/${producto.categoria}/`,
+    nombre: ETIQUETAS_CATEGORIA[producto.categorias[0]!],
+    ruta: `/catalogo/${producto.categorias[0]}/`,
   },
   ...(marcasEnlazadas.length
     ? [

@@ -25,12 +25,12 @@ import { VENTA } from '../../config'
  */
 export function getStaticPaths() {
   return CATEGORIAS.filter((categoria) =>
-    productos.some((producto) => producto.categoria === categoria)
+    productos.some((producto) => producto.categorias.includes(categoria))
   ).map((categoria) => ({ params: { categoria } }))
 }
 
 const { categoria } = Astro.params as { categoria: Categoria }
-const deLaCategoria = productos.filter((p) => p.categoria === categoria)
+const deLaCategoria = productos.filter((p) => p.categorias.includes(categoria))
 /** Como se nombra a quien compra en esa categoria. */
 const QUIENES: Record<Categoria, string> = {
   mujer: 'mujer',

@@ -51,6 +51,32 @@ describe('marcas de un producto', () => {
   })
 })
 
+describe('categorias de un producto', () => {
+  it('una categoria suelta se guarda como lista de una', () => {
+    expect(producto({}).categorias).toEqual(['hombre'])
+  })
+
+  it('una prenda unisex guarda los dos generos, en el orden escrito', () => {
+    expect(producto({ categoria: ['hombre', 'mujer'] }).categorias).toEqual(['hombre', 'mujer'])
+  })
+
+  it('no queda rastro del campo `categoria` en el producto validado', () => {
+    expect('categoria' in producto({})).toBe(false)
+  })
+
+  it('rechaza una lista de un solo genero: va como texto', () => {
+    expect(() => producto({ categoria: ['mujer'] })).toThrow(/categoria/)
+  })
+
+  it('rechaza mezclar un genero con calzado o accesorios', () => {
+    expect(() => producto({ categoria: ['hombre', 'calzado'] })).toThrow(/categoria/)
+  })
+
+  it('rechaza un genero repetido', () => {
+    expect(() => producto({ categoria: ['mujer', 'mujer'] })).toThrow(/categoria/)
+  })
+})
+
 describe('precio de sale', () => {
   it('sin precioAntes la prenda no esta en sale', () => {
     const p = producto({})

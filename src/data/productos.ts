@@ -574,6 +574,37 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+
+  {
+    slug: 'pinstripe-night-sky-knit-sweater',
+    nombre: 'Pinstripe Night Sky Knit Sweater',
+    marca: 'Eme Studios',
+    // Unisex: sale en hombre y en mujer.
+    categoria: ['hombre', 'mujer'],
+    tipo: 'sweater',
+    precio: 420000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Suéter Eme Studios de punto grueso a rayas finas blancas sobre azul marino, cuello redondo acanalado, hombro caído y corte amplio. Lleva EME en granate aplicado sobre el pecho. Unisex.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'eme-studios-pinstripe-night-sky-knit-sweater-azul-marino-frente.jpg',
+            alt: 'Suéter Eme Studios azul marino con rayas finas blancas, vista frontal de la prenda sola con EME en letras granate sobre el pecho',
+          },
+          {
+            archivo: 'eme-studios-pinstripe-night-sky-knit-sweater-azul-marino-modelo-hombre.jpg',
+            alt: 'Chico de cuerpo entero con el suéter Eme Studios azul marino a rayas y EME en granate, jean ancho y una gorra granate colgada del bolsillo',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
 ]
 
 export const productos: Producto[] = validarCatalogo(catalogo)

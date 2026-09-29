@@ -60,7 +60,7 @@ export function tarjetasEnOrden(productos: readonly Producto[]): Tarjeta[] {
       indice,
       precio: tarjeta.producto.precio,
       destacado: tarjeta.producto.destacado,
-      genero: generoDe(tarjeta.producto.categoria),
+      genero: generoDe(tarjeta.producto.categorias[0]!),
       tipo: tarjeta.producto.tipo,
       marcas: tarjeta.producto.marcas.map(slugMarca),
     }))
@@ -126,8 +126,10 @@ export function marcasDe(productos: readonly Producto[]): Opcion[] {
 export function generosDe(productos: readonly Producto[]): Opcion[] {
   const presentes = new Set<Genero>()
   for (const producto of productos) {
-    const genero = generoDe(producto.categoria)
-    if (genero) presentes.add(genero)
+    for (const categoria of producto.categorias) {
+      const genero = generoDe(categoria)
+      if (genero) presentes.add(genero)
+    }
   }
   // Se recorre GENEROS y no el Set para que el orden sea siempre el declarado
   // en el schema, no el de aparicion en el catalogo.
@@ -225,8 +227,9 @@ export function marcasQueQuepan(
  * colombia"). Ahora abre con las dos, sigue con la propuesta si la hay y
  * nombra los tipos de prenda que hay de verdad.
  *
- * Si no cabe en los ~160 caracteres de un resultado, sobra el cierre: las
- * condiciones de venta se repiten en todo el sitio, la propuesta no.
+ * Si no cabe en los ~160 caracteres de un resultado, se prueba el cierre
+ * corto, y si tampoco cabe sobra el cierre: las condiciones de venta se
+ * repiten en todo el sitio, la propuesta no.
  *
  * Sin piezas y sin ficha no se anuncia envio de nada: se dice lo unico que
  * es cierto.
@@ -235,7 +238,9 @@ export function descripcionDeMarca(
   nombre: string,
   propuesta: string | undefined,
   productos: readonly Producto[],
-  cierre: string
+  cierre: string,
+  /** Version corta del cierre, para cuando el largo no cabe en 160. */
+  cierreCorto?: string
 ): string {
   if (!productos.length && !propuesta) {
     return `${nombre} en el archivo de marcas de The Rack store.`
@@ -246,8 +251,12 @@ export function descripcionDeMarca(
   if (propuesta) partes.push(propuesta)
   if (tipos.length) partes.push(`${capitalizar(enumerar(tipos))}.`)
 
-  const conCierre = [...partes, cierre].join(' ')
-  return conCierre.length <= 160 ? conCierre : partes.join(' ')
+  for (const c of [cierre, cierreCorto]) {
+    if (!c) continue
+    const conCierre = [...partes, c].join(' ')
+    if (conCierre.length <= 160) return conCierre
+  }
+  return partes.join(' ')
 }
 
 function capitalizar(texto: string): string {

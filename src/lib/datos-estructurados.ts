@@ -95,15 +95,68 @@ export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha)
           },
         },
       },
-      hasMerchantReturnPolicy: {
-        '@type': 'MerchantReturnPolicy',
-        applicableCountry: VENTA.pais,
-        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
-        merchantReturnDays: VENTA.cambios.dias,
-        // Cambio, no devolucion del dinero: es lo que ofrece la tienda.
-        refundType: 'https://schema.org/ExchangeRefund',
-      },
+      hasMerchantReturnPolicy: politicaCambios(),
     },
+  }
+}
+
+/**
+ * La politica de cambios, una sola para la oferta y para la tienda.
+ *
+ * Va en los dos sitios porque Google la lee en los dos: en la oferta manda
+ * para esa prenda, en la tienda es la que aplica cuando una oferta no dice
+ * nada. Armarla en una funcion es lo que impide que las dos copias se
+ * separen.
+ */
+function politicaCambios() {
+  return {
+    '@type': 'MerchantReturnPolicy',
+    applicableCountry: VENTA.pais,
+    returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+    merchantReturnDays: VENTA.cambios.dias,
+    returnMethod: VENTA.cambios.metodo,
+    returnFees: VENTA.cambios.costo,
+    // Cambio, no devolucion del dinero: es lo que ofrece la tienda.
+    refundType: 'https://schema.org/ExchangeRefund',
+  }
+}
+
+/**
+ * La ficha de una prenda que viene en varios colores.
+ *
+ * Sin esto cada color es para Google un producto suelto, sin relacion con
+ * los otros: tres fichas que compiten entre si en vez de una prenda en tres
+ * colores. El ProductGroup las junta bajo un mismo `productGroupID` y dice
+ * que lo unico que cambia entre ellas es el color.
+ *
+ * Es el formato que Google documenta cuando cada variante tiene su propia
+ * URL: la variante de ESTA pagina va completa, con su oferta; las demas van
+ * solo con su URL, porque sus datos ya estan en su pagina y dos copias
+ * acaban discrepando.
+ *
+ * Con un solo color no hay grupo: un ProductGroup de una variante no agrupa
+ * nada. Quien pinta la pagina decide, y en ese caso usa `fichaProducto`.
+ */
+export function fichaGrupo(datos: DatosFicha) {
+  const { producto, variante, url } = datos
+  const { '@context': _, ...pieza } = fichaProducto(datos)
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProductGroup',
+    name: producto.nombre,
+    description: producto.descripcion,
+    productGroupID: producto.slug,
+    variesBy: ['https://schema.org/color'],
+    ...('brand' in pieza ? { brand: pieza.brand } : {}),
+    hasVariant: producto.variantes.map((v) =>
+      v.slug === variante.slug
+        ? { ...pieza, inProductGroupWithID: producto.slug }
+        : {
+            '@type': 'Product',
+            // Absoluta contra la de esta pagina: mismo sitio, otra ruta.
+            url: new URL(`/producto/${producto.slug}/${v.slug}/`, url).href,
+          }
+    ),
   }
 }
 
@@ -197,6 +250,7 @@ export function fichaMarca({
   propuesta,
   url,
   pais,
+  ciudad,
   anio,
   fundador,
   imagen,
@@ -208,8 +262,11 @@ export function fichaMarca({
   /** Canonica de la pagina de marca, absoluta. */
   url: string
   pais: string
+  /** Si se sabe, el Place dice "ciudad, pais". */
+  ciudad?: string
   anio: number
-  fundador: string
+  /** Una Person por nombre: con uno solo va el objeto, con varios la lista. */
+  fundador: string | readonly string[]
   /** Foto de campana, absoluta. */
   imagen: string
   /** Fichas que lista, absolutas y en el orden en que se ven. */
@@ -226,12 +283,19 @@ export function fichaMarca({
       name: nombre,
       description: propuesta,
       foundingDate: String(anio),
-      founder: { '@type': 'Person', name: fundador },
-      foundingLocation: { '@type': 'Place', name: pais },
+      founder:
+        typeof fundador === 'string'
+          ? persona(fundador)
+          : fundador.map(persona),
+      foundingLocation: { '@type': 'Place', name: ciudad ? `${ciudad}, ${pais}` : pais },
       image: imagen,
     },
     ...(urls.length > 0 ? { mainEntity: listaDeUrls(urls) } : {}),
   }
+}
+
+function persona(name: string) {
+  return { '@type': 'Person', name }
 }
 
 /**
@@ -322,6 +386,9 @@ export function fichaTienda({ url, logo }: { url: string; logo: string }) {
     // actividad de la tienda: es lo que deja a un buscador entender que son
     // el mismo negocio.
     sameAs: [INSTAGRAM_URL],
+    // La politica para toda la tienda: Google la usa en las fichas de
+    // comercio de cualquier prenda cuya oferta no declare la suya.
+    hasMerchantReturnPolicy: politicaCambios(),
     areaServed: { '@type': 'Country', name: 'Colombia' },
     paymentAccepted: VENTA.pago.texto,
     contactPoint: {

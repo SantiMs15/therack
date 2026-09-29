@@ -17,12 +17,37 @@ import { slugMarca } from '../lib/filtros'
  */
 export const FichaMarcaSchema = z.strictObject({
   pais: z.string().min(1, 'pais: no puede estar vacio'),
+  /**
+   * Ciudad donde nacio. Opcional: con ella la linea de datos y el Place de
+   * los datos estructurados dicen "Elche, España" en vez de solo el pais.
+   */
+  ciudad: z.string().min(1, 'ciudad: no puede estar vacia').optional(),
   anio: z
     .number()
     .int('anio: debe ser entero')
     .gte(1800, 'anio: fuera de rango')
     .lte(2100, 'anio: fuera de rango'),
-  fundador: z.string().min(1, 'fundador: no puede estar vacio'),
+  /**
+   * Una persona, o una lista cuando son varias. Lista y no "A y B" en una
+   * cadena: los datos estructurados declaran una Person por fundador, y dos
+   * nombres en una sola Person son una persona que no existe.
+   */
+  fundador: z.union([
+    z.string().min(1, 'fundador: no puede estar vacio'),
+    z
+      .array(z.string().min(1, 'fundador: ningun nombre puede estar vacio'))
+      .min(2, 'fundador: con una sola persona va como texto, no como lista'),
+  ]),
+  /**
+   * Lo que es la marca en dos o tres palabras, para el titulo del buscador:
+   * "Eme Studios en Colombia: streetwear de Elche". Opcional: sin el, el
+   * titulo se queda en "<marca> en Colombia".
+   */
+  titular: z
+    .string()
+    .min(1, 'titular: no puede estar vacio')
+    .max(30, 'titular: maximo 30 caracteres, o el titulo se corta en el buscador')
+    .optional(),
   /**
    * Que propone la marca, en una linea. Hace dos trabajos: es el gancho de la
    * pagina y es su meta description. Se escribe una vez para que no puedan
@@ -128,8 +153,10 @@ const archivo: Record<string, unknown> = {
   },
   'eme-studios': {
     pais: 'España',
+    ciudad: 'Elche',
     anio: 2017,
-    fundador: 'Conra Martínez y Gabriel Morón',
+    fundador: ['Conra Martínez', 'Gabriel Morón'],
+    titular: 'streetwear de Elche',
     propuesta: 'Streetwear de Elche fabricado entre España y Portugal. Cortes sin género y drops que se agotan.',
     porQue: [
       'Conra Martínez y Gabriel Morón la montaron en Elche en 2017. No tenían tienda ni distribuidor: vendían por redes y sacaban algo nuevo cada dos semanas. La primera tienda física, en Madrid, llegó siete años después. Su lema, Always Grateful, va para la gente que les compró desde el principio.',

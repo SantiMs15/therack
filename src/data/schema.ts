@@ -175,12 +175,29 @@ const MarcaSchema = z.union([
     .min(1, 'marca: la lista no puede estar vacia'),
 ])
 
+/**
+ * Donde se vende la prenda. Una categoria como texto -- `categoria: 'hombre'`
+ * -- o, para una prenda unisex, la lista de los dos generos:
+ * `categoria: ['hombre', 'mujer']`. La unisex sale en /catalogo/hombre y en
+ * /catalogo/mujer sin duplicarla en productos.ts.
+ *
+ * Solo los generos pueden ir juntos: una prenda no es a la vez calzado y
+ * hombre en el sentido en que es de hombre y de mujer.
+ */
+const CategoriaSchema = z.union([
+  z.enum(CATEGORIAS),
+  z
+    .array(z.enum(GENEROS))
+    .min(2, 'categoria: con un solo genero va como texto, no como lista')
+    .refine((lista) => new Set(lista).size === lista.length, 'categoria: genero repetido'),
+])
+
 const ProductoBase = z.strictObject({
   slug: z.string().regex(SLUG, 'slug: solo minusculas, numeros y guiones'),
   nombre: z.string().min(1, 'nombre: no puede estar vacio'),
   /** Opcional: no toda prenda de la tienda es de marca conocida. */
   marca: MarcaSchema.optional(),
-  categoria: z.enum(CATEGORIAS),
+  categoria: CategoriaSchema,
   tipo: z.enum(TIPOS),
   precio: z.number().int('precio: debe ser entero').positive('precio: debe ser positivo'),
   /**
@@ -205,6 +222,9 @@ const ProductoBase = z.strictObject({
  * lista, vacia si no es de marca conocida. Asi nadie tiene que preguntarse si
  * lo que recibe es un texto, una lista o nada -- se recorre y ya.
  *
+ * Lo mismo con `categoria`: fuera es `categorias`, con una o con los dos
+ * generos de una prenda unisex.
+ *
  * OJO: una lista vacia es `truthy` en JavaScript. Para saber si la prenda
  * tiene marca se mira `marcas.length`, nunca `if (producto.marcas)`.
  */
@@ -213,9 +233,11 @@ export const ProductoSchema = ProductoBase.refine(
   // cliente con el precio tachado. Mejor que el build falle.
   ({ precio, precioAntes }) => precioAntes === undefined || precioAntes > precio,
   { message: 'precioAntes: debe ser mayor que precio', path: ['precioAntes'] }
-).transform(({ marca, ...resto }) => ({
+).transform(({ marca, categoria, ...resto }) => ({
   ...resto,
   marcas: marca === undefined ? [] : typeof marca === 'string' ? [marca] : marca,
+  /** Nunca vacia. La primera es la de las migas de la ficha. */
+  categorias: (typeof categoria === 'string' ? [categoria] : categoria) as Categoria[],
 }))
 
 export type Producto = z.infer<typeof ProductoSchema>

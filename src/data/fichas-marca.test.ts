@@ -26,6 +26,22 @@ describe('validarFichas', () => {
     expect(fichas['aime-leon-dore']?.fundador).toBe('Teddy Santis')
   })
 
+  it('acepta varios fundadores como lista', () => {
+    const ficha = { ...fichaValida(), fundador: ['Conra Martínez', 'Gabriel Morón'] }
+    const fichas = validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)
+    expect(fichas.nike?.fundador).toEqual(['Conra Martínez', 'Gabriel Morón'])
+  })
+
+  it('rechaza una lista de un solo fundador: uno va como texto', () => {
+    const ficha = { ...fichaValida(), fundador: ['Teddy Santis'] }
+    expect(() => validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)).toThrow(/fundador/)
+  })
+
+  it('rechaza un titular que cortaria el titulo del buscador', () => {
+    const ficha = { ...fichaValida(), titular: 'x'.repeat(31) }
+    expect(() => validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)).toThrow(/titular/)
+  })
+
   it('rechaza un slug que no esta en marcas.ts, y lo nombra', () => {
     expect(() => validarFichas({ 'marca-inventada': fichaValida() }, MARCAS_DE_PRUEBA)).toThrow(
       /marca-inventada/
