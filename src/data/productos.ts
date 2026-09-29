@@ -21,11 +21,11 @@ const catalogo: unknown[] = [
     nombre: 'Intarsia Branded Wool Sweater',
     marca: 'Lacoste',
     categoria: 'hombre',
-    tipo: 'sweater',
+    tipo: 'buzo',
     precio: 385000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
-      'Suéter Lacoste en lana, cuello redondo acanalado, mangas raglán y el nombre Lacoste Paris tejido en intarsia sobre el pecho.',
+      'Buzo Lacoste en lana, cuello redondo acanalado, mangas raglán y el nombre Lacoste Paris tejido en intarsia sobre el pecho.',
     variantes: [
       {
         color: 'Crudo',
@@ -33,11 +33,11 @@ const catalogo: unknown[] = [
         imagenes: [
           {
             archivo: 'lacoste-intarsia-wool-sweater-crudo-frente.jpg',
-            alt: 'Suéter Lacoste de lana color crudo, vista frontal con el nombre Lacoste tejido en azul y verde y la palabra Paris en rosa debajo',
+            alt: 'Buzo Lacoste de lana color crudo, vista frontal con el nombre Lacoste tejido en azul y verde y la palabra Paris en rosa debajo',
           },
           {
             archivo: 'lacoste-intarsia-wool-sweater-crudo-espalda.jpg',
-            alt: 'Suéter Lacoste de lana color crudo, vista de espalda lisa, con las costuras raglán y el bajo acanalado a la vista',
+            alt: 'Buzo Lacoste de lana color crudo, vista de espalda lisa, con las costuras raglán y el bajo acanalado a la vista',
           },
         ],
         disponible: true,
@@ -171,11 +171,11 @@ const catalogo: unknown[] = [
     nombre: 'Classic Quarter-Zip Sweater',
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
-    tipo: 'sweater',
+    tipo: 'buzo',
     precio: 290000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
-      'Suéter Tommy Hilfiger de algodón, cuello alto acanalado con cremallera hasta el pecho y bandera bordada en el costado.',
+      'Buzo Tommy Hilfiger de algodón, cuello alto acanalado con cremallera hasta el pecho y bandera bordada en el costado.',
     variantes: [
       {
         color: 'Beige',
@@ -183,15 +183,15 @@ const catalogo: unknown[] = [
         imagenes: [
           {
             archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-beige-frente.jpg',
-            alt: 'Suéter Tommy Hilfiger beige, vista frontal de la prenda sola con la cremallera abierta hasta el pecho y la bandera bordada a la derecha',
+            alt: 'Buzo Tommy Hilfiger beige, vista frontal de la prenda sola con la cremallera abierta hasta el pecho y la bandera bordada a la derecha',
           },
           {
             archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-beige-espalda.jpg',
-            alt: 'Suéter Tommy Hilfiger beige, vista de espalda de la prenda sola, lisa, con la cinta a rayas asomando por el cuello',
+            alt: 'Buzo Tommy Hilfiger beige, vista de espalda de la prenda sola, lisa, con la cinta a rayas asomando por el cuello',
           },
           {
             archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-beige-modelo.jpg',
-            alt: 'Suéter Tommy Hilfiger beige puesto, plano medio de un modelo que lo lleva con una camiseta blanca debajo y pantalón chino',
+            alt: 'Buzo Tommy Hilfiger beige puesto, plano medio de un modelo que lo lleva con una camiseta blanca debajo y pantalón chino',
           },
         ],
         disponible: true,
@@ -205,11 +205,11 @@ const catalogo: unknown[] = [
     nombre: 'Quarter-Zip Sweater',
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
-    tipo: 'sweater',
+    tipo: 'buzo',
     precio: 380000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
-      'Suéter Tommy Hilfiger de punto texturizado en algodón, cuello alto con cremallera hasta el pecho y bandera bordada en el costado.',
+      'Buzo Tommy Hilfiger de punto texturizado en algodón, cuello alto con cremallera hasta el pecho y bandera bordada en el costado.',
     variantes: [
       {
         color: 'Azul marino',
@@ -217,11 +217,11 @@ const catalogo: unknown[] = [
         imagenes: [
           {
             archivo: 'tommy-hilfiger-quarter-zip-sweater-azul-marino-frente.jpg',
-            alt: 'Suéter Tommy Hilfiger azul marino, vista frontal de la prenda sola con la cremallera hasta el pecho y la bandera bordada a la derecha',
+            alt: 'Buzo Tommy Hilfiger azul marino, vista frontal de la prenda sola con la cremallera hasta el pecho y la bandera bordada a la derecha',
           },
           {
             archivo: 'tommy-hilfiger-quarter-zip-sweater-azul-marino-espalda.jpg',
-            alt: 'Suéter Tommy Hilfiger azul marino, vista de espalda de la prenda sola, con el punto texturizado en los hombros y las mangas',
+            alt: 'Buzo Tommy Hilfiger azul marino, vista de espalda de la prenda sola, con el punto texturizado en los hombros y las mangas',
           },
         ],
         disponible: true,
@@ -478,7 +478,7 @@ const catalogo: unknown[] = [
        paginas se presenta con el nombre de esa marca; fuera, con los dos. */
     marca: ['Aimé Leon Dore', 'New Balance'],
     categoria: 'hombre',
-    tipo: 'sweater',
+    tipo: 'buzo',
     precio: 580000,
     // Solo del medio de la escala. Las puntas siguen a la vista, tachadas: el
     // rango que cubre la prenda es informacion util aunque hoy falte una talla.
@@ -487,7 +487,7 @@ const catalogo: unknown[] = [
       disponible: talla === 'S' || talla === 'M' || talla === 'L',
     })),
     descripcion:
-      'Suéter Aimé Leon Dore × New Balance en punto de algodón color hueso, cuello redondo acanalado y puños y bajo en rib. Lleva el globo terráqueo de New Balance tramado en puntos grises, que cruza el pecho y baja por una manga, y la firma AIMÉ tejida abajo a la derecha.',
+      'Buzo Aimé Leon Dore × New Balance en punto de algodón color hueso, cuello redondo acanalado y puños y bajo en rib. Lleva el globo terráqueo de New Balance tramado en puntos grises, que cruza el pecho y baja por una manga, y la firma AIMÉ tejida abajo a la derecha.',
     variantes: [
       {
         color: 'Off-White',
@@ -495,11 +495,11 @@ const catalogo: unknown[] = [
         imagenes: [
           {
             archivo: 'aime-leon-dore-geo-print-crewneck-off-white-frente.jpg',
-            alt: 'Suéter Aimé Leon Dore × New Balance color hueso, vista frontal de la prenda sola con el globo terráqueo tramado en puntos grises cruzando el pecho y la firma AIMÉ tejida abajo a la derecha',
+            alt: 'Buzo Aimé Leon Dore × New Balance color hueso, vista frontal de la prenda sola con el globo terráqueo tramado en puntos grises cruzando el pecho y la firma AIMÉ tejida abajo a la derecha',
           },
           {
             archivo: 'aime-leon-dore-geo-print-crewneck-off-white-espalda.jpg',
-            alt: 'Suéter Aimé Leon Dore × New Balance color hueso, vista de espalda con la otra mitad del globo tramado en puntos grises, que sigue desde el hombro hasta la manga',
+            alt: 'Buzo Aimé Leon Dore × New Balance color hueso, vista de espalda con la otra mitad del globo tramado en puntos grises, que sigue desde el hombro hasta la manga',
           },
         ],
         disponible: true,
@@ -581,11 +581,11 @@ const catalogo: unknown[] = [
     marca: 'Eme Studios',
     // Unisex: sale en hombre y en mujer.
     categoria: ['hombre', 'mujer'],
-    tipo: 'sweater',
+    tipo: 'buzo',
     precio: 420000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
-      'Suéter Eme Studios de punto grueso a rayas finas blancas sobre azul marino, cuello redondo acanalado, hombro caído y corte amplio. Lleva EME en granate aplicado sobre el pecho. Unisex.',
+      'Buzo Eme Studios de punto grueso a rayas finas blancas sobre azul marino, cuello redondo acanalado, hombro caído y corte amplio. Lleva EME en granate aplicado sobre el pecho. Unisex.',
     variantes: [
       {
         color: 'Azul marino',
@@ -593,11 +593,11 @@ const catalogo: unknown[] = [
         imagenes: [
           {
             archivo: 'eme-studios-pinstripe-night-sky-knit-sweater-azul-marino-frente.jpg',
-            alt: 'Suéter Eme Studios azul marino con rayas finas blancas, vista frontal de la prenda sola con EME en letras granate sobre el pecho',
+            alt: 'Buzo Eme Studios azul marino con rayas finas blancas, vista frontal de la prenda sola con EME en letras granate sobre el pecho',
           },
           {
             archivo: 'eme-studios-pinstripe-night-sky-knit-sweater-azul-marino-modelo-hombre.jpg',
-            alt: 'Chico de cuerpo entero con el suéter Eme Studios azul marino a rayas y EME en granate, jean ancho y una gorra granate colgada del bolsillo',
+            alt: 'Chico de cuerpo entero con el buzo Eme Studios azul marino a rayas y EME en granate, jean ancho y una gorra granate colgada del bolsillo',
           },
         ],
         disponible: true,

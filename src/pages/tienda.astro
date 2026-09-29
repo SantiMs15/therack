@@ -1,33 +1,77 @@
 ---
 import Layout from '../layouts/Layout.astro'
 import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
+import { MARCAS_CLASICAS, MARCAS_QUE_PRESENTAMOS, ORIGEN } from '../data/tienda'
+import { hrefDeMarca } from '../lib/archivo-marcas'
+import { slugMarca } from '../lib/filtros'
 import { formatearPrecio } from '../lib/formato'
 
 /**
- * La tienda es solo online, asi que aqui ya no van direccion ni horario de
- * puerta: lo que un cliente necesita saber antes de escribir es cuanto cuesta
- * el envio, cuanto tarda, como se paga y si puede cambiar la prenda. Eso es
- * lo que se responde una y otra vez por WhatsApp.
+ * Quienes somos, y lo que un cliente necesita saber antes de escribir: de
+ * donde sale la ropa, cuanto cuesta el envio, cuanto tarda, como se paga y si
+ * puede cambiar la prenda. Es lo que se responde una y otra vez por WhatsApp.
+ *
+ * La tienda es solo online: no hay direccion ni horario de puerta. El texto
+ * y sus reglas de vocabulario viven en src/data/tienda.ts.
  */
 const envio =
   VENTA.envio.costo === 0
     ? `Gratis a toda Colombia · ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días`
     : `${formatearPrecio(VENTA.envio.costo)} · ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días`
+
+/** Cada marca con su enlace, y el separador que le toca: ", " o " y ". */
+function enlazadas(marcas: readonly string[]) {
+  return marcas.map((nombre, i) => ({
+    nombre,
+    href: hrefDeMarca(slugMarca(nombre)),
+    tras: i < marcas.length - 2 ? ', ' : i === marcas.length - 2 ? ' y ' : '',
+  }))
+}
+const presentamos = enlazadas(MARCAS_QUE_PRESENTAMOS)
+const clasicas = enlazadas(MARCAS_CLASICAS)
+
+// "original" aqui y no en el titulo: es donde lo pide el esquema de palabras
+// clave, y es la duda que resuelve esta pagina.
+const descripcion =
+  `Ropa de marca original, nueva y con etiquetas, traída a Colombia desde tiendas oficiales. ` +
+  `Envío gratis en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días y cambios hasta ${VENTA.cambios.dias} días.`
 ---
-<Layout
-  titulo="La tienda"
-  descripcion={`Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días, pago por transferencia y cambios hasta ${VENTA.cambios.dias} días.`}
->
+<Layout titulo="Quiénes somos, envíos y cambios" descripcion={descripcion}>
   <div class="contenedor tienda">
-    <h1>La tienda</h1>
-    <p class="sobre">{CONFIG.sobre}</p>
+    <h1>Quiénes somos</h1>
+
+    <div class="sobre">
+      <p>
+        {CONFIG.nombre} trae a Colombia marcas que aquí casi no se consiguen:{' '}
+        {presentamos.map((m) => <><a href={m.href}>{m.nombre}</a>{m.tras}</>)}.
+        Y junto a ellas, clásicas como{' '}
+        {clasicas.map((m) => <><a href={m.href}>{m.nombre}</a>{m.tras}</>)}.
+      </p>
+      <p>
+        Toda la ropa es original, nueva y con sus etiquetas. La compramos en {ORIGEN},
+        y la llevamos hasta tu casa.
+      </p>
+      <p>
+        No solo vendemos la prenda. En el <a href="/marca/">archivo de marcas</a> contamos
+        quién está detrás de cada marca, de dónde viene y por qué la escogimos: es difícil
+        animarse con una marca que nunca has visto, y ahí está lo que necesitas saber.
+      </p>
+      <p>
+        Somos una tienda online desde {CONFIG.ciudad}. Atendemos por WhatsApp e Instagram,
+        y enviamos a toda Colombia.
+      </p>
+    </div>
+
+    <h2>Envíos, pagos y cambios</h2>
     <dl>
+      <dt>Originalidad</dt>
+      <dd>Original, nueva y con etiquetas</dd>
       <dt>Envíos</dt>
       <dd>{envio}</dd>
       <dt>Pagos</dt>
       <dd>{VENTA.pago.texto}</dd>
       <dt>Cambios</dt>
-      <dd>Hasta {VENTA.cambios.dias} días después de recibir la prenda</dd>
+      <dd>Hasta {VENTA.cambios.dias} días después de recibir la prenda. El envío del cambio corre por tu cuenta.</dd>
       <dt>Atención</dt>
       <dd>{CONFIG.horarios}</dd>
       <dt>Instagram</dt>
@@ -39,7 +83,10 @@ const envio =
 <style>
   .tienda { padding-block: var(--espacio-3) var(--espacio-4); max-width: 55ch; }
   .sobre { color: var(--texto-suave); margin-top: var(--espacio-2); }
-  dl { margin-top: var(--espacio-3); }
+  .sobre p + p { margin-top: var(--espacio-2); }
+  .sobre a, dd a { text-decoration: underline; }
+  h2 { margin-top: var(--espacio-4); }
+  dl { margin-top: var(--espacio-2); }
   dt {
     font-size: 0.8125rem;
     letter-spacing: 0.04em;
@@ -48,5 +95,4 @@ const envio =
     margin-top: var(--espacio-2);
   }
   dd { margin: 0; }
-  dd a { text-decoration: underline; }
 </style>

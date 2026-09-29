@@ -7,11 +7,11 @@ const camisetaTommyMujer: Filtrable = {
   tipo: 'camiseta',
   marcas: ['tommy-hilfiger'],
 }
-const zapatoSinMarca: Filtrable = { genero: null, tipo: 'sweater', marcas: [] }
+const zapatoSinMarca: Filtrable = { genero: null, tipo: 'buzo', marcas: [] }
 // La colaboracion: una prenda, dos marcas, y tiene que salir por las dos.
-const sweaterColaboracion: Filtrable = {
+const buzoColaboracion: Filtrable = {
   genero: 'hombre',
-  tipo: 'sweater',
+  tipo: 'buzo',
   marcas: ['aime-leon-dore', 'new-balance'],
 }
 
@@ -79,17 +79,17 @@ describe('pasa', () => {
   })
 
   it('una colaboracion pasa el filtro de CUALQUIERA de sus dos marcas', () => {
-    expect(pasa(sweaterColaboracion, { ...SIN_FILTROS, marca: 'aime-leon-dore' })).toBe(true)
-    expect(pasa(sweaterColaboracion, { ...SIN_FILTROS, marca: 'new-balance' })).toBe(true)
+    expect(pasa(buzoColaboracion, { ...SIN_FILTROS, marca: 'aime-leon-dore' })).toBe(true)
+    expect(pasa(buzoColaboracion, { ...SIN_FILTROS, marca: 'new-balance' })).toBe(true)
   })
 
   it('la colaboracion no pasa el filtro de una marca que no es suya', () => {
-    expect(pasa(sweaterColaboracion, { ...SIN_FILTROS, marca: 'lacoste' })).toBe(false)
+    expect(pasa(buzoColaboracion, { ...SIN_FILTROS, marca: 'lacoste' })).toBe(false)
   })
 
   it('la segunda marca no la cuela en los otros filtros', () => {
     const filtros = { genero: 'mujer' as const, tipo: null, marca: 'new-balance' }
-    expect(pasa(sweaterColaboracion, filtros)).toBe(false)
+    expect(pasa(buzoColaboracion, filtros)).toBe(false)
   })
 })
 

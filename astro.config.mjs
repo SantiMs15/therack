@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config'
 import sitemap from '@astrojs/sitemap'
 import { productos } from './src/data/productos.ts'
 import { enSale } from './src/data/schema.ts'
+import { archivoDeMarcas, marcaIndexable } from './src/lib/archivo-marcas.ts'
 
 /**
  * Fecha del ultimo commit que toco un archivo.
@@ -43,6 +44,14 @@ const ARCHIVO = ultimoCambio('src/data/fichas-marca.ts')
 // La misma regla que `saleDe`, desde la misma funcion.
 const HAY_SALE = productos.some(enSale)
 
+// Lo mismo con las marcas sin ficha ni piezas: se publican con noindex para
+// que el menu no lleve a un 404, y por eso no van al sitemap.
+const MARCAS_SIN_INDEXAR = new Set(
+  archivoDeMarcas()
+    .filter((e) => !marcaIndexable(e.slug))
+    .map((e) => `/marca/${e.slug}/`)
+)
+
 /**
  * En desarrollo, las fotos se sirven por /_image con la ruta del archivo en
  * la URL y un Cache-Control de un ano. Como las fotos se reemplazan con el
@@ -75,7 +84,11 @@ export default defineConfig({
   // sale de `npm run build` como un archivo mas de dist/.
   integrations: [
     sitemap({
-      filter: (url) => HAY_SALE || new URL(url).pathname !== '/sale/',
+      filter: (url) => {
+        const ruta = new URL(url).pathname
+        if (ruta === '/sale/') return HAY_SALE
+        return !MARCAS_SIN_INDEXAR.has(ruta)
+      },
       serialize(entrada) {
         // Se compara el pathname y no el final de la URL entera: con tres
         // ramas, mirar sufijos es facil de romper.

@@ -22,7 +22,7 @@ import Migas from '../../components/Migas.astro'
 import GaleriaElastica from '../../components/GaleriaElastica.astro'
 import RejillaProductos from '../../components/RejillaProductos.astro'
 import { productos } from '../../data/productos'
-import { archivoDeMarcas, type EntradaArchivo } from '../../lib/archivo-marcas'
+import { archivoDeMarcas, marcaIndexable, type EntradaArchivo } from '../../lib/archivo-marcas'
 import { descripcionDeMarca, enumerar, tarjetasEnOrden } from '../../lib/catalogo'
 import { VENTA } from '../../config'
 import { slugMarca } from '../../lib/filtros'
@@ -121,6 +121,7 @@ const marcaJson = ficha
 <Layout
   titulo={titulo}
   descripcion={descripcion}
+  indexable={marcaIndexable(slug)}
   imagen={new URL(tarjeta.src, Astro.site).href}
   imagenAlt={alt}
   imagenAncho={1200}

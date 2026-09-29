@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { archivoDeMarcas, hrefDeMarca, nombreDeMarcas, tieneFicha } from './archivo-marcas'
+import { archivoDeMarcas, hrefDeMarca, marcaIndexable, nombreDeMarcas, tieneFicha } from './archivo-marcas'
 import type { FichaMarca } from '../data/fichas-marca'
 
 const MARCAS_DE_PRUEBA = ['Nike', 'Aimé Leon Dore', 'Represent'] as const
@@ -102,5 +102,25 @@ describe('nombreDeMarcas', () => {
   it('el contexto no estorba a la prenda de una sola marca', () => {
     expect(nombreDeMarcas(['Lacoste'], 'lacoste')).toBe('Lacoste')
     expect(nombreDeMarcas(['Lacoste'], 'nike')).toBe('Lacoste')
+  })
+})
+
+describe('marcaIndexable', () => {
+  const catalogo = [{ marcas: ['Nike'] }, { marcas: ['Aimé Leon Dore', 'New Balance'] }]
+
+  it('con ficha se indexa aunque no tenga piezas', () => {
+    expect(marcaIndexable('represent', FICHAS_DE_PRUEBA, [])).toBe(true)
+  })
+
+  it('con piezas se indexa aunque no tenga ficha', () => {
+    expect(marcaIndexable('nike', FICHAS_DE_PRUEBA, catalogo)).toBe(true)
+  })
+
+  it('una colaboracion cuenta como pieza de las dos marcas', () => {
+    expect(marcaIndexable('new-balance', FICHAS_DE_PRUEBA, catalogo)).toBe(true)
+  })
+
+  it('sin ficha ni piezas no se indexa', () => {
+    expect(marcaIndexable('adidas', FICHAS_DE_PRUEBA, catalogo)).toBe(false)
   })
 })

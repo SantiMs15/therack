@@ -24,7 +24,7 @@ function producto(campos: Record<string, unknown>): Producto {
       slug: 'prenda',
       nombre: 'Prenda',
       categoria: 'hombre',
-      tipo: 'sweater',
+      tipo: 'polo',
       precio: 100_000,
       tallas: ['M'],
       descripcion: 'Una prenda.',
@@ -103,7 +103,7 @@ describe('generosDe', () => {
 describe('tiposDe', () => {
   it('solo devuelve los presentes, en el orden del schema', () => {
     const catalogo = [
-      producto({ slug: 'a', tipo: 'sweater' }),
+      producto({ slug: 'a', tipo: 'polo' }),
       producto({ slug: 'b', tipo: 'buzo' }),
       producto({ slug: 'c', tipo: 'hoodie' }),
       producto({ slug: 'd', tipo: 'buzo' }),
@@ -111,7 +111,7 @@ describe('tiposDe', () => {
     expect(tiposDe(catalogo)).toEqual([
       { valor: 'buzo', etiqueta: 'Buzos' },
       { valor: 'hoodie', etiqueta: 'Hoodies' },
-      { valor: 'sweater', etiqueta: 'Suéteres' },
+      { valor: 'polo', etiqueta: 'Polos' },
     ])
   })
 })

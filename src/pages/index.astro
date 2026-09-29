@@ -28,8 +28,10 @@ const tiendaJson = serializar(
   })
 )
 ---
-{/* "Inicio" no lo busca nadie, y es la pagina con mas autoridad del sitio. */}
-<Layout titulo="Ropa de marca importada en Colombia" descripcion={descripcion}>
+{/* "Inicio" no lo busca nadie, y es la pagina con mas autoridad del sitio.
+    Sin "importada": en Colombia "ropa importada" trae mayoristas y China, y
+    "original" va en la descripcion, no aqui (docs/keywords-decisiones.md). */}
+<Layout titulo="Ropa de marca en Colombia" descripcion={descripcion}>
   <script type="application/ld+json" is:inline set:html={tiendaJson}></script>
 
   <div class="contenedor portada">

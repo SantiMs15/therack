@@ -8,7 +8,7 @@ import { productos } from '../../../data/productos'
 import { ETIQUETAS_CATEGORIA, ETIQUETAS_TIPO_UNA, tallasDe, ultimaTalla } from '../../../data/schema'
 import { fichaGrupo, fichaMigas, fichaProducto, serializar, type Miga } from '../../../lib/datos-estructurados'
 import { resolverImagen } from '../../../lib/imagenes-productos'
-import { resumir } from '../../../lib/formato'
+import { resumir, tituloDeFicha } from '../../../lib/formato'
 import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
 import { hrefDeMarca, nombreDeMarcas } from '../../../lib/archivo-marcas'
 import { slugMarca } from '../../../lib/filtros'
@@ -50,18 +50,19 @@ const marcasEnlazadas = producto.marcas.map((nombre) => ({
 /**
  * El titulo del navegador y del resultado de busqueda, que NO es el <h1>.
  *
- * En la pagina manda el nombre oficial del fabricante, que es lo que el
- * cliente reconoce con la prenda delante. En un resultado manda la palabra
- * con la que se busca: "chaqueta tommy hilfiger", no "Mixed-Media Puffer
- * Jacket". El nombre oficial sigue estando en el h1, en la descripcion y en
- * la ficha estructurada, asi que quien busque el modelo exacto lo encuentra.
- *
- * Se queda corto a proposito: con el " — The Rack store" que anade el layout
- * el mas largo ronda los 55 caracteres, por debajo de donde Google corta.
+ * Abre con la palabra con la que se busca -- "chaqueta tommy hilfiger" -- y
+ * detras, si cabe, el nombre oficial del modelo, que es lo que busca quien
+ * ya sabe que quiere comprar. `tituloDeFicha` decide que entra sin pasar de
+ * donde Google corta; la regla y sus casos estan en formato.ts.
  */
-const tituloBuscador = [ETIQUETAS_TIPO_UNA[producto.tipo], nombreDeMarcas(producto.marcas)]
-  .filter(Boolean)
-  .join(' ') + ` · ${variante.color}`
+const { titulo: tituloBuscador, conTienda } = tituloDeFicha({
+  base: [ETIQUETAS_TIPO_UNA[producto.tipo], nombreDeMarcas(producto.marcas)]
+    .filter(Boolean)
+    .join(' '),
+  modelo: producto.nombre,
+  color: variante.color,
+  tienda: ` — ${CONFIG.nombre}`,
+})
 
 /**
  * La descripcion para el buscador, que no es la que se lee en la ficha.
@@ -194,6 +195,7 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
 ---
 <Layout
   titulo={tituloBuscador}
+  sinNombreTienda={!conTienda}
   descripcion={descripcionBuscador}
   tipo="product"
   descripcionTarjeta={descripcionTarjeta(producto, descripcionBuscador)}

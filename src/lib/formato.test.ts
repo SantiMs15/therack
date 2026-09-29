@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatearPrecio, resumir } from './formato'
+import { formatearPrecio, resumir, tituloDeFicha } from './formato'
 
 describe('formatearPrecio', () => {
   it('usa punto como separador de miles', () => {
@@ -70,5 +70,60 @@ describe('resumir', () => {
     const r = resumir(t, 25).replace('…', '').trimEnd()
     expect(t.startsWith(r)).toBe(true)
     expect(t[r.length] === ' ' || r.length === t.length).toBe(true)
+  })
+})
+
+describe('tituloDeFicha', () => {
+  const TIENDA = ' — The Rack store'
+
+  it('con sitio, lleva el modelo y el nombre de la tienda', () => {
+    expect(
+      tituloDeFicha({ base: 'Polo Lacoste', modelo: 'Cable Knit', color: 'Negro', tienda: TIENDA })
+    ).toEqual({ titulo: 'Polo Lacoste Cable Knit · Negro', conTienda: true })
+  })
+
+  it('si no cabe con la tienda, suelta la tienda antes que el modelo', () => {
+    const r = tituloDeFicha({
+      base: 'Buzo Lacoste',
+      modelo: 'Classic Printed Crew Neck',
+      color: 'Negro',
+      tienda: TIENDA,
+    })
+    expect(r).toEqual({ titulo: 'Buzo Lacoste Classic Printed Crew Neck · Negro', conTienda: false })
+  })
+
+  it('si el modelo no cabe ni solo, vuelve al titulo corto', () => {
+    const r = tituloDeFicha({
+      base: 'Camiseta Tommy Hilfiger',
+      modelo: 'Crewneck Favorite T-Shirt',
+      color: 'Azul marino',
+      tienda: TIENDA,
+    })
+    expect(r).toEqual({ titulo: 'Camiseta Tommy Hilfiger · Azul marino', conTienda: true })
+  })
+
+  it('no repite en el modelo una palabra que ya dice la marca', () => {
+    const r = tituloDeFicha({
+      base: 'Camiseta Aimé Leon Dore',
+      modelo: 'Aimé Souvenir Tee',
+      color: 'Blanco',
+      tienda: TIENDA,
+    })
+    expect(r.titulo).toBe('Camiseta Aimé Leon Dore Souvenir Tee · Blanco')
+  })
+
+  it('si ni el corto cabe con la tienda, suelta la tienda', () => {
+    const r = tituloDeFicha({
+      base: 'Buzo Aimé Leon Dore × New Balance',
+      modelo: 'Geo Print Crewneck',
+      color: 'Off-White',
+      tienda: TIENDA,
+    })
+    expect(r).toEqual({ titulo: 'Buzo Aimé Leon Dore × New Balance · Off-White', conTienda: false })
+  })
+
+  it('nunca pasa del maximo mientras haya una opcion que quepa', () => {
+    const r = tituloDeFicha({ base: 'Buzo X', modelo: 'Y', color: 'Z', tienda: TIENDA, maximo: 20 })
+    expect(r.titulo + (r.conTienda ? TIENDA : '')).toHaveLength(12)
   })
 })

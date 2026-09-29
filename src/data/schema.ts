@@ -42,11 +42,15 @@ export function generoDe(categoria: Categoria): Genero | null {
  * buscando algo concreto: "un hoodie", "una camiseta". Va en orden
  * alfabetico porque es el orden en que se pinta el desplegable.
  *
+ * No hay "sweater" ni "sueter": en Colombia la prenda de punto es un
+ * BUZO, y sueter/sweater arrastran busquedas de Mexico y Argentina (ver
+ * docs/keywords-decisiones.md). El punto fino y el grueso van los dos aqui.
+ *
  * Anadir un tipo aqui obliga a declararlo en cada producto: el build falla
  * si una prenda se queda sin el, que es preferible a una prenda que no
  * aparece en ningun filtro.
  */
-export const TIPOS = ['buzo', 'camiseta', 'chaqueta', 'hoodie', 'polo', 'sweater'] as const
+export const TIPOS = ['buzo', 'camiseta', 'chaqueta', 'hoodie', 'polo'] as const
 export type Tipo = (typeof TIPOS)[number]
 
 /** En plural: el desplegable nombra grupos de prendas, no una prenda. */
@@ -56,7 +60,6 @@ export const ETIQUETAS_TIPO: Record<Tipo, string> = {
   chaqueta: 'Chaquetas',
   hoodie: 'Hoodies',
   polo: 'Polos',
-  sweater: 'Suéteres',
 }
 
 /**
@@ -71,7 +74,6 @@ export const ETIQUETAS_TIPO_UNA: Record<Tipo, string> = {
   chaqueta: 'Chaqueta',
   hoodie: 'Hoodie',
   polo: 'Polo',
-  sweater: 'Suéter',
 }
 
 /**

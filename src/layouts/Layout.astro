@@ -50,6 +50,12 @@ interface Props {
    * fichas lo usan para poner el precio delante; sin el, va `descripcion`.
    */
   descripcionTarjeta?: string
+  /**
+   * Sin " — The Rack store" al final del titulo. Solo para las fichas cuyo
+   * modelo no cabe con el: en un resultado de busqueda pesa mas el modelo
+   * que el nombre de la tienda, que ya sale encima en la URL.
+   */
+  sinNombreTienda?: boolean
   /** Precio de la prenda, para las etiquetas product:price que leen Facebook y Pinterest. */
   precio?: { monto: number; moneda: string }
 }
@@ -65,6 +71,7 @@ const {
   imagenAlto,
   tipo = 'website',
   descripcionTarjeta = descripcion,
+  sinNombreTienda = false,
   precio,
 } = Astro.props
 
@@ -96,7 +103,7 @@ const tarjeta = {
   ancho: imagenAncho ?? 1200,
   alto: imagenAlto ?? 630,
 }
-const tituloCompleto = `${titulo} — ${CONFIG.nombre}`
+const tituloCompleto = sinNombreTienda ? titulo : `${titulo} — ${CONFIG.nombre}`
 
 /**
  * Las dos secciones del catalogo, siempre a la vista: Exclusives, que es la
@@ -193,7 +200,13 @@ const enlacesArchivo: Enlace[] = [
 
     <link rel="preconnect" href="https://use.typekit.net" crossorigin />
     <link rel="preconnect" href="https://p.typekit.net" crossorigin />
-    <link rel="stylesheet" href="https://use.typekit.net/uat3sbv.css" />
+    {/* Typekit trae una sola fuente, la de maquina de escribir de la
+        interfaz, y como hoja normal bloqueaba el pintado de toda la pagina
+        hasta que respondia un servidor ajeno. Con media="print" el navegador
+        la baja sin esperar y la activa al llegar: mientras tanto se lee en
+        Geist, que es la siguiente de la pila. */}
+    <link rel="stylesheet" href="https://use.typekit.net/uat3sbv.css" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://use.typekit.net/uat3sbv.css" /></noscript>
   </head>
   <body>
     {/* Dos cajas y no una: la de fuera pinta el fondo de punta a punta y es la

@@ -1,5 +1,6 @@
 import { FICHAS, type FichaMarca } from '../data/fichas-marca'
 import { MARCAS } from '../data/marcas'
+import { productos } from '../data/productos'
 import { slugMarca } from './filtros'
 
 /**
@@ -58,6 +59,29 @@ export interface EntradaArchivo {
  */
 export function tieneFicha(slug: string, fichas: Record<string, FichaMarca> = FICHAS): boolean {
   return Object.hasOwn(fichas, slug)
+}
+
+/**
+ * Si la pagina de una marca tiene algo que ensenarle a un buscador.
+ *
+ * La tiene si hay ficha escrita o si hay piezas de la marca en la tienda.
+ * Sin ninguna de las dos la pagina solo dice "todavia se esta escribiendo" y
+ * "no hay piezas": indexada, Google la lee como una pagina vacia -- que resta
+ * al sitio entero -- y quien busca "adidas colombia" aterriza en ella.
+ *
+ * Se sigue publicando, con noindex y fuera del sitemap, por lo mismo que
+ * /sale/ sin rebajas: el menu la enlaza y no puede llevar a un 404. El dia
+ * que llegue la ficha o la primera pieza se indexa sola.
+ */
+export function marcaIndexable(
+  slug: string,
+  fichas: Record<string, FichaMarca> = FICHAS,
+  catalogo: readonly { marcas: readonly string[] }[] = productos
+): boolean {
+  return (
+    tieneFicha(slug, fichas) ||
+    catalogo.some((p) => p.marcas.some((m) => slugMarca(m) === slug))
+  )
 }
 
 /**

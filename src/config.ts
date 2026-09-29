@@ -1,5 +1,5 @@
 /**
- * Datos del negocio. PENDIENTE: reemplazar los marcados antes de publicar.
+ * Datos del negocio. El texto de quienes somos vive en src/data/tienda.ts.
  */
 export const CONFIG = {
   nombre: 'The Rack store',
@@ -11,8 +11,7 @@ export const CONFIG = {
   // anadirla aqui, ponerla en el pie y en /tienda, y cambiar el schema de
   // OnlineStore a LocalBusiness, que es lo que la mete en el mapa.
   ciudad: 'Bogotá',
-  horarios: 'Lunes a sábado, 10:00 - 19:00', // PENDIENTE: confirmar
-  sobre: 'PENDIENTE: texto de quienes somos', // PENDIENTE
+  horarios: 'Lunes a sábado, 10:00 - 19:00',
 } as const
 
 /**

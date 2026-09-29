@@ -12,7 +12,7 @@
  */
 import Layout from '../../layouts/Layout.astro'
 import Migas from '../../components/Migas.astro'
-import { archivoDeMarcas } from '../../lib/archivo-marcas'
+import { archivoDeMarcas, marcaIndexable } from '../../lib/archivo-marcas'
 import {
   fichaArchivo,
   fichaMigas,
@@ -37,7 +37,11 @@ const archivoJson =
     ? serializar(
         fichaArchivo({
           url: new URL('/marca/', Astro.site).href,
-          urls: entradas.map((e) => new URL(`/marca/${e.slug}/`, Astro.site).href),
+          // Solo las indexables: listar aqui una pagina con noindex seria
+          // senalarle a Google una URL que la propia pagina le pide ignorar.
+          urls: entradas
+            .filter((e) => marcaIndexable(e.slug))
+            .map((e) => new URL(`/marca/${e.slug}/`, Astro.site).href),
         })
       )
     : null
