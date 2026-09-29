@@ -12,7 +12,8 @@ import { resumir } from '../../../lib/formato'
 import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
 import { hrefDeMarca, nombreDeMarcas } from '../../../lib/archivo-marcas'
 import { slugMarca } from '../../../lib/filtros'
-import { CONFIG, INSTAGRAM_URL } from '../../../config'
+import { descripcionTarjeta, TARJETA } from '../../../lib/tarjeta-compartir'
+import { CONFIG, INSTAGRAM_URL, VENTA } from '../../../config'
 
 export function getStaticPaths() {
   // Una pagina por cada color. Asi el enlace que viaja en el mensaje de
@@ -115,8 +116,8 @@ const enlaceInicial = construirEnlaceWhatsApp({
 })
 
 /**
- * Las fotos con URL absoluta, que es lo que piden tanto el schema como la
- * tarjeta de compartir.
+ * Las fotos con URL absoluta, que es lo que pide el schema. La tarjeta de
+ * compartir no las usa: lleva su propia foto, compuesta en /tarjeta/.
  *
  * Se piden por getImage y no usando el `src` del import: asi el archivo que
  * se nombra es uno que el build emite seguro, en vez de una ruta del original
@@ -128,7 +129,8 @@ const optimizadas = await Promise.all(
 const absolutas = optimizadas.map((foto) => new URL(foto.src, Astro.site).href)
 
 // La misma foto que abre la prenda en la rejilla: hay prendas que se venden
-// por la espalda, y el enlace pegado en un chat tiene que enseñar eso.
+// por la espalda. Aqui solo da el alt de la tarjeta; la foto la elige con
+// la misma regla /tarjeta/[slug]/[color].jpg.
 const iPortada = Math.max(0, variante.imagenes.findIndex((foto) => foto.portada))
 
 // Ficha estructurada para el buscador. La arma datos-estructurados.ts, que
@@ -194,10 +196,12 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
   titulo={tituloBuscador}
   descripcion={descripcionBuscador}
   tipo="product"
-  imagen={absolutas[iPortada]}
+  descripcionTarjeta={descripcionTarjeta(producto, descripcionBuscador)}
+  precio={{ monto: producto.precio, moneda: VENTA.moneda }}
+  imagen={new URL(`/tarjeta/${producto.slug}/${variante.slug}.jpg`, Astro.site).href}
   imagenAlt={imagenes[iPortada]!.alt}
-  imagenAncho={imagenes[iPortada]!.datos.width}
-  imagenAlto={imagenes[iPortada]!.datos.height}
+  imagenAncho={TARJETA.ancho}
+  imagenAlto={TARJETA.alto}
 >
   <script type="application/ld+json" is:inline set:html={fichaJson}></script>
   <script type="application/ld+json" is:inline set:html={migasJson}></script>
