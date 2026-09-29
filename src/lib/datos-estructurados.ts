@@ -367,6 +367,24 @@ export function fichaMigas(migas: readonly Miga[], sitio: string | URL) {
 }
 
 /**
+ * El sitio, para la portada: es de donde Google saca el nombre que pone
+ * encima de cada resultado. Sin el lo adivina, y puede quedarse con el
+ * dominio pelado o con el titulo de alguna pagina.
+ *
+ * `alternateName` recoge como se la nombra de palabra, que es tambien como
+ * la escribe quien la busca.
+ */
+export function fichaSitio({ url }: { url: string }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: CONFIG.nombre,
+    alternateName: ['The Rack', 'therackstore'],
+    url,
+  }
+}
+
+/**
  * La ficha de la tienda, para la portada.
  *
  * `OnlineStore` y no `LocalBusiness`: no hay local, y declarar un negocio

@@ -26,6 +26,18 @@
  */
 import { slugMarca, type Opcion } from '../lib/filtros'
 
+/**
+ * Las marcas que mas se buscan, en ese orden. Van delante cuando una
+ * descripcion nombra marcas, tengan las prendas que tengan: el que busca
+ * "eme studios" tiene que leerla en el resultado aunque sea la marca con
+ * menos piezas colgadas.
+ *
+ * Lo dijo el dueno el 2026-09-29, a partir de lo que ve en el buscador.
+ * Cuando GSC tenga meses de datos, este orden sale del informe de
+ * rendimiento y no de la intuicion.
+ */
+export const MARCAS_MAS_BUSCADAS = ['Eme Studios', 'Lacoste', 'Tommy Hilfiger'] as const
+
 /** En orden alfabetico, que es el que sale al menu. */
 export const MARCAS = [
   'Adidas',

@@ -51,7 +51,7 @@ interface Props {
    */
   descripcionTarjeta?: string
   /**
-   * Sin " — The Rack store" al final del titulo. Solo para las fichas cuyo
+   * Sin " | The Rack store" al final del titulo. Solo para las fichas cuyo
    * modelo no cabe con el: en un resultado de busqueda pesa mas el modelo
    * que el nombre de la tienda, que ya sale encima en la URL.
    */
@@ -103,7 +103,9 @@ const tarjeta = {
   ancho: imagenAncho ?? 1200,
   alto: imagenAlto ?? 630,
 }
-const tituloCompleto = sinNombreTienda ? titulo : `${titulo} — ${CONFIG.nombre}`
+// Barra vertical y no raya: es el separador que se lee en un resultado de
+// busqueda, y el que pidio el dueno.
+const tituloCompleto = sinNombreTienda ? titulo : `${titulo} | ${CONFIG.nombre}`
 
 /**
  * Las dos secciones del catalogo, siempre a la vista: Exclusives, que es la
@@ -174,7 +176,13 @@ const enlacesArchivo: Enlace[] = [
     {/* El isotipo sin el punto: es el doble de ancho que de alto, y sin el
         punto crece un cuarto en una pestana cuadrada. El SVG cambia de negro a blanco con el tema del sistema;
         el .ico es para quien no lee SVG, y el PNG con fondo negro es el
-        acceso directo de iOS, que rellenaria el transparente por su cuenta. */}
+        acceso directo de iOS, que rellenaria el transparente por su cuenta.
+
+        El de 192 es para el resultado de Google: lo pinta en un circulo sobre
+        blanco o sobre gris oscuro, y el isotipo negro transparente del .ico
+        desaparecia en el modo oscuro. Fondo negro solido, como el de iOS, y
+        un multiplo de 48 que es lo que Google pide. */}
+    <link rel="icon" href="/favicon-192.png" sizes="192x192" type="image/png" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

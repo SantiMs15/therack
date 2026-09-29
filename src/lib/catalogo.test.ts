@@ -187,7 +187,18 @@ describe('marcasPorPeso', () => {
       producto({ slug: 'c', marca: 'Lacoste' }),
       producto({ slug: 'd', marca: 'Dime' }),
     ]
-    expect(marcasPorPeso(catalogo)).toEqual(['Lacoste', 'Dime', 'Tommy Hilfiger'])
+    expect(marcasPorPeso(catalogo, [])).toEqual(['Lacoste', 'Dime', 'Tommy Hilfiger'])
+  })
+
+  it('las mas buscadas van delante aunque tengan menos prendas', () => {
+    const catalogo = [
+      producto({ slug: 'a', marca: 'Dime' }),
+      producto({ slug: 'b', marca: 'Dime' }),
+      producto({ slug: 'c', marca: 'Eme Studios' }),
+      producto({ slug: 'd', marca: 'Lacoste' }),
+    ]
+    expect(marcasPorPeso(catalogo, ['Eme Studios', 'Lacoste', 'Tommy Hilfiger']))
+      .toEqual(['Eme Studios', 'Lacoste', 'Dime'])
   })
 })
 

@@ -74,7 +74,7 @@ describe('resumir', () => {
 })
 
 describe('tituloDeFicha', () => {
-  const TIENDA = ' — The Rack store'
+  const TIENDA = ' | The Rack store'
 
   it('con sitio, lleva el modelo y el nombre de la tienda', () => {
     expect(

@@ -20,6 +20,7 @@ import {
 } from '../data/schema'
 import { ORDEN_POR_DEFECTO, ordenar, turnos } from './orden'
 import { slugMarca, type Opcion } from './filtros'
+import { MARCAS_MAS_BUSCADAS } from '../data/marcas'
 
 /** Una tarjeta de la rejilla: una prenda en UN color. */
 export interface Tarjeta {
@@ -182,19 +183,29 @@ export function descripcionDeCategoria(
 }
 
 /**
- * Las marcas de un catalogo, de la que mas prendas tiene a la que menos.
+ * Las marcas de un catalogo, en el orden en que las nombra una descripcion.
  *
- * Para las descripciones, no para el menu: cuando no caben todas, las que se
- * nombran tienen que ser las que el que llega va a encontrar de verdad. A
- * igualdad, alfabetico, para que el orden no dependa del de la lista.
+ * Primero las de `prioridad` -- las que mas se buscan -- si hay prendas de
+ * ellas; luego el resto, de la que mas prendas tiene a la que menos. Para
+ * las descripciones, no para el menu: cuando no caben todas, las que se
+ * nombran tienen que ser las que el que llega busca y va a encontrar de
+ * verdad. A igualdad, alfabetico, para que el orden no dependa del de la
+ * lista.
  */
-export function marcasPorPeso(productos: readonly Producto[]): string[] {
+export function marcasPorPeso(
+  productos: readonly Producto[],
+  prioridad: readonly string[] = MARCAS_MAS_BUSCADAS
+): string[] {
   const cuenta = new Map<string, number>()
   for (const producto of productos) {
     for (const marca of producto.marcas) cuenta.set(marca, (cuenta.get(marca) ?? 0) + 1)
   }
+  const puesto = (marca: string) => {
+    const i = prioridad.indexOf(marca)
+    return i === -1 ? prioridad.length : i
+  }
   return [...cuenta]
-    .sort(([a, na], [b, nb]) => nb - na || a.localeCompare(b, 'es'))
+    .sort(([a, na], [b, nb]) => puesto(a) - puesto(b) || nb - na || a.localeCompare(b, 'es'))
     .map(([marca]) => marca)
 }
 

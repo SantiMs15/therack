@@ -2,17 +2,21 @@
 import Layout from '../layouts/Layout.astro'
 import RejillaProductos from '../components/RejillaProductos.astro'
 import { productos } from '../data/productos'
-import { fichaTienda, serializar } from '../lib/datos-estructurados'
+import { fichaSitio, fichaTienda, serializar } from '../lib/datos-estructurados'
 import { exclusivesDe, marcasPorPeso, marcasQueQuepan } from '../lib/catalogo'
-import { CONFIG, VENTA } from '../config'
+import { VENTA } from '../config'
 
 // Nombra las marcas que hay de verdad y las condiciones de venta, en vez de
 // la generica de 24 caracteres que compartia con media web. Las que caben,
 // empezando por las que mas prendas tienen.
+//
+// "original" va aqui, que es donde lo pide docs/keywords-decisiones.md. Y
+// sin la ciudad: "<marca> bogota" es la busqueda de quien quiere una tienda
+// fisica, y esta no la tiene -- vende a toda Colombia.
 const descripcion = marcasQueQuepan(
   marcasPorPeso(productos),
   (lista) =>
-    `Ropa de marca en ${CONFIG.ciudad}: ${lista}. ` +
+    `Ropa de marca original en Colombia: ${lista}. ` +
     `Envío gratis a toda Colombia y cambios hasta ${VENTA.cambios.dias} días.`
 )
 
@@ -27,11 +31,15 @@ const tiendaJson = serializar(
     logo: new URL('/og.png', Astro.site).href,
   })
 )
+// El nombre que Google pone encima del resultado. Sin esto lo deduce, y
+// puede acabar poniendo el dominio o el titulo de una pagina.
+const sitioJson = serializar(fichaSitio({ url: Astro.site.href }))
 ---
 {/* "Inicio" no lo busca nadie, y es la pagina con mas autoridad del sitio.
     Sin "importada": en Colombia "ropa importada" trae mayoristas y China, y
     "original" va en la descripcion, no aqui (docs/keywords-decisiones.md). */}
 <Layout titulo="Ropa de marca en Colombia" descripcion={descripcion}>
+  <script type="application/ld+json" is:inline set:html={sitioJson}></script>
   <script type="application/ld+json" is:inline set:html={tiendaJson}></script>
 
   <div class="contenedor portada">
@@ -43,7 +51,7 @@ const tiendaJson = serializar(
         fotos a proposito, y meter un titular grande encima cambiaria la pagina
         entera por un problema que es de jerarquia, no de composicion. Un
         lector de pantalla y un buscador si lo reciben. */}
-    <h1 class="visualmente-oculto">Ropa de marca en {CONFIG.ciudad}</h1>
+    <h1 class="visualmente-oculto">Ropa de marca en Colombia</h1>
     {/* La portada es Exclusives: la coleccion a precio completo. Lo rebajado
         vive en /sale/ y no se repite aqui. */}
     <RejillaProductos productos={exclusivesDe(productos)} ordenable />

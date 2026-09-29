@@ -46,9 +46,9 @@ export function resumir(texto: string, maximo: number): string {
  * el nombre del fabricante solo estaba en el h1. Ahora entra si cabe, por
  * este orden:
  *
- *   1. "Buzo Lacoste Classic Printed Crew Neck · Negro — The Rack store"
+ *   1. "Buzo Lacoste Classic Printed Crew Neck · Negro | The Rack store"
  *   2. lo mismo sin el nombre de la tienda, que es lo que menos se busca
- *   3. "Buzo Lacoste · Negro — The Rack store", el de antes
+ *   3. "Buzo Lacoste · Negro | The Rack store", el de antes
  *   4. el de antes sin el nombre de la tienda
  *
  * `maximo` son los ~60 caracteres a partir de los que Google corta.
@@ -65,7 +65,7 @@ export function tituloDeFicha({
   /** Nombre del fabricante: "Classic Printed Crew Neck". */
   modelo: string
   color: string
-  /** Lo que se anade al final, con su separador: " — The Rack store". */
+  /** Lo que se anade al final, con su separador: " | The Rack store". */
   tienda: string
   maximo?: number
 }): { titulo: string; conTienda: boolean } {

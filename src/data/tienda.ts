@@ -24,8 +24,10 @@
  * comprueba tienda.test.ts.
  */
 export const MARCAS_QUE_PRESENTAMOS = [
-  'Aimé Leon Dore',
+  // Eme Studios delante: es la que mas se busca de las que presentamos
+  // (ver MARCAS_MAS_BUSCADAS en marcas.ts).
   'Eme Studios',
+  'Aimé Leon Dore',
   'KidSuper Studios',
   'Pleasures',
 ] as const

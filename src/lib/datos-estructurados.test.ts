@@ -8,6 +8,7 @@ import {
   fichaMarca,
   fichaMigas,
   fichaProducto,
+  fichaSitio,
   fichaTienda,
   serializar,
 } from './datos-estructurados'
@@ -490,5 +491,15 @@ describe('fichaArchivo', () => {
     expect(ficha['@type']).toBe('CollectionPage')
     expect(ficha.mainEntity.numberOfItems).toBe(1)
     expect(ficha.mainEntity.itemListElement[0].url).toBe(urls[0])
+  })
+})
+
+describe('fichaSitio', () => {
+  it('declara el WebSite con el nombre de la tienda y la URL de la portada', () => {
+    const f = fichaSitio({ url: 'https://therackstore.shop/' }) as any
+    expect(f['@type']).toBe('WebSite')
+    expect(f.name).toBe(CONFIG.nombre)
+    expect(f.url).toBe('https://therackstore.shop/')
+    expect(f.alternateName).toContain('The Rack')
   })
 })
