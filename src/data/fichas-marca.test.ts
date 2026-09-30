@@ -37,6 +37,17 @@ describe('validarFichas', () => {
     expect(() => validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)).toThrow(/fundador/)
   })
 
+  it('acepta un nombre de busqueda distinto del nombre de la marca', () => {
+    const ficha = { ...fichaValida(), nombreBusqueda: 'Polo Ralph Lauren' }
+    const fichas = validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)
+    expect(fichas.nike?.nombreBusqueda).toBe('Polo Ralph Lauren')
+  })
+
+  it('rechaza un nombre de busqueda vacio', () => {
+    const ficha = { ...fichaValida(), nombreBusqueda: '' }
+    expect(() => validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)).toThrow(/nombreBusqueda/)
+  })
+
   it('rechaza un titular que cortaria el titulo del buscador', () => {
     const ficha = { ...fichaValida(), titular: 'x'.repeat(31) }
     expect(() => validarFichas({ nike: ficha }, MARCAS_DE_PRUEBA)).toThrow(/titular/)

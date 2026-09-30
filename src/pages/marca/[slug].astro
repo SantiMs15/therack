@@ -25,7 +25,7 @@ import { productos } from '../../data/productos'
 import { archivoDeMarcas, marcaIndexable, type EntradaArchivo } from '../../lib/archivo-marcas'
 import { descripcionDeMarca, enumerar, galeriaDePiezas, tarjetasEnOrden } from '../../lib/catalogo'
 import { resolverImagen } from '../../lib/imagenes-productos'
-import { VENTA } from '../../config'
+import { CONFIG, VENTA } from '../../config'
 import { slugMarca } from '../../lib/filtros'
 import { resolverImagenMarca } from '../../lib/imagenes-marcas'
 import { resolverLogoMarca } from '../../lib/logos-marcas'
@@ -76,8 +76,9 @@ const logo = resolverLogoMarca(slug)
 
 /* La descripcion del buscador: nombre y pais delante, que es como se busca,
    y detras la propuesta y lo que hay de la marca. */
+const nombreBuscado = ficha?.nombreBusqueda ?? nombre
 const descripcion = descripcionDeMarca(
-  nombre,
+  nombreBuscado,
   ficha?.propuesta,
   suyas,
   `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`,
@@ -85,8 +86,16 @@ const descripcion = descripcionDeMarca(
 )
 
 /* El titulo del buscador: el nombre y "en Colombia", que es como se busca,
-   y detras lo que es la marca si la ficha lo dice. */
-const titulo = ficha?.titular ? `${nombre} en Colombia: ${ficha.titular}` : `${nombre} en Colombia`
+   y detras lo que es la marca si la ficha lo dice. Con `nombreBusqueda`
+   va la forma en que se busca -- "Polo Ralph Lauren" -- y no el nombre a
+   secas; el h1 sigue siendo el nombre real. */
+const titulo = ficha?.titular
+  ? `${nombreBuscado} en Colombia: ${ficha.titular}`
+  : `${nombreBuscado} en Colombia`
+/* La misma regla que las fichas de producto: si con " | The Rack store" pasa
+   de los ~60 caracteres donde Google corta, se suelta el nombre de la tienda
+   antes que el titular. */
+const sinNombreTienda = `${titulo} | ${CONFIG.nombre}`.length > 60
 
 /* La tarjeta al compartir el enlace es la portada de la marca, recortada al
    1200x630 que piden WhatsApp e Instagram. Sin ella salia el logo de la
@@ -128,6 +137,7 @@ const marcaJson = ficha
 
 <Layout
   titulo={titulo}
+  sinNombreTienda={sinNombreTienda}
   descripcion={descripcion}
   indexable={marcaIndexable(slug)}
   imagen={new URL(tarjeta.src, Astro.site).href}

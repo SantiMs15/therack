@@ -42,6 +42,7 @@ La marca desnuda trae otra cosa. Hay que anclarla siempre.
 | Represent | representante legal, Congreso de Bogota | `Represent Owners Club` |
 | On | Onitsuka Tiger | `On Running` / `On Cloud` |
 | ALD | Aldo (¡otra marca de zapatos!) | `Aime Leon Dore` |
+| Ralph Lauren | (se busca con la prenda delante) | `Polo Ralph Lauren`. Va en `nombreBusqueda` de la ficha: cambia titulo y meta description, no el nombre de la marca |
 
 ### Nombres correctos
 

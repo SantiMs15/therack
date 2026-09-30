@@ -267,7 +267,11 @@ export function descripcionDeMarca(
     const conCierre = [...partes, c].join(' ')
     if (conCierre.length <= 160) return conCierre
   }
-  return partes.join(' ')
+  // Sin cierre y aun largo: sobran los tipos de prenda antes que la
+  // propuesta, que es lo unico que no se repite en otras paginas.
+  const sinCierre = partes.join(' ')
+  if (sinCierre.length > 160 && tipos.length) return partes.slice(0, -1).join(' ')
+  return sinCierre
 }
 
 function capitalizar(texto: string): string {

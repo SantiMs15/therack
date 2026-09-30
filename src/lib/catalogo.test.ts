@@ -203,6 +203,15 @@ describe('marcasPorPeso', () => {
   })
 })
 
+describe('descripcionDeMarca: largo', () => {
+  it('si ni sin cierre cabe, suelta los tipos antes que la propuesta', () => {
+    const piezas = [producto({ slug: 'a', marca: 'Lacoste', tipo: 'buzo' })]
+    const propuesta = 'x'.repeat(140)
+    const d = descripcionDeMarca('Lacoste', propuesta, piezas, 'Cierre.')
+    expect(d).toBe(`Lacoste en Colombia. ${propuesta}`)
+  })
+})
+
 describe('descripcionDeMarca', () => {
   const piezas = [
     producto({ slug: 'a', marca: 'Lacoste', tipo: 'buzo' }),

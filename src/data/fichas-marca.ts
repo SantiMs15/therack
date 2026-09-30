@@ -39,6 +39,13 @@ export const FichaMarcaSchema = z.strictObject({
       .min(2, 'fundador: con una sola persona va como texto, no como lista'),
   ]),
   /**
+   * Como se BUSCA la marca en Colombia, cuando no es su nombre a secas:
+   * "Polo Ralph Lauren", "Fear of God Essentials". Cambia solo el titulo y
+   * la descripcion del buscador; el h1, el menu y el catalogo siguen con el
+   * nombre real. Mismo caso que las anclas de docs/keywords-decisiones.md.
+   */
+  nombreBusqueda: z.string().min(1, 'nombreBusqueda: no puede estar vacio').optional(),
+  /**
    * Lo que es la marca en dos o tres palabras, para el titulo del buscador:
    * "Eme Studios en Colombia: streetwear de Elche". Opcional: sin el, el
    * titulo se queda en "<marca> en Colombia".
@@ -148,6 +155,94 @@ const archivo: Record<string, unknown> = {
     ],
     // PROVISIONAL: silueta urbana generada, no es material de la marca.
     // Reemplazar por la campana real antes de publicar.
+    imagen: 'placeholder-ciudad.jpg',
+    alt: 'Siluetas de edificios de una ciudad en blanco y negro',
+  },
+  'tommy-hilfiger': {
+    pais: 'Estados Unidos',
+    ciudad: 'Nueva York',
+    anio: 1985,
+    fundador: 'Tommy Hilfiger',
+    titular: 'preppy de Nueva York',
+    propuesta:
+      'El preppy americano original: polos, camisas oxford y buzos medio cierre, con la bandera de la marca.',
+    porQue: [
+      'Tommy Hilfiger es una marca de Estados Unidos. Tommy Hilfiger, que había empezado vendiendo jeans en una tienda de su pueblo, Elmira, la lanzó en Nueva York en 1985.',
+      'Arrancó con una valla en Times Square que ponía su nombre junto al de los grandes diseñadores americanos del momento, cuando casi nadie lo conocía. Funcionó: la bandera roja, blanca y azul se volvió la firma del preppy americano, esa ropa de universidad de la costa este hecha de polos, camisas oxford y buzos de punto.',
+      'La trajimos porque es el preppy que mejor aguanta el día a día: prendas que combinan con todo y se ven cuidadas sin esfuerzo. Aquí se consigue original, incluido el buzo medio cierre, que en Colombia casi nadie ofrece de la marca.',
+    ],
+    // PROVISIONAL: sin foto de campana todavia.
+    imagen: 'placeholder-ciudad.jpg',
+    alt: 'Siluetas de edificios de una ciudad en blanco y negro',
+  },
+  'hugo-boss': {
+    pais: 'Alemania',
+    ciudad: 'Metzingen',
+    anio: 1924,
+    fundador: 'Hugo Boss',
+    titular: 'sastrería alemana',
+    propuesta:
+      'Sastrería alemana llevada a la calle: gorras, zapatos y ropa original con el corte limpio de BOSS.',
+    porQue: [
+      'Hugo Boss es una marca alemana. Hugo Boss abrió su taller de confección en 1924 en Metzingen, un pueblo del sur de Alemania donde la marca sigue teniendo su sede.',
+      'Se hizo un nombre con la sastrería: trajes de corte preciso que en los años ochenta vistieron a medio mundo. Hoy tiene dos líneas, BOSS, la más clásica, y HUGO, la más joven, y la misma precisión llega a gorras, zapatos y ropa de diario.',
+      'La trajimos porque es la forma de llevar esa sastrería sin ponerse un traje: una gorra, unos zapatos o una prenda de BOSS suben cualquier pinta sin que se note el esfuerzo.',
+    ],
+    // PROVISIONAL: sin foto de campana todavia.
+    imagen: 'placeholder-ciudad.jpg',
+    alt: 'Siluetas de edificios de una ciudad en blanco y negro',
+  },
+  'ralph-lauren': {
+    pais: 'Estados Unidos',
+    ciudad: 'Nueva York',
+    anio: 1967,
+    fundador: 'Ralph Lauren',
+    // En Colombia se busca "polo ralph lauren": el titulo lo dice asi sin
+    // renombrar la marca (ver docs/keywords-decisiones.md).
+    nombreBusqueda: 'Polo Ralph Lauren',
+    titular: 'el clásico americano',
+    propuesta:
+      'La camisa polo con el jugador bordado en el pecho, original: el clásico americano que nació en Nueva York.',
+    porQue: [
+      'Ralph Lauren es una marca de Estados Unidos. Ralph Lauren, que creció en el Bronx, la empezó en Nueva York en 1967 vendiendo corbatas anchas, y a esa primera línea la llamó Polo.',
+      'En 1972 sacó la camisa polo con el jugador de polo bordado en el pecho, y esa prenda se volvió la marca: por eso en Colombia casi nadie dice Ralph Lauren a secas, sino polo Ralph Lauren. Detrás vino todo un estilo, el del clásico americano: camisas oxford, buzos de punto y chaquetas que no pasan de moda.',
+      'La trajimos porque es la prenda de marca que se puede llevar en cualquier ocasión, del trabajo a un fin de semana, y aquí se consigue original.',
+    ],
+    // PROVISIONAL: sin foto de campana todavia.
+    imagen: 'placeholder-ciudad.jpg',
+    alt: 'Siluetas de edificios de una ciudad en blanco y negro',
+  },
+  'calvin-klein': {
+    pais: 'Estados Unidos',
+    ciudad: 'Nueva York',
+    anio: 1968,
+    fundador: ['Calvin Klein', 'Barry Schwartz'],
+    titular: 'minimalismo de Nueva York',
+    propuesta:
+      'Minimalismo de Nueva York, original: el boxer con el nombre en el elástico, jeans y básicos sin adornos.',
+    porQue: [
+      'Calvin Klein es una marca de Estados Unidos. Calvin Klein la fundó en Nueva York en 1968 con Barry Schwartz, su amigo de infancia, y empezaron haciendo abrigos.',
+      'Su sello es el minimalismo: líneas limpias, pocos colores y nada que sobre. En los ochenta puso su nombre en el elástico de la ropa interior, y el boxer Calvin Klein se volvió la prenda más reconocible de la marca, junto a sus jeans.',
+      'La trajimos porque son los básicos que se usan todos los días, y en los básicos es donde más se nota la diferencia de llevar algo original.',
+    ],
+    // PROVISIONAL: sin foto de campana todavia.
+    imagen: 'placeholder-ciudad.jpg',
+    alt: 'Siluetas de edificios de una ciudad en blanco y negro',
+  },
+  'karl-lagerfeld': {
+    pais: 'Francia',
+    ciudad: 'París',
+    anio: 1984,
+    fundador: 'Karl Lagerfeld',
+    titular: 'el estilo de París',
+    propuesta:
+      'Bolsos y ropa original con la silueta de Karl, la coleta y las gafas oscuras: París en blanco y negro.',
+    porQue: [
+      'Karl Lagerfeld es una marca francesa, nacida en París en 1984 con el nombre del diseñador que la creó.',
+      'Su firma es fácil de reconocer: la silueta de Karl, con la coleta blanca y las gafas oscuras, y una paleta que casi no sale del blanco y el negro. Con esa identidad hace bolsos, ropa y accesorios, sobre todo para mujer.',
+      'La trajimos porque es moda de París a un precio que se puede alcanzar, y sus bolsos son de las piezas que más se buscan de la marca en Colombia.',
+    ],
+    // PROVISIONAL: sin foto de campana todavia.
     imagen: 'placeholder-ciudad.jpg',
     alt: 'Siluetas de edificios de una ciudad en blanco y negro',
   },

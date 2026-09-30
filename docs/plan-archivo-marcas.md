@@ -17,11 +17,11 @@ con que enfoque, y se registra cada avance en la **Bitacora** del final.
 | Eme Studios | Si | Portada + galeria (5) | 1 | Publicada |
 | Aimé Leon Dore | Si | No: usa el placeholder | 4 (una es la colaboracion con New Balance) | Publicada (falta portada) |
 | Lacoste | Si | No: usa el placeholder | 4 | Publicada (falta portada) |
-| Tommy Hilfiger | No | No | 4 | **Siguiente** |
-| Hugo Boss | No | No | 0 | En cola |
-| Ralph Lauren | No | No | 0 | En cola |
-| Calvin Klein | No | No | 0 | En cola |
-| Karl Lagerfeld | No | No | 0 | En cola |
+| Tommy Hilfiger | Si | No: usa el placeholder | 4 | Publicada (falta portada) |
+| Hugo Boss | Si | No: usa el placeholder | 0 (en camino) | Publicada (falta portada y stock) |
+| Ralph Lauren | Si | No: usa el placeholder | 0 (en camino) | Publicada (falta portada y stock) |
+| Calvin Klein | Si | No: usa el placeholder | 0 (en camino) | Publicada (falta portada y stock) |
+| Karl Lagerfeld | Si | No: usa el placeholder | 0 (en camino) | Publicada (falta portada y stock) |
 | Essentials | No | No | 2 | Bloqueada: falta medir keyword correcta |
 
 Actualizar esta tabla cada vez que cambie algo (y anotarlo en la Bitacora).
@@ -94,8 +94,9 @@ Otras variantes vistas en los informes, por si sirven en el texto:
 ### 4. Ralph Lauren
 - **Angulo:** preppy clasico americano.
 - **Ancla obligatoria:** en Colombia se busca "**polo** ralph lauren". El
-  titulo debe decir "Polo Ralph Lauren en Colombia" sin renombrar la marca en
-  el catalogo (mismo caso que Dime / Represent).
+  titulo dice "Polo Ralph Lauren en Colombia" sin renombrar la marca en el
+  catalogo: lo hace el campo `nombreBusqueda` de la ficha, que cambia solo
+  titulo y meta description.
 - **Datos ficha:** Estados Unidos · Nueva York · 1967 · Ralph Lauren (verificar).
 
 ### 5. Calvin Klein
@@ -154,10 +155,15 @@ Otras variantes vistas en los informes, por si sirven en el texto:
 
 - [x] Escribir ficha de Lacoste
 - [ ] Lacoste: portada 3:2 en `src/assets/marcas/lacoste-portada.jpg`
-- [ ] Escribir ficha de Tommy Hilfiger
+- [x] Escribir ficha de Tommy Hilfiger
+- [x] Escribir fichas de Hugo Boss, Ralph Lauren, Calvin Klein y Karl Lagerfeld
+- [ ] Portadas 3:2 de Tommy Hilfiger, Hugo Boss, Ralph Lauren, Calvin Klein y Karl Lagerfeld
+- [ ] Cuando llegue el stock de Hugo Boss, Ralph Lauren, Calvin Klein y Karl
+      Lagerfeld: revisar que `porQue` y `propuesta` nombren lo que de verdad llego
 - [ ] Conseguir portada 3:2 (y galeria) de Aimé Leon Dore: hoy usa el placeholder
 - [ ] Medir "fear of god essentials" en Semrush
-- [ ] Añadir "Polo Ralph Lauren" y "Fear of God Essentials" a las anclas de `keywords-decisiones.md`
+- [x] Añadir "Polo Ralph Lauren" a las anclas de `keywords-decisiones.md`
+- [ ] Añadir "Fear of God Essentials" a las anclas (despues de medirla)
 - [ ] Cuando GSC tenga 2-3 meses: revisar este orden con impresiones reales
 
 ---
@@ -165,6 +171,16 @@ Otras variantes vistas en los informes, por si sirven en el texto:
 ## Bitacora
 
 Formato: `AAAA-MM-DD — que se hizo — quien`. Lo mas reciente arriba.
+
+- **2026-09-29** — Fichas de Tommy Hilfiger, Hugo Boss, Ralph Lauren, Calvin
+  Klein y Karl Lagerfeld. Se escriben ya, sin stock, porque el stock de las
+  cuatro ultimas viene en camino. Enfoque de "marca conocida": de donde es,
+  un rasgo o historia que la identifique, y por que la trajimos, con las
+  prendas que se buscan nombradas en el texto (buzo medio cierre, polo,
+  boxer, bolso, gorra, zapatos). Nuevo campo `nombreBusqueda` para Ralph
+  Lauren. Titulos de mas de 60 caracteres sueltan "| The Rack store"; la
+  meta description suelta los tipos de prenda antes que la propuesta si no
+  cabe en 160. Portadas provisionales. Essentials sigue bloqueada. — Santiago + Claude
 
 - **2026-09-29** — Ficha de Lacoste escrita. Titular "el cocodrilo francés";
   titulo "Lacoste en Colombia: el cocodrilo francés"; meta description de 145
