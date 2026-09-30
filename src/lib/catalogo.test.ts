@@ -8,6 +8,7 @@ import {
   generosDe,
   marcasDe,
   marcasPorPeso,
+  galeriaDePiezas,
   marcasQueQuepan,
   saleDe,
   tiposDe,
@@ -263,5 +264,53 @@ describe('exclusivesDe y saleDe', () => {
 
   it('sin rebajas, sale queda vacia', () => {
     expect(saleDe([producto({ slug: 'a' })])).toEqual([])
+  })
+})
+
+describe('galeriaDePiezas', () => {
+  const pieza = (slug: string, archivos: string[]) => {
+    const p = producto({
+      slug,
+      marca: 'Lacoste',
+      variantes: [
+        { color: 'Negro', slug: 'negro', imagenes: archivos, disponible: true },
+      ],
+    })
+    return { producto: p, variante: p.variantes[0]! }
+  }
+
+  it('una foto por prenda antes de repetir prenda', () => {
+    const fotos = galeriaDePiezas([
+      pieza('a', ['a-frente.jpg', 'a-espalda.jpg']),
+      pieza('b', ['b-frente.jpg', 'b-espalda.jpg']),
+    ])
+    expect(fotos.map((f) => f.archivo)).toEqual([
+      'a-frente.jpg',
+      'b-frente.jpg',
+      'a-espalda.jpg',
+      'b-espalda.jpg',
+    ])
+  })
+
+  it('de cada prenda van primero las fotos con modelo', () => {
+    const fotos = galeriaDePiezas([
+      pieza('a', ['a-frente.jpg', 'a-modelo.jpg']),
+      pieza('b', ['b-frente.jpg']),
+    ])
+    expect(fotos[0]!.archivo).toBe('a-modelo.jpg')
+  })
+
+  it('no pasa del maximo', () => {
+    const muchas = ['a', 'b', 'c', 'd'].map((s) => pieza(s, [`${s}-1.jpg`, `${s}-2.jpg`]))
+    expect(galeriaDePiezas(muchas, 6)).toHaveLength(6)
+  })
+
+  it('con una sola foto no hay galeria', () => {
+    expect(galeriaDePiezas([pieza('a', ['a.jpg'])])).toEqual([])
+  })
+
+  it('sin alt propio compone uno con marca, nombre y color', () => {
+    const [foto] = galeriaDePiezas([pieza('a', ['a-1.jpg', 'a-2.jpg'])])
+    expect(foto!.alt).toBe('Lacoste Prenda Negro')
   })
 })

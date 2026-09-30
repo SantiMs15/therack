@@ -273,3 +273,49 @@ export function descripcionDeMarca(
 function capitalizar(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
+
+/** Una foto de la galeria de una marca: archivo de src/assets/productos y su alt. */
+export interface FotoDePieza {
+  archivo: string
+  alt: string
+}
+
+/**
+ * La galeria de respaldo de una pagina de marca: fotos de sus piezas.
+ *
+ * La galeria de verdad es la de la ficha, con fotos de campana. Casi ninguna
+ * marca la tiene todavia, y sin ella la pagina se quedaba en un texto solo;
+ * con esto toda marca con piezas tiene galeria desde el primer dia, y el dia
+ * que llegan las fotos de campana la sustituyen sin tocar nada mas.
+ *
+ * Una foto por prenda antes de repetir prenda, para que la galeria ensene la
+ * marca y no un solo buzo desde cinco angulos. De cada prenda van primero las
+ * fotos con modelo -- una prenda puesta se parece mas a una campana que una
+ * prenda sola sobre blanco --, luego la de portada y luego el resto.
+ *
+ * De 2 a `maximo`: con una sola no hay acordeon que abrir, asi que por
+ * debajo de dos devuelve la lista vacia y la pagina se queda sin galeria.
+ */
+export function galeriaDePiezas(
+  tarjetas: readonly { producto: Producto; variante: Variante }[],
+  maximo = 6
+): FotoDePieza[] {
+  const colas = tarjetas.map(({ producto, variante }) => {
+    const alternativo = [producto.marcas.join(' × '), producto.nombre, variante.color]
+      .filter(Boolean)
+      .join(' ')
+    const peso = (foto: Variante['imagenes'][number]) =>
+      foto.archivo.includes('-modelo') ? 0 : foto.portada ? 1 : 2
+    return [...variante.imagenes]
+      .sort((a, b) => peso(a) - peso(b))
+      .map((foto) => ({ archivo: foto.archivo, alt: foto.alt ?? alternativo }))
+  })
+
+  const fotos: FotoDePieza[] = []
+  for (let vuelta = 0; fotos.length < maximo; vuelta++) {
+    const deEstaVuelta = colas.map((cola) => cola[vuelta]).filter((f) => f !== undefined)
+    if (!deEstaVuelta.length) break
+    fotos.push(...deEstaVuelta.slice(0, maximo - fotos.length))
+  }
+  return fotos.length >= 2 ? fotos : []
+}

@@ -23,7 +23,8 @@ import GaleriaElastica from '../../components/GaleriaElastica.astro'
 import RejillaProductos from '../../components/RejillaProductos.astro'
 import { productos } from '../../data/productos'
 import { archivoDeMarcas, marcaIndexable, type EntradaArchivo } from '../../lib/archivo-marcas'
-import { descripcionDeMarca, enumerar, tarjetasEnOrden } from '../../lib/catalogo'
+import { descripcionDeMarca, enumerar, galeriaDePiezas, tarjetasEnOrden } from '../../lib/catalogo'
+import { resolverImagen } from '../../lib/imagenes-productos'
 import { VENTA } from '../../config'
 import { slugMarca } from '../../lib/filtros'
 import { resolverImagenMarca } from '../../lib/imagenes-marcas'
@@ -54,6 +55,13 @@ const enOrden = tarjetasEnOrden(suyas)
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
 }
+
+/* La galeria de campana de la ficha, si la hay; si no, fotos de las piezas
+   de la marca. Asi toda marca con al menos dos fotos tiene galeria, y la de
+   campana manda en cuanto se escribe. Ver `galeriaDePiezas`. */
+const galeria = ficha?.galeria
+  ? ficha.galeria.map((foto) => ({ imagen: resolverImagenMarca(foto.imagen), alt: foto.alt }))
+  : galeriaDePiezas(enOrden).map((foto) => ({ imagen: resolverImagen(foto.archivo), alt: foto.alt }))
 
 /* La marca sin ficha todavia no tiene foto de campana propia, y una portada
    sin imagen dejaria el nombre flotando sobre el fondo del sitio: se pinta la
@@ -181,7 +189,7 @@ const marcaJson = ficha
     {/* Con galeria, el texto y las fotos van lado a lado en pantalla ancha:
         se lee la marca mientras se la mira. Sin galeria el texto se queda
         solo, a su medida de lectura, como estaba. */}
-    <div class:list={['marca__cuerpo', { 'marca__cuerpo--galeria': ficha?.galeria }]}>
+    <div class:list={['marca__cuerpo', { 'marca__cuerpo--galeria': galeria.length > 0 }]}>
       <div class="marca__relato">
         <div class="marca__cabecera">
           {ficha ? (
@@ -213,7 +221,7 @@ const marcaJson = ficha
           </div>
         )}
       </div>
-      {ficha?.galeria && <GaleriaElastica fotos={ficha.galeria} />}
+      {galeria.length > 0 && <GaleriaElastica fotos={galeria} />}
     </div>
 
     {enOrden.length > 0 ? (

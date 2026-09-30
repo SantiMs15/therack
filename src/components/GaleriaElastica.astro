@@ -10,11 +10,15 @@
  * que sin JS la galeria se ve igual -- solo deja de cambiar.
  */
 import { Image } from 'astro:assets'
-import { resolverImagenMarca } from '../lib/imagenes-marcas'
-import type { FichaMarca } from '../data/fichas-marca'
+import type { ImageMetadata } from 'astro'
 
+/**
+ * Las fotos llegan ya resueltas: pueden ser de campana (src/assets/marcas) o
+ * de las piezas de la marca (src/assets/productos), y quien sabe de donde
+ * vienen es la pagina, no la galeria.
+ */
 interface Props {
-  fotos: NonNullable<FichaMarca['galeria']>
+  fotos: { imagen: ImageMetadata; alt: string }[]
 }
 
 const { fotos } = Astro.props
@@ -30,7 +34,7 @@ const inicial = Math.floor(fotos.length / 2)
           movil la ventana entera. */}
       <Image
         class="galeria__foto"
-        src={resolverImagenMarca(foto.imagen)}
+        src={foto.imagen}
         alt={foto.alt}
         widths={[480, 800, 1200]}
         sizes="(min-width: 900px) 40vw, 100vw"
