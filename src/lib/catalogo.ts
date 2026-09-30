@@ -297,12 +297,14 @@ export interface FotoDePieza {
  * fotos con modelo -- una prenda puesta se parece mas a una campana que una
  * prenda sola sobre blanco --, luego la de portada y luego el resto.
  *
- * De 2 a `maximo`: con una sola no hay acordeon que abrir, asi que por
- * debajo de dos devuelve la lista vacia y la pagina se queda sin galeria.
+ * De `minimo` a `maximo`: con una sola no hay acordeon que abrir, asi que
+ * por debajo del minimo devuelve la lista vacia. Quien va a completar la
+ * galeria con relleno (ver `completarGaleria`) pide minimo 0.
  */
 export function galeriaDePiezas(
   tarjetas: readonly { producto: Producto; variante: Variante }[],
-  maximo = 6
+  maximo = 5,
+  minimo = 2
 ): FotoDePieza[] {
   const colas = tarjetas.map(({ producto, variante }) => {
     const alternativo = [producto.marcas.join(' × '), producto.nombre, variante.color]
@@ -321,5 +323,17 @@ export function galeriaDePiezas(
     if (!deEstaVuelta.length) break
     fotos.push(...deEstaVuelta.slice(0, maximo - fotos.length))
   }
-  return fotos.length >= 2 ? fotos : []
+  return fotos.length >= minimo ? fotos : []
+}
+
+/**
+ * Lleva una galeria hasta `total` fotos repitiendo `relleno` al final.
+ *
+ * Para las marcas con ficha: su pagina ensena siempre el acordeon completo,
+ * aunque todavia no haya fotos de campana ni stock. El relleno es un
+ * placeholder, y cada foto real que llegue desplaza a uno. Si ya hay
+ * `total` o mas, recorta.
+ */
+export function completarGaleria<T>(fotos: readonly T[], relleno: T, total = 5): T[] {
+  return [...fotos.slice(0, total), ...Array(Math.max(0, total - fotos.length)).fill(relleno)]
 }

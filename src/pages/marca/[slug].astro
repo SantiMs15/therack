@@ -23,7 +23,13 @@ import GaleriaElastica from '../../components/GaleriaElastica.astro'
 import RejillaProductos from '../../components/RejillaProductos.astro'
 import { productos } from '../../data/productos'
 import { archivoDeMarcas, marcaIndexable, type EntradaArchivo } from '../../lib/archivo-marcas'
-import { descripcionDeMarca, enumerar, galeriaDePiezas, tarjetasEnOrden } from '../../lib/catalogo'
+import {
+  completarGaleria,
+  descripcionDeMarca,
+  enumerar,
+  galeriaDePiezas,
+  tarjetasEnOrden,
+} from '../../lib/catalogo'
 import { resolverImagen } from '../../lib/imagenes-productos'
 import { CONFIG, VENTA } from '../../config'
 import { slugMarca } from '../../lib/filtros'
@@ -56,12 +62,25 @@ if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
 }
 
-/* La galeria de campana de la ficha, si la hay; si no, fotos de las piezas
-   de la marca. Asi toda marca con al menos dos fotos tiene galeria, y la de
-   campana manda en cuanto se escribe. Ver `galeriaDePiezas`. */
+/* La galeria de campana de la ficha, si la hay. Si no, fotos de las piezas
+   de la marca, hasta 5.
+
+   Una marca CON ficha ensena siempre las 5: lo que falte lo cubre el
+   placeholder, y cada foto real que llegue desplaza a uno. Una marca sin
+   ficha solo tiene galeria si reune dos fotos de piezas: su pagina aun no
+   presenta nada, y un acordeon de relleno no lo disimula. */
+const dePiezas = galeriaDePiezas(enOrden, 5, ficha ? 0 : 2).map((foto) => ({
+  imagen: resolverImagen(foto.archivo),
+  alt: foto.alt,
+}))
 const galeria = ficha?.galeria
   ? ficha.galeria.map((foto) => ({ imagen: resolverImagenMarca(foto.imagen), alt: foto.alt }))
-  : galeriaDePiezas(enOrden).map((foto) => ({ imagen: resolverImagen(foto.archivo), alt: foto.alt }))
+  : ficha
+    ? completarGaleria(dePiezas, {
+        imagen: resolverImagenMarca('placeholder-ciudad.jpg'),
+        alt: 'Siluetas de edificios de una ciudad en blanco y negro',
+      })
+    : dePiezas
 
 /* La marca sin ficha todavia no tiene foto de campana propia, y una portada
    sin imagen dejaria el nombre flotando sobre el fondo del sitio: se pinta la

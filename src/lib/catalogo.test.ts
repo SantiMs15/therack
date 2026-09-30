@@ -9,6 +9,7 @@ import {
   marcasDe,
   marcasPorPeso,
   galeriaDePiezas,
+  completarGaleria,
   marcasQueQuepan,
   saleDe,
   tiposDe,
@@ -309,9 +310,14 @@ describe('galeriaDePiezas', () => {
     expect(fotos[0]!.archivo).toBe('a-modelo.jpg')
   })
 
-  it('no pasa del maximo', () => {
+  it('no pasa del maximo, que por defecto es 5', () => {
     const muchas = ['a', 'b', 'c', 'd'].map((s) => pieza(s, [`${s}-1.jpg`, `${s}-2.jpg`]))
     expect(galeriaDePiezas(muchas, 6)).toHaveLength(6)
+    expect(galeriaDePiezas(muchas)).toHaveLength(5)
+  })
+
+  it('con minimo 0 devuelve aunque haya una sola foto', () => {
+    expect(galeriaDePiezas([pieza('a', ['a.jpg'])], 5, 0)).toHaveLength(1)
   })
 
   it('con una sola foto no hay galeria', () => {
@@ -321,5 +327,19 @@ describe('galeriaDePiezas', () => {
   it('sin alt propio compone uno con marca, nombre y color', () => {
     const [foto] = galeriaDePiezas([pieza('a', ['a-1.jpg', 'a-2.jpg'])])
     expect(foto!.alt).toBe('Lacoste Prenda Negro')
+  })
+})
+
+describe('completarGaleria', () => {
+  it('rellena hasta el total con el relleno al final', () => {
+    expect(completarGaleria(['a', 'b'], 'x')).toEqual(['a', 'b', 'x', 'x', 'x'])
+  })
+
+  it('sin fotos es todo relleno', () => {
+    expect(completarGaleria([], 'x', 5)).toEqual(['x', 'x', 'x', 'x', 'x'])
+  })
+
+  it('con mas del total, recorta', () => {
+    expect(completarGaleria(['a', 'b', 'c', 'd', 'e', 'f'], 'x')).toHaveLength(5)
   })
 })
