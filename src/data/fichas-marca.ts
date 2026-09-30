@@ -151,6 +151,28 @@ const archivo: Record<string, unknown> = {
     imagen: 'placeholder-ciudad.jpg',
     alt: 'Siluetas de edificios de una ciudad en blanco y negro',
   },
+  lacoste: {
+    // La ciudad es la de la sede, no la de la fabrica de Gillier (Troyes):
+    // decision del dueno, 2026-09-29.
+    pais: 'Francia',
+    ciudad: 'París',
+    anio: 1933,
+    fundador: ['René Lacoste', 'André Gillier'],
+    titular: 'el cocodrilo francés',
+    // La pagina ya antepone "Lacoste en Colombia." y detras los tipos de
+    // prenda: aqui va solo lo que falta, para que todo quepa en ~155.
+    propuesta:
+      'El polo de piqué que nació en las canchas de tenis en 1933, original y con el cocodrilo en el pecho.',
+    porQue: [
+      'Lacoste es una marca francesa. Nació en 1933, cuando el tenista René Lacoste se asoció con André Gillier, dueño de una fábrica de punto, para hacer la camisa que él mismo usaba en la cancha: un polo de piqué de algodón, de manga corta, más fresco que las camisas de la época.',
+      'El cocodrilo viene de un apodo. La prensa de Estados Unidos empezó a llamar así a René Lacoste por una apuesta sobre una maleta de piel de cocodrilo, y él se lo hizo bordar en la chaqueta. Cuando salió el polo, el cocodrilo fue al pecho, y fue de los primeros logos que se vieron por fuera de una prenda.',
+      'La trajimos porque es de las marcas que más se buscan en Colombia, y comprarla original no debería ser una apuesta. Aquí no solo está el polo clásico: también hay buzos, hoodies y polos de punto de la temporada.',
+    ],
+    // PROVISIONAL: no hay foto de campana de Lacoste todavia. Reemplazar por
+    // una horizontal 3:2 en src/assets/marcas/lacoste-portada.jpg.
+    imagen: 'placeholder-ciudad.jpg',
+    alt: 'Siluetas de edificios de una ciudad en blanco y negro',
+  },
   'eme-studios': {
     pais: 'España',
     ciudad: 'Elche',

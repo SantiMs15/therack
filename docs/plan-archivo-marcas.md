@@ -16,8 +16,8 @@ con que enfoque, y se registra cada avance en la **Bitacora** del final.
 |---|---|---|---|---|
 | Eme Studios | Si | Portada + galeria (5) | 1 | Publicada |
 | Aimé Leon Dore | Si | No: usa el placeholder | 4 (una es la colaboracion con New Balance) | Publicada (falta portada) |
-| Lacoste | No | No | 4 | **Siguiente** |
-| Tommy Hilfiger | No | No | 4 | En cola |
+| Lacoste | Si | No: usa el placeholder | 4 | Publicada (falta portada) |
+| Tommy Hilfiger | No | No | 4 | **Siguiente** |
 | Hugo Boss | No | No | 0 | En cola |
 | Ralph Lauren | No | No | 0 | En cola |
 | Calvin Klein | No | No | 0 | En cola |
@@ -73,10 +73,11 @@ Otras variantes vistas en los informes, por si sirven en el texto:
 ### 1. Lacoste
 - **Angulo:** herencia francesa, polo pique, el cocodrilo.
 - **Titular (max 30):** "el cocodrilo francés"
-- **Seccion clave:** como reconocer una Lacoste original (el grupo de
-  keywords trae "marca del cocodrilo", "logo lacoste original"). Da confianza
-  en una tienda de reventa.
-- **Datos ficha:** Francia · 1933 · René Lacoste y André Gillier (verificar antes de publicar).
+- **Descartado:** la seccion "como reconocer una Lacoste original". Decision
+  del dueno (2026-09-29): no se publica. Ademas, reglas como "el cocodrilo
+  va bordado" no las cumplen todas las prendas (el Classic Printed lo lleva
+  estampado).
+- **Datos ficha:** Francia · París (sede) · 1933 · René Lacoste y André Gillier.
 
 ### 2. Tommy Hilfiger
 - **Angulo:** preppy americano. Alinear con el carrusel Preppy de Instagram.
@@ -127,7 +128,10 @@ Otras variantes vistas en los informes, por si sirven en el texto:
 3. **"Zapatos" si se puede usar** como variante natural en el texto (tiene
    volumen), aunque la categoria del catalogo siga siendo "tenis".
 4. **"Original" va en `propuesta`** (meta description), no en el titular.
-5. `propuesta` max 160 caracteres; `titular` max 30.
+5. `propuesta` max 160 caracteres, pero en la practica ~110: la pagina le
+   antepone "<Marca> en Colombia." y le agrega los tipos de prenda, y todo
+   junto debe quedar en ~155. No repetir el nombre de la marca ni "en Colombia".
+   `titular` max 30.
 6. Respetar el vocabulario cerrado: buzo, tenis, gorra, bolso, jean, boxer.
    Prohibido: ropa americana, saco, sueter, cartera, zapatillas, sudadera.
 
@@ -148,7 +152,8 @@ Otras variantes vistas en los informes, por si sirven en el texto:
 
 ## Pendientes abiertos
 
-- [ ] Escribir ficha de Lacoste
+- [x] Escribir ficha de Lacoste
+- [ ] Lacoste: portada 3:2 en `src/assets/marcas/lacoste-portada.jpg`
 - [ ] Escribir ficha de Tommy Hilfiger
 - [ ] Conseguir portada 3:2 (y galeria) de Aimé Leon Dore: hoy usa el placeholder
 - [ ] Medir "fear of god essentials" en Semrush
@@ -161,6 +166,15 @@ Otras variantes vistas en los informes, por si sirven en el texto:
 
 Formato: `AAAA-MM-DD — que se hizo — quien`. Lo mas reciente arriba.
 
+- **2026-09-29** — Ficha de Lacoste escrita. Titular "el cocodrilo francés";
+  titulo "Lacoste en Colombia: el cocodrilo francés"; meta description de 145
+  caracteres con "original". `porQue` en 3 parrafos: de donde es la marca,
+  origen del cocodrilo y por que la trajimos. Ciudad: París (sede). Sin
+  seccion de "como reconocer una original", por decision del dueno. Portada
+  provisional (placeholder) hasta que lleguen las fotos. Aprendido:
+  la pagina de marca ya antepone "<Marca> en Colombia." y agrega los tipos de
+  prenda a la descripcion, asi que `propuesta` no debe repetirlos y en la
+  practica tiene ~110 caracteres utiles, no 160. — Santiago + Claude
 - **2026-09-29** — Creado este plan. Priorizacion a partir de informes Semrush
   (Tommy Hilfiger, Ralph Lauren, Lacoste, Essentials, Calvin Klein, Hugo Boss,
   Karl Lagerfeld). Orden: Lacoste > Tommy > Hugo Boss > Ralph Lauren >
