@@ -10,13 +10,15 @@ import { VENTA } from '../config'
 // la generica de 24 caracteres que compartia con media web. Las que caben,
 // empezando por las que mas prendas tienen.
 //
-// "original" va aqui, que es donde lo pide docs/keywords-decisiones.md. Y
-// sin la ciudad: "<marca> bogota" es la busqueda de quien quiere una tienda
-// fisica, y esta no la tiene -- vende a toda Colombia.
+// Abre con la busqueda que eligio el dueno, "tienda de ropa original", y
+// cierra con el envio a toda Colombia. "original" va aqui y no en el
+// titulo, que es donde lo pide docs/keywords-decisiones.md. Sin la ciudad:
+// "<marca> bogota" es la busqueda de quien quiere una tienda fisica, y esta
+// no la tiene.
 const descripcion = marcasQueQuepan(
   marcasPorPeso(productos),
   (lista) =>
-    `Ropa de marca original en Colombia: ${lista}. ` +
+    `Tienda de ropa original: ${lista}. ` +
     `Envío gratis a toda Colombia y cambios hasta ${VENTA.cambios.dias} días.`
 )
 
