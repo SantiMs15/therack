@@ -76,18 +76,16 @@ describe('fichaProducto', () => {
       .toEqual({ '@type': 'Brand', name: 'Tommy Hilfiger' })
   })
 
-  it('una colaboracion declara las dos marcas, en el orden escrito', () => {
+  it('una colaboracion declara solo la marca principal, la primera escrita', () => {
     const f = ficha(catalogo({ marca: ['Aimé Leon Dore', 'New Balance'] })) as any
-    expect(f.brand).toEqual([
-      { '@type': 'Brand', name: 'Aimé Leon Dore' },
-      { '@type': 'Brand', name: 'New Balance' },
-    ])
+    expect(f.brand).toEqual({ '@type': 'Brand', name: 'Aimé Leon Dore' })
   })
 
-  it('con una sola marca brand sigue siendo un objeto, no una lista de uno', () => {
-    // Google acepta las dos formas, pero envolver lo de siempre en una lista
-    // cambiaria el schema de las trece prendas que ya estan publicadas.
+  it('brand es siempre un objeto, nunca una lista', () => {
+    // Una lista de dos Brand es lo que Google marca como campo duplicado.
     expect(Array.isArray((ficha(catalogo()) as any).brand)).toBe(false)
+    const colab = ficha(catalogo({ marca: ['Aimé Leon Dore', 'New Balance'] })) as any
+    expect(Array.isArray(colab.brand)).toBe(false)
   })
 
   it('omite brand del todo cuando la prenda no tiene marca', () => {

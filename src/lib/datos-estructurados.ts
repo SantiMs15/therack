@@ -40,15 +40,10 @@ export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha)
     // concreta, es unico por construccion y no cambia con el tiempo.
     sku: `${producto.slug}-${variante.slug}`,
     // Sin marca no se declara `brand`: uno vacio es peor que ninguno. Con
-    // una, un objeto, que es lo que ya publican las prendas de siempre. Con
-    // dos -- una colaboracion -- la lista, que es lo que schema.org espera.
+    // una o con dos -- una colaboracion -- va solo la principal, la primera
+    // escrita: Google marca una lista de Brand como campo duplicado.
     ...(producto.marcas.length
-      ? {
-          brand:
-            producto.marcas.length === 1
-              ? { '@type': 'Brand', name: producto.marcas[0] }
-              : producto.marcas.map((marca) => ({ '@type': 'Brand', name: marca })),
-        }
+      ? { brand: { '@type': 'Brand', name: producto.marcas[0] } }
       : {}),
     offers: {
       '@type': 'Offer',
