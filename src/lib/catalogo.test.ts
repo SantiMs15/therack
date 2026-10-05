@@ -127,7 +127,7 @@ describe('descripcionDeCategoria', () => {
 
   it('aguanta una categoria sin prendas sin dejar frases a medias', () => {
     const d = descripcionDeCategoria([], 'calzado', cierre)
-    expect(d).toBe('Ropa de calzado. Envío gratis a toda Colombia.')
+    expect(d).toBe('Calzado. Envío gratis a toda Colombia.')
     expect(d).not.toContain('  ')
   })
 })

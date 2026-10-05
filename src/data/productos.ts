@@ -1,4 +1,4 @@
-import { TALLAS_HOMBRE, TALLAS_MUJER, validarCatalogo, type Producto } from './schema'
+import { TALLA_UNICA, TALLAS_HOMBRE, TALLAS_MUJER, validarCatalogo, type Producto } from './schema'
 
 /**
  * FUENTE DE VERDAD DEL CATALOGO.
@@ -833,6 +833,477 @@ const catalogo: unknown[] = [
           {
             archivo: 'diesel-successful-living-hoodie-negro-detalle.jpg',
             alt: 'Hoodie Diesel negro puesto, detalle de la manga con el logo Diesel en rosa y el bolsillo canguro',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'adidas-szn-french-terry-loose-pants',
+    nombre: 'SZN French Terry Loose Pants',
+    marca: 'Adidas',
+    // Corte unisex: va en el catalogo de mujer y sale tambien en el de hombre.
+    categoria: 'mujer',
+    tambienEn: ['hombre'],
+    tipo: 'pantalon',
+    precio: 185000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Pantalón Adidas en french terry de algodón, corte holgado, cintura elástica con cordón, puños elásticos en el tobillo y el logo Adidas tono sobre tono en la pierna.',
+    variantes: [
+      {
+        color: 'Beige',
+        slug: 'beige',
+        imagenes: [
+          {
+            archivo: 'adidas-szn-french-terry-loose-pants-beige-frente.jpg',
+            alt: 'Pantalón Adidas beige, vista frontal de la prenda sola con cintura elástica y cordón, puños en el tobillo y el logo Adidas en la pierna',
+          },
+          {
+            archivo: 'adidas-szn-french-terry-loose-pants-beige-modelo.jpg',
+            alt: 'Pantalón Adidas beige puesto, plano de la cintura para abajo de una persona que lo lleva con buzo a juego y tenis blancos',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'adidas-adilenium-season-5-cargo-pants',
+    nombre: 'Adilenium Season 5 Cargo Pants',
+    marca: 'Adidas',
+    categoria: 'hombre',
+    tipo: 'pantalon',
+    precio: 330000,
+    // Una sola pieza, en talla de cintura: la ficha la avisa como ultima talla.
+    tallas: ['34'],
+    descripcion:
+      'Pantalón cargo Adidas Originals en ripstop negro, corte ancho, cintura elástica con botón, bolsillo cargo con el trébol bordado y franjas laterales estampadas con las tres rayas.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'adidas-adilenium-season-5-cargo-pants-negro-frente.jpg',
+            alt: 'Pantalón cargo Adidas negro, vista frontal de la prenda sola con franjas laterales estampadas, las tres rayas y el bolsillo cargo con el trébol',
+          },
+          {
+            archivo: 'adidas-adilenium-season-5-cargo-pants-negro-modelo.jpg',
+            alt: 'Pantalón cargo Adidas negro puesto, plano de la cintura para abajo de un modelo con camiseta negra y tenis Superstar negros',
+          },
+          {
+            archivo: 'adidas-adilenium-season-5-cargo-pants-negro-detalle.jpg',
+            alt: 'Pantalón cargo Adidas negro puesto, detalle del bolsillo cargo con el trébol bordado sobre la franja estampada con las tres rayas',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'adidas-adicolor-spacer-oversized-hoodie',
+    nombre: 'Adicolor Spacer Oversized Hoodie',
+    marca: 'Adidas',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 255000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Hoodie Adidas Originals de corte oversize en tejido spacer, cremallera completa, capucha con cordones, bolsillos canguro, las tres rayas en las mangas y el trébol en el pecho.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'adidas-adicolor-spacer-oversized-hoodie-negro-frente.jpg',
+            alt: 'Hoodie Adidas negro con cremallera, vista frontal de la prenda sola con las tres rayas blancas en las mangas y el trébol blanco en el pecho',
+          },
+          {
+            archivo: 'adidas-adicolor-spacer-oversized-hoodie-negro-modelo.jpg',
+            alt: 'Hoodie Adidas negro puesto y abierto, plano medio de un modelo que lo lleva con camiseta negra y jean negro ancho',
+          },
+          {
+            archivo: 'adidas-adicolor-spacer-oversized-hoodie-negro-modelo-espalda.jpg',
+            alt: 'Hoodie Adidas negro puesto, vista de espalda lisa con la capucha caída y las rayas blancas en el hombro',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'nike-flyfree-shield-101',
+    nombre: 'Flyfree Shield 101',
+    marca: 'Nike',
+    // Accesorio sin genero: sale tambien en los catalogos de mujer y hombre.
+    categoria: 'accesorios',
+    tambienEn: ['mujer', 'hombre'],
+    tipo: 'gafas',
+    precio: 335000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Gafas de sol deportivas Nike de media montura blanca, lente envolvente espejada Nike Max Optics en rojo y violeta y patillas azul marino con agarre.',
+    variantes: [
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        imagenes: [
+          {
+            archivo: 'nike-flyfree-shield-101-blanco-frente.jpg',
+            alt: 'Gafas Nike Flyfree Shield blancas, vista de frente con la lente envolvente espejada en rojo y violeta y el puente azul marino',
+          },
+          {
+            archivo: 'nike-flyfree-shield-101-blanco-lado.jpg',
+            alt: 'Gafas Nike Flyfree Shield blancas, vista de lado con la lente espejada, el swoosh negro y la patilla azul marino',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-short-sleeve-logo-rashguard',
+    nombre: 'Short-Sleeve Logo Rashguard',
+    marca: 'Karl Lagerfeld',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 235000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: talla !== 'XS' })),
+    descripcion:
+      'Camiseta Karl Lagerfeld de manga corta tipo rashguard, en tejido elástico, cuello redondo acanalado y el logo Karl Lagerfeld Paris en blanco sobre el pecho.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-short-sleeve-logo-rashguard-negro-frente.jpg',
+            alt: 'Camiseta Karl Lagerfeld negra de manga corta, vista frontal de la prenda sola con el logo Karl Lagerfeld Paris en blanco sobre el pecho',
+          },
+          {
+            archivo: 'karl-lagerfeld-short-sleeve-logo-rashguard-negro-espalda.jpg',
+            alt: 'Camiseta Karl Lagerfeld negra de manga corta, vista de espalda lisa de la prenda sola',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-crewneck-t-shirt',
+    nombre: 'Crewneck T-Shirt',
+    marca: 'Karl Lagerfeld',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 270000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: !['XS', 'XXL'].includes(talla) })),
+    descripcion:
+      'Camiseta Karl Lagerfeld de algodón, cuello redondo acanalado y la figura de Karl con gafas oscuras y el logo Karl Lagerfeld Paris estampados en pequeño sobre el pecho.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-crewneck-t-shirt-negro-frente.jpg',
+            alt: 'Camiseta Karl Lagerfeld negra, vista frontal de la prenda sola con la figura de Karl con gafas oscuras y el logo estampados en el pecho',
+          },
+          {
+            archivo: 'karl-lagerfeld-crewneck-t-shirt-negro-espalda.jpg',
+            alt: 'Camiseta Karl Lagerfeld negra, vista de espalda lisa de la prenda sola',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-bomber-jacket-sherpa-collar',
+    nombre: 'Bomber Jacket with Sherpa Collar',
+    marca: 'Karl Lagerfeld',
+    categoria: 'hombre',
+    tipo: 'chaqueta',
+    precio: 415000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: talla !== 'XS' })),
+    descripcion:
+      'Chaqueta bomber acolchada Karl Lagerfeld en negro, cuello alto forrado en sherpa, cremallera doble, bolsillos laterales, puños y bajo en rib y placa con el logo en la manga.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-bomber-jacket-sherpa-collar-negro-frente.jpg',
+            alt: 'Chaqueta bomber Karl Lagerfeld negra, vista frontal de la prenda sola acolchada, con cuello de sherpa negro y cremallera plateada',
+          },
+          {
+            archivo: 'karl-lagerfeld-bomber-jacket-sherpa-collar-negro-detalle.jpg',
+            alt: 'Chaqueta bomber Karl Lagerfeld negra puesta, detalle del cuello de sherpa y la placa con el logo en la manga',
+          },
+          {
+            archivo: 'karl-lagerfeld-bomber-jacket-sherpa-collar-negro-modelo-espalda.jpg',
+            alt: 'Chaqueta bomber Karl Lagerfeld negra puesta, vista de espalda de cuerpo entero de un modelo con jean negro y botas',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-adele-small-bucket-handbag',
+    nombre: 'Adele Small Bucket Handbag',
+    marca: 'Karl Lagerfeld',
+    categoria: 'accesorios',
+    tambienEn: ['mujer'],
+    tipo: 'bolso',
+    precio: 470000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Bolso tipo bucket Karl Lagerfeld en negro, cierre de cordón, asa corta y correa larga ajustable con el logo Karl Lagerfeld Paris, apliques metálicos de corazones, flores y la firma Karl, y forro estampado con bolsillo interior.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-adele-small-bucket-handbag-negro-frente.jpg',
+            alt: 'Bolso bucket Karl Lagerfeld negro, vista frontal con cierre de cordón, apliques plateados de corazones y la firma Karl y correa con el logo en blanco y negro',
+          },
+          {
+            archivo: 'karl-lagerfeld-adele-small-bucket-handbag-negro-modelo.jpg',
+            alt: 'Modelo de cuerpo entero con el bolso Karl Lagerfeld negro cruzado con la correa del logo, top y pantalón blancos',
+          },
+          {
+            archivo: 'karl-lagerfeld-adele-small-bucket-handbag-negro-interior.jpg',
+            alt: 'Bolso Karl Lagerfeld negro abierto visto desde arriba, con el forro gris estampado con la silueta de Karl y un bolsillo para tarjetas',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-maybelle-crossbody',
+    nombre: 'Maybelle Crossbody',
+    marca: 'Karl Lagerfeld',
+    categoria: 'accesorios',
+    tambienEn: ['mujer'],
+    tipo: 'bolso',
+    precio: 370000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Bolso cruzado Karl Lagerfeld en negro, cubierto de pedrería con la firma Karl en cristales blancos, dos compartimentos con cremallera, forro estampado y correa ajustable con el logo Karl Lagerfeld Paris.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-maybelle-crossbody-negro-frente.jpg',
+            alt: 'Bolso cruzado Karl Lagerfeld negro, vista frontal cubierta de pedrería con la firma Karl en cristales blancos y el logo arriba',
+          },
+          {
+            archivo: 'karl-lagerfeld-maybelle-crossbody-negro-interior.jpg',
+            alt: 'Bolso Karl Lagerfeld negro abierto visto desde arriba, con dos compartimentos con cremallera, forro estampado y la correa con el logo',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-maybelle-small-crossbody-handbag',
+    nombre: 'Maybelle Small Crossbody Handbag',
+    marca: 'Karl Lagerfeld',
+    categoria: 'accesorios',
+    tambienEn: ['mujer'],
+    tipo: 'bolso',
+    precio: 400000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Bolso cruzado pequeño Karl Lagerfeld en negro, con las caras de Karl y su gata Choupette bordadas en pedrería, logo Karl Lagerfeld Paris metálico, dos compartimentos con cremallera, forro estampado y correa ajustable.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-maybelle-small-crossbody-handbag-negro-frente.jpg',
+            alt: 'Bolso cruzado Karl Lagerfeld negro, vista frontal con las caras de Karl y Choupette en pedrería y el logo metálico arriba',
+          },
+          {
+            archivo: 'karl-lagerfeld-maybelle-small-crossbody-handbag-negro-interior.jpg',
+            alt: 'Bolso Karl Lagerfeld negro abierto visto desde arriba, con dos compartimentos de cremallera plateada y forro estampado',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-khloe-logo-backpack',
+    nombre: 'Khloe Logo Backpack',
+    marca: 'Karl Lagerfeld',
+    categoria: 'accesorios',
+    tambienEn: ['mujer'],
+    tipo: 'morral',
+    precio: 575000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Morral Karl Lagerfeld en negro con acabado granulado, herrajes dorados, bolsillo frontal con el nombre Karl Lagerfeld en relieve y apliques de Karl, Choupette y la torre Eiffel, asa superior y tiras ajustables con el logo tejido.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-khloe-logo-backpack-negro-frente.jpg',
+            alt: 'Morral Karl Lagerfeld negro, vista frontal con el logo dorado arriba y el bolsillo con Karl Lagerfeld en relieve y los apliques de Karl y Choupette',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-logo-backpack-negro-lado.jpg',
+            alt: 'Morral Karl Lagerfeld negro, vista de tres cuartos con las cremalleras doradas y una tira con el logo tejido',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-logo-backpack-negro-espalda.jpg',
+            alt: 'Morral Karl Lagerfeld negro, vista de espalda con las dos tiras ajustables tejidas con el logo Karl Lagerfeld Paris y hebillas doradas',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-logo-backpack-negro-interior.jpg',
+            alt: 'Morral Karl Lagerfeld negro abierto visto desde arriba, con forro negro, bolsillo interior con cremallera y etiqueta de la marca',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-khloe-monogram-backpack',
+    nombre: 'Khloe Monogram Backpack',
+    marca: 'Karl Lagerfeld',
+    categoria: 'accesorios',
+    tambienEn: ['mujer'],
+    tipo: 'morral',
+    precio: 575000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Morral Karl Lagerfeld con el monograma de la L en gris y negro, ribetes negros, herrajes plateados, bolsillo frontal con los apliques de Karl y Choupette, asa superior y tiras ajustables con el logo tejido.',
+    variantes: [
+      {
+        color: 'Gris',
+        slug: 'gris',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-khloe-monogram-backpack-gris-frente.jpg',
+            alt: 'Morral Karl Lagerfeld con monograma gris y negro, vista frontal con el logo plateado arriba y los apliques de Karl y Choupette en el bolsillo',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-monogram-backpack-gris-lado.jpg',
+            alt: 'Morral Karl Lagerfeld con monograma gris y negro, vista de tres cuartos con las cremalleras y una tira con el logo tejido',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-monogram-backpack-gris-espalda.jpg',
+            alt: 'Morral Karl Lagerfeld con monograma gris y negro, vista de espalda con las tiras ajustables tejidas con el logo y hebillas plateadas',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-monogram-backpack-gris-interior.jpg',
+            alt: 'Morral Karl Lagerfeld con monograma abierto visto desde arriba, con forro negro, bolsillos interiores y etiqueta de la marca',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-logo-zip-up-polo-top',
+    nombre: 'Logo Zip Up Polo Top',
+    marca: 'Karl Lagerfeld',
+    categoria: 'mujer',
+    tipo: 'polo',
+    precio: 270000,
+    tallas: TALLAS_MUJER.map((talla) => ({ talla, disponible: talla !== 'XXL' })),
+    descripcion:
+      'Polo Karl Lagerfeld de mujer en punto acanalado blanco, cuello camisero con cremallera hasta el pecho, logo Karl Lagerfeld Paris bordado en negro y franjas laterales a rayas con el nombre Karl.',
+    variantes: [
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-logo-zip-up-polo-top-blanco-frente.jpg',
+            alt: 'Polo Karl Lagerfeld blanco, vista frontal de la prenda sola con cremallera negra hasta el pecho, logo bordado y franjas laterales a rayas',
+          },
+          {
+            archivo: 'karl-lagerfeld-logo-zip-up-polo-top-blanco-espalda.jpg',
+            alt: 'Polo Karl Lagerfeld blanco, vista de espalda lisa con las franjas laterales a rayas y el nombre Karl',
+          },
+          {
+            archivo: 'karl-lagerfeld-logo-zip-up-polo-top-blanco-modelo.jpg',
+            alt: 'Polo Karl Lagerfeld blanco puesto, plano medio de una modelo que lo lleva con pantalón negro',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-choupette-crewneck-sweatshirt',
+    nombre: 'Choupette Crewneck Sweatshirt',
+    marca: 'Karl Lagerfeld',
+    categoria: 'mujer',
+    tipo: 'buzo',
+    precio: 330000,
+    // Una sola pieza: la ficha la avisa como ultima talla.
+    tallas: ['XS'],
+    descripcion:
+      'Buzo Karl Lagerfeld de mujer en felpa de algodón, corte amplio con hombros caídos, cuello redondo acanalado con pico y Choupette con gafas oscuras estampada en grande sobre el logo Karl Lagerfeld Paris.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-choupette-crewneck-sweatshirt-negro-frente.jpg',
+            alt: 'Buzo Karl Lagerfeld negro, vista frontal de la prenda sola con Choupette con gafas oscuras estampada en el pecho y el logo Karl Lagerfeld Paris',
+          },
+          {
+            archivo: 'karl-lagerfeld-choupette-crewneck-sweatshirt-negro-espalda.jpg',
+            alt: 'Buzo Karl Lagerfeld negro, vista de espalda lisa de la prenda sola',
+          },
+          {
+            archivo: 'karl-lagerfeld-choupette-crewneck-sweatshirt-negro-modelo.jpg',
+            alt: 'Buzo Karl Lagerfeld negro con Choupette puesto, plano medio de una modelo que lo lleva con jean azul',
           },
         ],
         disponible: true,

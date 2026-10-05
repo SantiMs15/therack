@@ -224,7 +224,11 @@ export function descripcionDeCategoria(
   const marcas = marcasParaTexto(productos, primero, 3)
   const tipos = tiposDe(productos).map((t) => t.etiqueta.toLowerCase())
 
-  const partes = [`Ropa de ${quienes}`]
+  // "Ropa de hombre", pero "Accesorios de Nike": calzado y accesorios ya
+  // nombran lo que se vende, y "ropa de accesorios" no lo dice nadie.
+  const partes = [
+    (GENEROS as readonly string[]).includes(quienes) ? `Ropa de ${quienes}` : capitalizar(quienes),
+  ]
   if (marcas) partes.push(` de ${marcas}`)
   partes.push('.')
   if (tipos.length) partes.push(` ${capitalizar(enumerar(tipos))}.`)

@@ -9,6 +9,7 @@ import {
   precioDe,
   tallasDisponibles,
   ultimaTalla,
+  TALLA_UNICA,
 } from './schema'
 
 const valido = {
@@ -150,6 +151,10 @@ describe('ultimaTalla', () => {
   it('no avisa si quedan dos o mas', () => {
     expect(ultima(conTallas(['S', 'M']))).toBeNull()
     expect(ultima(conTallas([{ talla: 'S', disponible: false }, 'M', 'L']))).toBeNull()
+  })
+
+  it('la talla unica no es ultima talla: tener una sola es lo normal', () => {
+    expect(ultima(conTallas([TALLA_UNICA]))).toBeNull()
   })
 
   it('sin ninguna disponible no es ultima talla, es agotado', () => {

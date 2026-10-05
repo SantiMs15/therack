@@ -47,15 +47,19 @@ export function generoDe(categoria: Categoria): Genero | null {
  * si una prenda se queda sin el, que es preferible a una prenda que no
  * aparece en ningun filtro.
  */
-export const TIPOS = ['buzo', 'camiseta', 'chaqueta', 'hoodie', 'polo', 'sweater'] as const
+export const TIPOS = ['bolso', 'buzo', 'camiseta', 'chaqueta', 'gafas', 'hoodie', 'morral', 'pantalon', 'polo', 'sweater'] as const
 export type Tipo = (typeof TIPOS)[number]
 
 /** En plural: el desplegable nombra grupos de prendas, no una prenda. */
 export const ETIQUETAS_TIPO: Record<Tipo, string> = {
+  bolso: 'Bolsos',
   buzo: 'Buzos',
   camiseta: 'Camisetas',
   chaqueta: 'Chaquetas',
+  gafas: 'Gafas',
   hoodie: 'Hoodies',
+  morral: 'Morrales',
+  pantalon: 'Pantalones',
   polo: 'Polos',
   sweater: 'Suéteres',
 }
@@ -67,10 +71,14 @@ export const ETIQUETAS_TIPO: Record<Tipo, string> = {
  * de los diez titulos llevaba esa palabra.
  */
 export const ETIQUETAS_TIPO_UNA: Record<Tipo, string> = {
+  bolso: 'Bolso',
   buzo: 'Buzo',
   camiseta: 'Camiseta',
   chaqueta: 'Chaqueta',
+  gafas: 'Gafas',
   hoodie: 'Hoodie',
+  morral: 'Morral',
+  pantalon: 'Pantalón',
   polo: 'Polo',
   sweater: 'Suéter',
 }
@@ -85,6 +93,13 @@ export const TALLAS_MUJER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 
 /** La misma escala para la ropa de hombre, que empieza una talla mas arriba. */
 export const TALLAS_HOMBRE = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
+
+/**
+ * La talla de lo que no tiene tallas: gafas, gorras, bolsos. Se declara como
+ * una talla mas para que la ficha y el mensaje de WhatsApp funcionen igual,
+ * pero nunca es "ultima talla": que haya una sola es lo normal, no un aviso.
+ */
+export const TALLA_UNICA = 'Única'
 
 /**
  * Una foto. Se acepta el nombre del archivo suelto o un objeto con `alt`
@@ -383,5 +398,5 @@ export function validarMarcas(datos: unknown[]): Marca[] {
  */
 export function ultimaTalla(producto: Producto, variante: Variante): Talla | null {
   const quedan = tallasDisponibles(producto, variante)
-  return quedan.length === 1 ? quedan[0]! : null
+  return quedan.length === 1 && quedan[0]!.talla !== TALLA_UNICA ? quedan[0]! : null
 }
