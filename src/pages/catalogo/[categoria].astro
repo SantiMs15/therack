@@ -41,7 +41,13 @@ const QUIENES: Record<Categoria, string> = {
   accesorios: 'accesorios',
 }
 const cierre = `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
-const descripcion = descripcionDeCategoria(deLaCategoria, QUIENES[categoria], cierre, MARCAS_PRIMERO)
+const descripcion = descripcionDeCategoria(
+  deLaCategoria,
+  QUIENES[categoria],
+  cierre,
+  MARCAS_PRIMERO,
+  'Envío gratis a toda Colombia.'
+)
 
 /**
  * El titulo para el buscador, que no es el <h1>: "Hombre" a secas no dice

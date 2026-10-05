@@ -26,6 +26,20 @@ import { validarMarcas, type Marca } from './schema'
 const archivo: unknown[] = [
   {
     nombre: 'Adidas',
+    ficha: {
+      pais: 'Alemania',
+      ciudad: 'Herzogenaurach',
+      fundacion: 1949,
+      fundadores: ['Adolf Dassler'],
+      propuesta:
+        'Las tres rayas originales: de las pistas alemanas al streetwear, con el trébol de Adidas Originals.',
+      lema: 'las tres rayas originales',
+      texto: [
+        'Adidas es una marca de Alemania. Adolf Dassler, Adi para todos, la fundó en 1949 en Herzogenaurach, el pueblo de Baviera donde ya hacía zapatillas para atletas desde los años veinte. El nombre sale de su apodo y su apellido.',
+        'Las tres rayas nacieron como un refuerzo en el costado de la zapatilla y se volvieron la firma de la marca. En los setenta llegó el trébol, que hoy identifica a la línea Originals: la de los buzos con las rayas en las mangas, los pantalones de chándal y la Superstar.',
+        'La trajimos por esa línea: ropa deportiva que ya es clásica, que se lleva con jean o con sudadera a juego, y que aquí se consigue original.',
+      ],
+    },
   },
 
   {
@@ -227,6 +241,20 @@ const archivo: unknown[] = [
 
   {
     nombre: 'Nike',
+    ficha: {
+      pais: 'Estados Unidos',
+      ciudad: 'Oregón',
+      fundacion: 1964,
+      fundadores: ['Bill Bowerman', 'Phil Knight'],
+      propuesta:
+        'El swoosh original: la marca que nació en una pista de atletismo de Oregón y se volvió la más reconocida del deporte.',
+      lema: 'el swoosh original',
+      texto: [
+        'Nike es una marca de Estados Unidos. Bill Bowerman, entrenador de atletismo de la Universidad de Oregón, y Phil Knight, uno de sus corredores, la empezaron en 1964 con otro nombre, Blue Ribbon Sports, vendiendo zapatillas importadas desde el maletero de un carro.',
+        'En 1971 tomó el nombre de Nike, la diosa griega de la victoria, y estrenó el swoosh, el trazo que hoy se reconoce sin necesidad de leer la marca. Desde entonces hace equipo para atletas de casi todos los deportes, de las zapatillas a las gafas de sol.',
+        'La trajimos por su equipo técnico: piezas pensadas para entrenar que también se ven bien fuera de la cancha, y que aquí se consiguen originales.',
+      ],
+    },
   },
 
   {

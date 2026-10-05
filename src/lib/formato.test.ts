@@ -36,9 +36,16 @@ describe('resumir', () => {
     expect(resumir('Corto.', 100)).toBe('Corto.')
   })
 
-  it('cierra en el punto cuando hay uno util', () => {
-    const t = 'Primera frase completa. Segunda frase que ya no cabe entera aqui dentro.'
-    expect(resumir(t, 40)).toBe('Primera frase completa.')
+  it('cierra en el punto cuando la frase llena casi todo el espacio', () => {
+    const t = 'Primera frase bastante completa. Segunda frase que ya no cabe entera.'
+    expect(resumir(t, 38)).toBe('Primera frase bastante completa.')
+  })
+
+  it('no cierra en un punto temprano: corta por palabra y aprovecha el espacio', () => {
+    const t = 'Frase corta. Segunda frase que sigue y sigue hasta pasarse del limite.'
+    const r = resumir(t, 40)
+    expect(r.endsWith('…')).toBe(true)
+    expect(r.length).toBeGreaterThan(30)
   })
 
   it('recorta por palabra si la primera frase ya se pasa', () => {

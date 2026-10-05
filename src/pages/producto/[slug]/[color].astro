@@ -70,13 +70,19 @@ const nombreSinTipo = producto.nombre
   .split(' ')
   .filter((palabra) => palabra.toLowerCase() !== tipoUna.toLowerCase())
   .join(' ')
-const tituloLargo = [tipoUna, marca, nombreSinTipo || producto.nombre]
-  .filter(Boolean)
-  .join(' ') + ` · ${variante.color}`
-const tituloCorto = [tipoUna, marca]
-  .filter(Boolean)
-  .join(' ') + ` · ${variante.color}`
-const tituloBuscador = tituloLargo.length <= MAXIMO_TITULO ? tituloLargo : tituloCorto
+const componer = (modelo: string) =>
+  [tipoUna, marca, modelo].filter(Boolean).join(' ') + ` · ${variante.color}`
+// Si no cabe, el modelo se recorta por el final palabra a palabra antes de
+// perderlo entero: "Bolso Karl Lagerfeld Maybelle Small · Negro" distingue la
+// pieza de los otros bolsos negros de la marca; "Bolso Karl Lagerfeld · Negro"
+// no. Una palabra de enlace suelta al final ("with", "de") se quita tambien.
+const ENLACES = new Set(['with', 'and', 'de', 'del', 'y', 'con', '&', '-'])
+let palabras = (nombreSinTipo || producto.nombre).split(' ')
+while (palabras.length && componer(palabras.join(' ')).length > MAXIMO_TITULO) {
+  palabras = palabras.slice(0, -1)
+  while (palabras.length && ENLACES.has(palabras.at(-1)!.toLowerCase())) palabras = palabras.slice(0, -1)
+}
+const tituloBuscador = componer(palabras.join(' '))
 
 /**
  * La descripcion para el buscador, que no es la que se lee en la ficha.

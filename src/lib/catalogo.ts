@@ -215,26 +215,36 @@ export function marcasParaTexto(
  * `cierre` es la frase de condiciones de venta, que la pagina pasa desde la
  * configuracion: este modulo no tiene por que saber cuanto cuesta el envio.
  */
+/** Lo que muestra un resultado de busqueda antes de cortar. */
+const LIMITE_DESCRIPCION = 155
+
 export function descripcionDeCategoria(
   productos: readonly Producto[],
   quienes: string,
   cierre: string,
-  primero: readonly string[] = []
+  primero: readonly string[] = [],
+  /** Version corta de `cierre`, para cuando la larga no cabe con los tipos. */
+  cierreCorto: string = cierre
 ): string {
   const marcas = marcasParaTexto(productos, primero, 3)
   const tipos = tiposDe(productos).map((t) => t.etiqueta.toLowerCase())
 
   // "Ropa de hombre", pero "Accesorios de Nike": calzado y accesorios ya
   // nombran lo que se vende, y "ropa de accesorios" no lo dice nadie.
-  const partes = [
-    (GENEROS as readonly string[]).includes(quienes) ? `Ropa de ${quienes}` : capitalizar(quienes),
+  const inicio =
+    ((GENEROS as readonly string[]).includes(quienes) ? `Ropa de ${quienes}` : capitalizar(quienes)) +
+    (marcas ? ` de ${marcas}` : '') +
+    '.'
+  const tiposTexto = tipos.length ? ` ${capitalizar(enumerar(tipos))}.` : ''
+  // Con muchos tipos de prenda se pasaba de lo que muestra el buscador y se
+  // cortaba el envio, que es lo que mas convence. Primero se acorta el envio;
+  // si aun no cabe sobran los tipos, que la pagina enumera en el filtro.
+  const opciones = [
+    `${inicio}${tiposTexto} ${cierre}`,
+    `${inicio}${tiposTexto} ${cierreCorto}`,
+    `${inicio} ${cierre}`,
   ]
-  if (marcas) partes.push(` de ${marcas}`)
-  partes.push('.')
-  if (tipos.length) partes.push(` ${capitalizar(enumerar(tipos))}.`)
-  partes.push(` ${cierre}`)
-
-  return partes.join('')
+  return opciones.find((o) => o.length <= LIMITE_DESCRIPCION) ?? opciones[opciones.length - 1]!
 }
 
 export function capitalizar(texto: string): string {

@@ -27,7 +27,10 @@ export function resumir(texto: string, maximo: number): string {
   if (texto.length <= maximo) return texto
 
   const punto = texto.lastIndexOf('. ', maximo)
-  if (punto > maximo * 0.5) return texto.slice(0, punto + 1)
+  // Cerrar en el punto solo si la frase llena casi todo el espacio: cortar a
+  // la mitad dejaba descripciones de 80 caracteres donde caben 150, y el
+  // buscador rellena el hueco con texto de la pagina que no elegimos.
+  if (punto >= maximo * 0.8) return texto.slice(0, punto + 1)
 
   const espacio = texto.lastIndexOf(' ', maximo - 1)
   return texto.slice(0, espacio > 0 ? espacio : maximo - 1).trimEnd() + '…'

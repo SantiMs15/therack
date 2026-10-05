@@ -10,13 +10,14 @@ import { marcasDeProducto, type FichaMarca, type Marca, type Producto } from '..
 import { CONFIG, VENTA } from '../config'
 import { capitalizar, enumerar, tiposDe } from './catalogo'
 import { slugMarca } from './filtros'
+import { resumir } from './formato'
 
 /**
  * Lo que mide como mucho una meta description antes de que el buscador la
  * corte. Las de las marcas se acercan: una propuesta larga mas los tipos de
  * prenda llenan casi todo el espacio.
  */
-const LIMITE_DESCRIPCION = 160
+const LIMITE_DESCRIPCION = 155
 
 /** "Elche, España", o el pais a secas si la ficha no cuenta la ciudad. */
 export function lugarDe(ficha: FichaMarca): string {
@@ -55,20 +56,21 @@ export function descripcionMarca(marca: Marca, prendas: readonly Producto[]): st
   }
 
   const nombre = marca.ficha?.nombreBusqueda ?? marca.nombre
-  const partes = [`${nombre} en Colombia.`]
-  if (marca.ficha) partes.push(marca.ficha.propuesta)
-  if (tipos.length) partes.push(`${capitalizar(enumerar(tipos))}.`)
-  const base = partes.join(' ')
+  const inicio = [`${nombre} en Colombia.`, marca.ficha?.propuesta].filter(Boolean).join(' ')
+  const tiposTexto = tipos.length ? ` ${capitalizar(enumerar(tipos))}.` : ''
+  const largo = ` Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
+  const corto = ' Envío gratis a toda Colombia.'
 
-  const cierres = [
-    `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`,
-    'Envío gratis a toda Colombia.',
+  // De la mas completa a la mas escueta: se queda la primera que cabe. Lo
+  // ultimo en caer es la propuesta, que es lo que distingue a la marca.
+  const opciones = [
+    inicio + tiposTexto + largo,
+    inicio + tiposTexto + corto,
+    inicio + corto,
+    inicio + tiposTexto,
+    inicio,
   ]
-  for (const cierre of cierres) {
-    const completa = `${base} ${cierre}`
-    if (completa.length <= LIMITE_DESCRIPCION) return completa
-  }
-  return base
+  return opciones.find((o) => o.length <= LIMITE_DESCRIPCION) ?? resumir(inicio, LIMITE_DESCRIPCION)
 }
 
 /** Una foto de la galeria, ya resuelta. */
