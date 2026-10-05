@@ -5,6 +5,8 @@ import {
   CATEGORIAS,
   TIPOS,
   generoDe,
+  precioAnteriorDe,
+  precioDe,
   tallasDisponibles,
   ultimaTalla,
 } from './schema'
@@ -128,9 +130,11 @@ describe('validarCatalogo', () => {
 
 describe('ultimaTalla', () => {
   const conTallas = (tallas: unknown[]) => validarCatalogo([{ ...valido, tallas }])[0]!
+  // La cuenta es por color: sin `tallas` propias, el color usa las de la prenda.
+  const ultima = (producto: ReturnType<typeof conTallas>) => ultimaTalla(producto, producto.variantes[0]!)
 
   it('devuelve la talla cuando solo queda una', () => {
-    expect(ultimaTalla(conTallas(['S']))?.talla).toBe('S')
+    expect(ultima(conTallas(['S']))?.talla).toBe('S')
   })
 
   it('la cuenta es de tallas DISPONIBLES, no de tallas declaradas', () => {
@@ -140,12 +144,12 @@ describe('ultimaTalla', () => {
       'M',
       { talla: 'L', disponible: false },
     ])
-    expect(ultimaTalla(producto)?.talla).toBe('M')
+    expect(ultima(producto)?.talla).toBe('M')
   })
 
   it('no avisa si quedan dos o mas', () => {
-    expect(ultimaTalla(conTallas(['S', 'M']))).toBeNull()
-    expect(ultimaTalla(conTallas([{ talla: 'S', disponible: false }, 'M', 'L']))).toBeNull()
+    expect(ultima(conTallas(['S', 'M']))).toBeNull()
+    expect(ultima(conTallas([{ talla: 'S', disponible: false }, 'M', 'L']))).toBeNull()
   })
 
   it('sin ninguna disponible no es ultima talla, es agotado', () => {
@@ -153,7 +157,7 @@ describe('ultimaTalla', () => {
       { talla: 'S', disponible: false },
       { talla: 'M', disponible: false },
     ])
-    expect(ultimaTalla(agotado)).toBeNull()
+    expect(ultima(agotado)).toBeNull()
   })
 })
 
@@ -162,6 +166,43 @@ describe('tallasDisponibles', () => {
     const producto = validarCatalogo([
       { ...valido, tallas: ['S', { talla: 'M', disponible: false }, 'L'] },
     ])[0]!
-    expect(tallasDisponibles(producto).map((t) => t.talla)).toEqual(['S', 'L'])
+    expect(tallasDisponibles(producto, producto.variantes[0]!).map((t) => t.talla)).toEqual(['S', 'L'])
+  })
+})
+
+describe('precio por color', () => {
+  const dosColores = (blanco: object, extra: object = {}) =>
+    validarCatalogo([
+      {
+        ...valido,
+        ...extra,
+        variantes: [
+          valido.variantes[0],
+          { ...valido.variantes[0], color: 'Blanco', slug: 'blanco', ...blanco },
+        ],
+      },
+    ])[0]!
+
+  it('sin precio propio, el color usa el de la prenda', () => {
+    const p = dosColores({})
+    expect(precioDe(p, p.variantes[1]!)).toBe(189000)
+  })
+
+  it('el precio del color manda sobre el de la prenda', () => {
+    const p = dosColores({ precio: 150000, precioAnterior: 189000 })
+    expect(precioDe(p, p.variantes[0]!)).toBe(189000)
+    expect(precioDe(p, p.variantes[1]!)).toBe(150000)
+    expect(precioAnteriorDe(p, p.variantes[0]!)).toBeUndefined()
+    expect(precioAnteriorDe(p, p.variantes[1]!)).toBe(189000)
+  })
+
+  it('un color con precio propio no hereda la rebaja de la prenda', () => {
+    const p = dosColores({ precio: 150000 }, { precioAnterior: 250000 })
+    expect(precioAnteriorDe(p, p.variantes[0]!)).toBe(250000)
+    expect(precioAnteriorDe(p, p.variantes[1]!)).toBeUndefined()
+  })
+
+  it('rompe si la rebaja de un color no baja el precio', () => {
+    expect(() => dosColores({ precio: 200000, precioAnterior: 189000 })).toThrow(/blanco/)
   })
 })

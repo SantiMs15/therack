@@ -1,0 +1,305 @@
+---
+import { Image, getImage } from 'astro:assets'
+import Layout from '../../layouts/Layout.astro'
+import Galeria from '../../components/Galeria.astro'
+import Migas from '../../components/Migas.astro'
+import RejillaProductos from '../../components/RejillaProductos.astro'
+import { marcas } from '../../data/marcas'
+import { productos } from '../../data/productos'
+import { deMarca, enumerar, tarjetasEnOrden } from '../../lib/catalogo'
+import { fichaMarca, fichaMigas, serializar, type Miga } from '../../lib/datos-estructurados'
+import { resolverImagen, resolverImagenMarca, urlLogo } from '../../lib/imagenes-productos'
+import {
+  comprobarMarcas,
+  descripcionMarca,
+  galeriaDeMarca,
+  lugarDe,
+  tituloMarca,
+} from '../../lib/marcas'
+
+/**
+ * Una pagina por cada marca del archivo, tenga hoy prendas o no: el menu las
+ * enlaza todas, y la marca que todavia no tiene piezas dice que esta en
+ * camino en vez de dar un 404.
+ */
+export function getStaticPaths() {
+  // Aqui y no en cada pagina: una prenda de una marca que no esta en el
+  // archivo enlazaria a una pagina que no existe, y el build tiene que
+  // pararse antes de publicarla.
+  comprobarMarcas(productos, marcas)
+  return marcas.map((marca) => ({ params: { slug: marca.slug }, props: { marca } }))
+}
+
+const { marca } = Astro.props
+const { ficha } = marca
+const prendas = deMarca(productos, marca.slug)
+
+if (!Astro.site) {
+  throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
+}
+
+/**
+ * La portada: la foto de campaña de la marca, o la de ciudad de reserva. La
+ * de reserva lleva su propio alt si la marca tiene ficha -- describe lo que
+ * se ve --, y uno generico si no, que es una pagina provisional de verdad.
+ */
+const reserva = resolverImagenMarca('placeholder-ciudad.jpg')
+const portada = marca.portada
+  ? { datos: resolverImagenMarca(marca.portada.archivo), alt: marca.portada.alt }
+  : {
+      datos: reserva,
+      alt: ficha
+        ? 'Siluetas de edificios de una ciudad en blanco y negro'
+        : `Fotografía de campaña de ${marca.nombre}`,
+    }
+
+// La tarjeta para compartir: la portada recortada a 1200x630, la proporcion
+// que piden WhatsApp e Instagram.
+const tarjeta = await getImage({ src: portada.datos, width: 1200, height: 630, format: 'jpg' })
+
+const galeria = galeriaDeMarca(
+  marca,
+  prendas,
+  (archivo, carpeta) => (carpeta === 'marcas' ? resolverImagenMarca(archivo) : resolverImagen(archivo)),
+  { datos: reserva, alt: 'Siluetas de edificios de una ciudad en blanco y negro' }
+)
+
+const migas: Miga[] = [
+  { nombre: 'Inicio', ruta: '/' },
+  { nombre: 'Archivo de marcas', ruta: '/marca/' },
+  { nombre: marca.nombre },
+]
+const migasJson = serializar(fichaMigas(migas, Astro.site))
+
+// Solo con ficha: un Brand sin fundacion ni origen no le cuenta al buscador
+// nada que el titulo no diga ya.
+const fichaJson = ficha
+  ? serializar(
+      fichaMarca({
+        nombre: marca.nombre,
+        ficha,
+        url: new URL(`/marca/${marca.slug}/`, Astro.site).href,
+        imagen: new URL(portada.datos.src, Astro.site).href,
+        lugar: lugarDe(ficha),
+        urls: tarjetasEnOrden(prendas).map(
+          ({ producto, variante }) =>
+            new URL(`/producto/${producto.slug}/${variante.slug}/`, Astro.site).href
+        ),
+      })
+    )
+  : null
+---
+<Layout
+  titulo={tituloMarca(marca)}
+  descripcion={descripcionMarca(marca, prendas)}
+  imagen={new URL(tarjeta.src, Astro.site).href}
+  imagenAlt={portada.alt}
+  imagenAncho={1200}
+  imagenAlto={630}
+  sinIndexar={!ficha && prendas.length === 0}
+>
+  <script type="application/ld+json" is:inline set:html={migasJson}></script>
+  {fichaJson && <script type="application/ld+json" is:inline set:html={fichaJson}></script>}
+
+  {/* A todo el ancho, fuera del contenedor: es la portada de la marca, no
+      una foto mas de la pagina. */}
+  <header class="marca__portada">
+    <Image
+      class="marca__foto"
+      src={portada.datos}
+      alt={portada.alt}
+      widths={[640, 960, 1280, 1600, 1800]}
+      sizes="100vw"
+      loading="eager"
+    />
+    {/* El video va encima de la foto y la tapa. Sin audio, en bucle y
+        oculto a los lectores de pantalla: es ambiente, la foto de debajo ya
+        lleva el alt. */}
+    {marca.portada?.video && (
+      <video
+        class="marca__foto marca__video"
+        src={marca.portada.video}
+        poster={portada.datos.src}
+        autoplay
+        muted
+        loop
+        playsinline
+        aria-hidden="true"
+      ></video>
+    )}
+    <h1 class="marca__nombre">
+      {marca.logo ? <img class="marca__logo" src={urlLogo(marca.logo)} alt={marca.nombre} /> : marca.nombre}
+    </h1>
+  </header>
+
+  <div class="contenedor marca-pagina">
+    <Migas migas={migas} />
+
+    <div class:list={['marca__cuerpo', { 'marca__cuerpo--galeria': galeria.length > 0 }]}>
+      <div class="marca__relato">
+        <div class="marca__cabecera">
+          {ficha ? (
+            <>
+              <p class="marca__datos">
+                <span>{lugarDe(ficha)}</span>
+                <span aria-hidden="true">·</span>
+                <span>{ficha.fundacion}</span>
+                <span aria-hidden="true">·</span>
+                <span>{enumerar(ficha.fundadores)}</span>
+              </p>
+              <p class="marca__propuesta">{ficha.propuesta}</p>
+            </>
+          ) : (
+            <p class="marca__pendiente">La ficha de {marca.nombre} todavía se está escribiendo.</p>
+          )}
+        </div>
+
+        {ficha && (
+          <div class="marca__texto">
+            <h2 class="marca__texto-titulo">Por qué trajimos {marca.nombre} a Colombia</h2>
+            {ficha.texto.map((parrafo) => <p>{parrafo}</p>)}
+          </div>
+        )}
+      </div>
+
+      {galeria.length > 0 && <Galeria fotos={galeria} />}
+    </div>
+
+    {prendas.length > 0 ? (
+      <section class="marca__piezas">
+        <h2>Piezas disponibles</h2>
+        <RejillaProductos productos={prendas} marcaPagina={marca.nombre} />
+      </section>
+    ) : (
+      <p class="marca__sin-piezas">
+        Ahora mismo no hay piezas de {marca.nombre} en la tienda.
+        <a href="/">Mira el resto del catálogo</a>.
+      </p>
+    )}
+  </div>
+</Layout>
+
+<style>
+  .marca-pagina { padding-block: var(--espacio-2) var(--espacio-4); }
+
+  .marca__cabecera { margin-block: var(--espacio-3); }
+
+  /* Con galeria, texto y fotos van en dos columnas desde tablet ancha: el
+     texto a su medida de lectura y la galeria con todo el resto. */
+  .marca__cuerpo--galeria {
+    display: grid;
+    gap: var(--espacio-3);
+    margin-block: var(--espacio-3);
+  }
+  .marca__cuerpo--galeria .marca__cabecera { margin-block-start: 0; }
+  @media (min-width: 900px) {
+    .marca__cuerpo--galeria {
+      grid-template-columns: minmax(0, 62ch) minmax(0, 1fr);
+      gap: var(--espacio-4);
+      align-items: start;
+    }
+  }
+
+  /* --- Portada --- */
+  /* Foto, video, velo y nombre en la misma celda de la rejilla: se apilan
+     sin posicionar nada a mano. */
+  .marca__portada {
+    position: relative;
+    display: grid;
+  }
+  .marca__portada > * { grid-area: 1 / 1; }
+
+  .marca__foto {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 5 / 2;
+    max-height: 48vh;
+    object-fit: cover;
+  }
+  /* Quien pide menos movimiento se queda con la foto: el video no llega a
+     pintarse. */
+  @media (prefers-reduced-motion: reduce) {
+    .marca__video { display: none; }
+  }
+
+  /* Un velo de arriba abajo para que el nombre en blanco se lea sobre
+     cualquier foto. */
+  .marca__portada::after {
+    content: '';
+    grid-area: 1 / 1;
+    background: linear-gradient(rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.4));
+  }
+
+  .marca__nombre {
+    z-index: 1;
+    align-self: center;
+    margin: 0;
+    padding-inline: var(--espacio-2);
+    color: #fff;
+    text-align: center;
+    font-size: clamp(2rem, 8vw, 7rem);
+    text-wrap: balance;
+    text-shadow: 0 0 2.5rem rgb(0 0 0 / 0.55);
+  }
+  .marca__logo {
+    display: block;
+    width: min(58vw, 32rem);
+    height: auto;
+    max-height: 15vh;
+    margin-inline: auto;
+    object-fit: contain;
+  }
+
+  /* --- Relato --- */
+  /* Los datos en la sans de la marca y pequenos: son la ficha tecnica, se
+     leen de pasada antes de la propuesta. */
+  .marca__datos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5ch;
+    margin-block: var(--espacio-1) var(--espacio-2);
+    color: var(--texto-suave);
+    font-family: var(--fuente-marca);
+    font-size: 0.8125rem;
+  }
+  .marca__propuesta {
+    max-width: 34ch;
+    margin: 0;
+    font-family: var(--fuente-titular);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+    line-height: 1.15;
+  }
+  .marca__texto {
+    max-width: 62ch;
+    margin-block: var(--espacio-3);
+    font-family: var(--fuente-marca);
+  }
+  .marca__texto p + p { margin-block-start: var(--espacio-2); }
+  .marca__texto-titulo {
+    margin-block: 0 var(--espacio-2);
+    font-family: var(--fuente-titular);
+    font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+    line-height: 1.2;
+  }
+  .marca__pendiente {
+    max-width: 34ch;
+    margin: 0;
+    color: var(--texto-suave);
+    font-family: var(--fuente-titular);
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    line-height: 1.2;
+  }
+
+  /* --- Piezas --- */
+  .marca__piezas { margin-block-start: var(--espacio-4); }
+  .marca__piezas h2 {
+    margin-block-end: var(--espacio-2);
+    padding-block-end: var(--espacio-2);
+    border-block-end: 1px solid var(--linea);
+  }
+  .marca__sin-piezas {
+    margin-block-start: var(--espacio-4);
+    color: var(--texto-suave);
+  }
+  .marca__sin-piezas a { color: inherit; }
+</style>

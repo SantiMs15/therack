@@ -3,14 +3,14 @@ import Layout from '../../layouts/Layout.astro'
 import RejillaProductos from '../../components/RejillaProductos.astro'
 import { productos } from '../../data/productos'
 import { CATEGORIAS, ETIQUETAS_CATEGORIA, generoDe, type Categoria } from '../../data/schema'
-import { descripcionDeCategoria, tarjetasEnOrden } from '../../lib/catalogo'
+import { descripcionDeCategoria, prendasDeCategoria, tarjetasEnOrden } from '../../lib/catalogo'
 import {
   fichaCategoria,
   fichaMigas,
   serializar,
   type Miga,
 } from '../../lib/datos-estructurados'
-import { VENTA } from '../../config'
+import { MARCAS_PRIMERO, VENTA } from '../../config'
 
 /**
  * Solo las categorias que tienen prendas.
@@ -24,13 +24,15 @@ import { VENTA } from '../../config'
  * ni el sitio ni el sitemap pueden apuntar a una pagina que no se genera.
  */
 export function getStaticPaths() {
-  return CATEGORIAS.filter((categoria) =>
-    productos.some((producto) => producto.categoria === categoria)
-  ).map((categoria) => ({ params: { categoria } }))
+  // getStaticPaths corre aislado del resto del frontmatter y no ve funciones
+  // declaradas aqui abajo: la regla vive en lib/catalogo.
+  return CATEGORIAS.filter((categoria) => prendasDeCategoria(productos, categoria).length > 0).map(
+    (categoria) => ({ params: { categoria } })
+  )
 }
 
 const { categoria } = Astro.params as { categoria: Categoria }
-const deLaCategoria = productos.filter((p) => p.categoria === categoria)
+const deLaCategoria = prendasDeCategoria(productos, categoria)
 /** Como se nombra a quien compra en esa categoria. */
 const QUIENES: Record<Categoria, string> = {
   mujer: 'mujer',
@@ -39,7 +41,18 @@ const QUIENES: Record<Categoria, string> = {
   accesorios: 'accesorios',
 }
 const cierre = `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
-const descripcion = descripcionDeCategoria(deLaCategoria, QUIENES[categoria], cierre)
+const descripcion = descripcionDeCategoria(deLaCategoria, QUIENES[categoria], cierre, MARCAS_PRIMERO)
+
+/**
+ * El titulo para el buscador, que no es el <h1>: "Hombre" a secas no dice
+ * que se vende ni a quien. Las paginas de genero llevan la busqueda entera.
+ */
+const TITULOS: Record<Categoria, string> = {
+  mujer: 'Ropa de marca para mujer',
+  hombre: 'Ropa de marca para hombre',
+  calzado: 'Calzado de marca',
+  accesorios: 'Accesorios de marca',
+}
 
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
@@ -72,7 +85,7 @@ const listadoJson = serializar(
   })
 )
 ---
-<Layout titulo={ETIQUETAS_CATEGORIA[categoria]} descripcion={descripcion}>
+<Layout titulo={TITULOS[categoria]} descripcion={descripcion}>
   <script type="application/ld+json" is:inline set:html={migasJson}></script>
   <script type="application/ld+json" is:inline set:html={listadoJson}></script>
 

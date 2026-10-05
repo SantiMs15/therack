@@ -1,0 +1,67 @@
+---
+/**
+ * El precio de una prenda, en la tarjeta y en la ficha.
+ *
+ * Un componente aparte porque la rebaja cambia el bloque entero -- el precio
+ * de antes tachado, el de ahora en burdeos y el descuento --, y la tarjeta y
+ * la ficha tienen que contarla igual.
+ */
+import { precioAnteriorDe, precioDe, type Producto, type Variante } from '../data/schema'
+import { formatearPrecio } from '../lib/formato'
+
+interface Props {
+  producto: Producto
+  /** El precio es del color: uno puede estar rebajado y el otro no. */
+  variante: Variante
+}
+
+// El resto se pasa al <p> tal cual: es como llega el atributo de ambito del
+// componente que lo pinta, y lo que deja que la tarjeta y la ficha le den a
+// .precio su propio tamano desde su CSS.
+const { producto, variante, ...resto } = Astro.props
+const precio = precioDe(producto, variante)
+const antes = precioAnteriorDe(producto, variante)
+// Redondeado hacia abajo: anunciar un -31% donde el descuento real es un
+// 30,6% es prometer de mas.
+const descuento = antes ? Math.floor((1 - precio / antes) * 100) : 0
+---
+<p class:list={['precio', { 'precio--sale': antes }]} {...resto}>
+  {antes && (
+    <span class="antes">
+      <span class="visualmente-oculto">Antes </span>
+      <s>{formatearPrecio(antes)}</s>
+    </span>
+  )}
+  <span class="actual">
+    {antes && <span class="visualmente-oculto">Ahora </span>}
+    {formatearPrecio(precio)}
+  </span>
+  {antes && <span class="descuento">-{descuento}%</span>}
+</p>
+
+<style>
+  .precio--sale {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.5em;
+  }
+  /* El precio de antes, mas pequeno y en gris: se lee de pasada. */
+  /* En su propia linea, encima del de ahora: lado a lado los dos precios
+     se leian como uno solo. */
+  .antes {
+    flex-basis: 100%;
+    color: var(--texto-suave);
+    font-size: 0.75em;
+  }
+  .precio--sale .actual { color: var(--burdeos); }
+  /* La etiqueta de la tarjeta, en la sans de la marca y con el mismo
+     tracking que el aviso de ultima talla: son de la misma familia. */
+  .descuento {
+    font-family: var(--fuente-marca);
+    font-size: max(0.6875rem, 0.45em);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--burdeos);
+  }
+</style>

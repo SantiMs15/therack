@@ -7,25 +7,32 @@ import { TALLAS_HOMBRE, TALLAS_MUJER, validarCatalogo, type Producto } from './s
  * src/assets/productos/ con los nombres que declares. Las fotos deben ir en
  * ratio 3:4 vertical.
  *
+ * El slug de la prenda y el nombre de sus fotos empiezan por la marca
+ * (lacoste-..., tommy-hilfiger-...): asi se ordenan solos en la carpeta y la
+ * URL ya dice de quien es la prenda. Si cambias el slug de una prenda
+ * publicada, anade su redireccion en public/.htaccess.
+ *
  * Cada color es una VARIANTE con sus propias fotos, su propia disponibilidad
  * y su propia pagina (/producto/<slug>/<color>), para que el enlace del
  * mensaje de WhatsApp lleve al color exacto que miraba el cliente.
+ *
+ * La marca tiene que existir en src/data/marcas.ts: es la que da la pagina a
+ * la que enlaza la ficha.
  *
  * Si algo esta mal, el build falla con un mensaje que dice que producto y que
  * campo. No publica una ficha rota.
  */
 const catalogo: unknown[] = [
-
   {
-    slug: 'intarsia-wool-sweater',
+    slug: 'lacoste-intarsia-wool-sweater',
     nombre: 'Intarsia Branded Wool Sweater',
     marca: 'Lacoste',
     categoria: 'hombre',
-    tipo: 'sweater',
+    tipo: 'buzo',
     precio: 385000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
-      'Suéter Lacoste en lana, cuello redondo acanalado, mangas raglán y el nombre Lacoste Paris tejido en intarsia sobre el pecho.',
+      'Buzo Lacoste en lana, cuello redondo acanalado, mangas raglán y el nombre Lacoste Paris tejido en intarsia sobre el pecho.',
     variantes: [
       {
         color: 'Crudo',
@@ -33,11 +40,11 @@ const catalogo: unknown[] = [
         imagenes: [
           {
             archivo: 'lacoste-intarsia-wool-sweater-crudo-frente.jpg',
-            alt: 'Suéter Lacoste de lana color crudo, vista frontal con el nombre Lacoste tejido en azul y verde y la palabra Paris en rosa debajo',
+            alt: 'Buzo Lacoste de lana color crudo, vista frontal con el nombre Lacoste tejido en azul y verde y la palabra Paris en rosa debajo',
           },
           {
             archivo: 'lacoste-intarsia-wool-sweater-crudo-espalda.jpg',
-            alt: 'Suéter Lacoste de lana color crudo, vista de espalda lisa, con las costuras raglán y el bajo acanalado a la vista',
+            alt: 'Buzo Lacoste de lana color crudo, vista de espalda lisa, con las costuras raglán y el bajo acanalado a la vista',
           },
         ],
         disponible: true,
@@ -47,7 +54,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'multi-print-fleece-hoodie',
+    slug: 'lacoste-multi-print-fleece-hoodie',
     nombre: 'Multi Print Fleece Hoodie',
     marca: 'Lacoste',
     categoria: 'hombre',
@@ -80,7 +87,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'striped-cable-knit-polo',
+    slug: 'lacoste-striped-cable-knit-polo',
     nombre: 'Striped Cable Knit Polo',
     marca: 'Lacoste',
     categoria: 'mujer',
@@ -122,15 +129,17 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+
   {
-    slug: 'crew-neck-lacoste',
+    slug: 'lacoste-classic-printed-crew-neck',
     nombre: 'Classic Printed Crew Neck',
     marca: 'Lacoste',
     categoria: 'hombre',
     tipo: 'buzo',
     precio: 290000,
     tallas: [...TALLAS_HOMBRE],
-    descripcion: 'Buzo Lacoste en algodón, corte clásico, estampado frontal Classic Logo.',
+    descripcion:
+      'Buzo Lacoste Classic Printed Crew Neck original en algodón, corte clásico y estampado Classic Logo al frente.',
     variantes: [
       {
         color: 'Negro',
@@ -167,15 +176,15 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'classic-quarter-zip-sweater',
+    slug: 'tommy-hilfiger-classic-quarter-zip-sweater',
     nombre: 'Classic Quarter-Zip Sweater',
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
-    tipo: 'sweater',
+    tipo: 'buzo',
     precio: 290000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
-      'Suéter Tommy Hilfiger de algodón, cuello alto acanalado con cremallera hasta el pecho y bandera bordada en el costado.',
+      'Buzo Tommy Hilfiger de algodón, cuello alto acanalado con cremallera hasta el pecho y bandera bordada en el costado.',
     variantes: [
       {
         color: 'Beige',
@@ -183,15 +192,34 @@ const catalogo: unknown[] = [
         imagenes: [
           {
             archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-beige-frente.jpg',
-            alt: 'Suéter Tommy Hilfiger beige, vista frontal de la prenda sola con la cremallera abierta hasta el pecho y la bandera bordada a la derecha',
+            alt: 'Buzo Tommy Hilfiger beige, vista frontal de la prenda sola con la cremallera abierta hasta el pecho y la bandera bordada a la derecha',
           },
           {
             archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-beige-espalda.jpg',
-            alt: 'Suéter Tommy Hilfiger beige, vista de espalda de la prenda sola, lisa, con la cinta a rayas asomando por el cuello',
+            alt: 'Buzo Tommy Hilfiger beige, vista de espalda de la prenda sola, lisa, con la cinta a rayas asomando por el cuello',
           },
           {
             archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-beige-modelo.jpg',
-            alt: 'Suéter Tommy Hilfiger beige puesto, plano medio de un modelo que lo lleva con una camiseta blanca debajo y pantalón chino',
+            alt: 'Buzo Tommy Hilfiger beige puesto, plano medio de un modelo que lo lleva con una camiseta blanca debajo y pantalón chino',
+          },
+        ],
+        disponible: true,
+      },
+      {
+        color: 'Borgoña',
+        slug: 'borgona',
+        // Rebajado solo este color: el beige sigue a precio normal y no entra en /sale.
+        precio: 248000,
+        precioAnterior: 290000,
+        tallas: ['M'],
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-borgona-frente.jpg',
+            alt: 'Buzo Tommy Hilfiger borgoña, vista frontal de la prenda sola con la cremallera abierta hasta el pecho y la bandera bordada a la derecha',
+          },
+          {
+            archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-borgona-espalda.jpg',
+            alt: 'Buzo Tommy Hilfiger borgoña, vista de espalda de la prenda sola, lisa, con la cinta a rayas asomando por el cuello',
           },
         ],
         disponible: true,
@@ -201,15 +229,15 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'quarter-zip-sweater',
+    slug: 'tommy-hilfiger-quarter-zip-sweater',
     nombre: 'Quarter-Zip Sweater',
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
-    tipo: 'sweater',
+    tipo: 'buzo',
     precio: 380000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
-      'Suéter Tommy Hilfiger de punto texturizado en algodón, cuello alto con cremallera hasta el pecho y bandera bordada en el costado.',
+      'Buzo Tommy Hilfiger de punto texturizado en algodón, cuello alto con cremallera hasta el pecho y bandera bordada en el costado.',
     variantes: [
       {
         color: 'Azul marino',
@@ -217,11 +245,11 @@ const catalogo: unknown[] = [
         imagenes: [
           {
             archivo: 'tommy-hilfiger-quarter-zip-sweater-azul-marino-frente.jpg',
-            alt: 'Suéter Tommy Hilfiger azul marino, vista frontal de la prenda sola con la cremallera hasta el pecho y la bandera bordada a la derecha',
+            alt: 'Buzo Tommy Hilfiger azul marino, vista frontal de la prenda sola con la cremallera hasta el pecho y la bandera bordada a la derecha',
           },
           {
             archivo: 'tommy-hilfiger-quarter-zip-sweater-azul-marino-espalda.jpg',
-            alt: 'Suéter Tommy Hilfiger azul marino, vista de espalda de la prenda sola, con el punto texturizado en los hombros y las mangas',
+            alt: 'Buzo Tommy Hilfiger azul marino, vista de espalda de la prenda sola, con el punto texturizado en los hombros y las mangas',
           },
         ],
         disponible: true,
@@ -231,7 +259,7 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'crewneck-favorite-t-shirt',
+    slug: 'tommy-hilfiger-crewneck-favorite-t-shirt',
     nombre: 'Crewneck Favorite T-Shirt',
     marca: 'Tommy Hilfiger',
     categoria: 'mujer',
@@ -270,8 +298,8 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'essentials-hoodie',
-    nombre: 'Hoodie',
+    slug: 'essentials-fleece-hoodie-ii',
+    nombre: 'Fleece Hoodie II',
     marca: 'Essentials',
     categoria: 'hombre',
     tipo: 'hoodie',
@@ -285,15 +313,15 @@ const catalogo: unknown[] = [
         slug: 'negro',
         imagenes: [
           {
-            archivo: 'essentials-hoodie-negro-frente.jpg',
+            archivo: 'essentials-fleece-hoodie-ii-negro-frente.jpg',
             alt: 'Hoodie Essentials negro, vista frontal de la prenda sola con capucha, corte oversize y el logo Essentials Fear of God en pequeño sobre el pecho',
           },
           {
-            archivo: 'essentials-hoodie-negro-espalda.jpg',
+            archivo: 'essentials-fleece-hoodie-ii-negro-espalda.jpg',
             alt: 'Hoodie Essentials negro, vista de espalda con el logo Essentials Fear of God impreso en grande y en blanco entre los hombros',
             // Mismo criterio que el hoodie de Lacoste: en la rejilla va la
             // espalda, porque el logo grande distingue la prenda y el frente,
-            // con el logo pequeño en el pecho, no.
+            // con el logo pequeno en el pecho, no.
             portada: true,
           },
         ],
@@ -302,13 +330,14 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+
   {
-    slug: 'mixed-media-puffer-jacket',
-    nombre: "Men's Mixed-Media Puffer Jacket",
+    slug: 'tommy-hilfiger-mixed-media-puffer-jacket',
+    nombre: 'Men\'s Mixed-Media Puffer Jacket',
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
     tipo: 'chaqueta',
-    precio: 390000,
+    precio: 515000,
     // Una sola talla, y es la que queda: la rejilla y la ficha lo avisan en
     // burdeos. No se declara la escala entera con las demas tachadas porque
     // de esta chaqueta no hay mas que esta pieza, y un rango tachado da a
@@ -324,6 +353,486 @@ const catalogo: unknown[] = [
           {
             archivo: 'tommy-hilfiger-mixed-media-puffer-jacket-negro-frente.jpg',
             alt: 'Chaqueta acolchada Tommy Hilfiger Mixed-Media negra, vista frontal con el cuello alto levantado, la cremallera cerrada y la bandera Tommy bordada en el pecho',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'essentials-fleece-hoodie',
+    nombre: 'Fleece Hoodie',
+    marca: 'Essentials',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 420000,
+    tallas: ['S', 'M', 'L', 'XL'],
+    descripcion:
+      'Hoodie Essentials de Fear of God en gris jaspeado, tejido fleece de algodón, corte oversize con hombros caídos, capucha sin cordones y puños y bajo acanalados. Lleva Fear of God Essentials en letras arqueadas sobre el pecho y la espalda lisa.',
+    variantes: [
+      {
+        color: 'Heather Grey',
+        slug: 'heather-grey',
+        imagenes: [
+          {
+            archivo: 'essentials-fleece-hoodie-gris-frente.jpg',
+            alt: 'Hoodie Essentials gris jaspeado, vista frontal de la prenda sola con capucha, corte oversize y Fear of God Essentials en letras arqueadas de color crudo sobre el pecho',
+          },
+          {
+            archivo: 'essentials-fleece-hoodie-gris-espalda.jpg',
+            alt: 'Hoodie Essentials gris jaspeado, vista de espalda, lisa y sin ningún logo',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'aime-leon-dore-unisphere-tee',
+    nombre: 'Unisphere Tee',
+    marca: 'Aimé Leon Dore',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 390000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Camiseta Aimé Leon Dore en algodón color crudo, cuello redondo acanalado y corte recto. Lleva el escudo Unisphere de Queens estampado en verde: pequeño sobre el pecho y en grande en la espalda, con la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough.',
+    variantes: [
+      {
+        color: 'Pristine',
+        slug: 'pristine',
+        imagenes: [
+          {
+            archivo: 'aime-leon-dore-unisphere-tee-pristine-frente.jpg',
+            alt: 'Camiseta Aimé Leon Dore color crudo, vista frontal de la prenda sola con el cuello redondo acanalado y el escudo Unisphere en verde, pequeño, sobre el pecho',
+          },
+          {
+            archivo: 'aime-leon-dore-unisphere-tee-pristine-espalda.jpg',
+            alt: 'Camiseta Aimé Leon Dore color crudo, vista de espalda con el globo Unisphere y los árboles de Flushing Meadows estampados en verde oscuro sobre la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough',
+            // En la rejilla va la espalda: el escudo grande es lo que se
+            // reconoce de lejos; el frente lo lleva pequeno.
+            portada: true,
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'aime-leon-dore-unisphere-waffle-thermal',
+    nombre: 'Long-Sleeve Unisphere Waffle Thermal',
+    marca: 'Aimé Leon Dore',
+    categoria: 'hombre',
+    tipo: 'buzo',
+    precio: 660000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Buzo Aimé Leon Dore en punto waffle azul marino, cuello redondo acanalado y puños y bajo en rib. Lleva el escudo Unisphere de Queens estampado en crudo: pequeño sobre el pecho y en grande en la espalda, con la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'aime-leon-dore-unisphere-waffle-thermal-azul-marino-frente.jpg',
+            alt: 'Buzo Aimé Leon Dore de punto waffle azul marino, vista frontal de la prenda sola con el cuello redondo acanalado y el escudo Unisphere en crudo, pequeño, sobre el pecho',
+          },
+          {
+            archivo: 'aime-leon-dore-unisphere-waffle-thermal-azul-marino-espalda.jpg',
+            alt: 'Buzo Aimé Leon Dore de punto waffle azul marino, vista de espalda con el globo Unisphere y los árboles de Flushing Meadows estampados en crudo sobre la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough',
+            // Igual que la camiseta Unisphere: el escudo grande de la espalda
+            // es el que vende la prenda en la rejilla.
+            portada: true,
+          },
+          {
+            archivo: 'aime-leon-dore-unisphere-waffle-thermal-azul-marino-modelo-espalda.jpg',
+            alt: 'Buzo Aimé Leon Dore de punto waffle azul marino puesto, plano medio de un modelo de espaldas que lo lleva con vaqueros claros',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'aime-leon-dore-souvenir-tee',
+    nombre: 'Aimé Souvenir Tee',
+    marca: 'Aimé Leon Dore',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 390000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Camiseta Aimé Leon Dore en algodón blanco, cuello redondo acanalado y corte recto. Lleva AIMÉ en letra universitaria azul arqueada sobre el pecho, con NYC dentro de un óvalo azul marino debajo.',
+    variantes: [
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        imagenes: [
+          {
+            archivo: 'aime-leon-dore-souvenir-tee-blanco-frente.jpg',
+            alt: 'Camiseta Aimé Leon Dore blanca, vista frontal de la prenda sola con la palabra AIMÉ en letra universitaria azul arqueada y NYC dentro de un óvalo azul marino debajo',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'aime-leon-dore-new-balance-geo-print-crewneck',
+    nombre: 'Off-White New Balance Geo Print Crewneck',
+    marca: ['Aimé Leon Dore', 'New Balance'],
+    categoria: 'hombre',
+    tipo: 'buzo',
+    precio: 580000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: !['XS', 'XL', 'XXL'].includes(talla) })),
+    descripcion:
+      'Buzo Aimé Leon Dore × New Balance en punto de algodón color hueso, cuello redondo acanalado y puños y bajo en rib. Lleva el globo terráqueo de New Balance tramado en puntos grises, que cruza el pecho y baja por una manga, y la firma AIMÉ tejida abajo a la derecha.',
+    variantes: [
+      {
+        color: 'Off-White',
+        slug: 'off-white',
+        imagenes: [
+          {
+            archivo: 'aime-leon-dore-geo-print-crewneck-off-white-frente.jpg',
+            alt: 'Buzo Aimé Leon Dore × New Balance color hueso, vista frontal de la prenda sola con el globo terráqueo tramado en puntos grises cruzando el pecho y la firma AIMÉ tejida abajo a la derecha',
+          },
+          {
+            archivo: 'aime-leon-dore-geo-print-crewneck-off-white-espalda.jpg',
+            alt: 'Buzo Aimé Leon Dore × New Balance color hueso, vista de espalda con la otra mitad del globo tramado en puntos grises, que sigue desde el hombro hasta la manga',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'kidsuper-studios-astronaut-tee',
+    nombre: 'Astronaut Tee',
+    marca: 'KidSuper Studios',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 220000,
+    tallas: ['M'],
+    descripcion:
+      'Camiseta KidSuper Studios en algodón color crudo, cuello redondo acanalado y corte holgado de hombro caído. Lleva al frente un astronauta pintado a mano en acuarela, flotando con un libro abierto, y la firma de la marca con la leyenda A discovery tour of our universe.',
+    variantes: [
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        imagenes: [
+          {
+            archivo: 'kidsuper-studios-astronaut-tee-blanco-frente.jpg',
+            alt: 'Camiseta KidSuper Studios color crudo, vista frontal de la prenda sola con un astronauta en acuarela azul y amarillo flotando con un libro abierto y la firma de la marca en azul a la derecha',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'pleasures-twitch-studded-crewneck-t-shirt',
+    nombre: 'Twitch Studded Crewneck T-Shirt',
+    marca: 'Pleasures',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 220000,
+    tallas: ['M', 'L'],
+    descripcion:
+      'Camiseta Pleasures en algodón, cuello redondo acanalado y corte holgado. Cruza el pecho el logo Pleasures en letra gótica arqueada, aplicado en cuero sintético negro y tachonado con remaches plateados. En negro con lavado desgastado o en blanco.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'pleasures-twitch-studded-crewneck-t-shirt-negro-frente.jpg',
+            alt: 'Camiseta Pleasures negra desgastada, vista frontal de la prenda sola con el logo Pleasures en letra gótica arqueada, aplicado en cuero negro con remaches plateados, y la etiqueta roja en el cuello',
+          },
+        ],
+        disponible: true,
+        // Del negro queda una sola talla; del blanco, dos.
+        tallas: ['M'],
+      },
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        imagenes: [
+          {
+            archivo: 'pleasures-twitch-studded-crewneck-t-shirt-blanco-frente.jpg',
+            alt: 'Camiseta Pleasures blanca, vista frontal de la prenda sola con el logo Pleasures en letra gótica arqueada, aplicado en cuero negro con remaches plateados, y la etiqueta roja en el cuello',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'eme-studios-pinstripe-night-sky-knit-sweater',
+    nombre: 'Pinstripe Night Sky Knit Sweater',
+    marca: 'Eme Studios',
+    categoria: 'hombre',
+    // Corte sin genero: tambien sale en el catalogo de mujer.
+    tambienEn: ['mujer'],
+    tipo: 'buzo',
+    precio: 420000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Buzo Eme Studios de punto grueso a rayas finas blancas sobre azul marino, cuello redondo acanalado, hombro caído y corte amplio. Lleva EME en granate aplicado sobre el pecho. Unisex.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'eme-studios-pinstripe-night-sky-knit-sweater-azul-marino-frente.jpg',
+            alt: 'Buzo Eme Studios azul marino con rayas finas blancas, vista frontal de la prenda sola con EME en letras granate sobre el pecho',
+          },
+          {
+            archivo: 'eme-studios-pinstripe-night-sky-knit-sweater-azul-marino-modelo-hombre.jpg',
+            alt: 'Chico de cuerpo entero con el buzo Eme Studios azul marino a rayas y EME en granate, jean ancho y una gorra granate colgada del bolsillo',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'tommy-hilfiger-back-flag-logo-pullover-hoodie',
+    nombre: 'Back Flag Logo Pullover Hoodie',
+    marca: 'Tommy Hilfiger',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 370000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: ['XS', 'L', 'XL'].includes(talla) })),
+    descripcion:
+      'Hoodie Tommy Hilfiger en felpa de algodón, capucha con cordones, bolsillo canguro, bandera bordada al frente y gran bandera tricolor en la espalda con el nombre de la marca en relieve.',
+    variantes: [
+      {
+        color: 'Crema',
+        slug: 'crema',
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-back-flag-logo-pullover-hoodie-crema-frente.jpg',
+            alt: 'Hoodie Tommy Hilfiger crema, vista frontal de la prenda sola con capucha de cordones, bolsillo canguro y la bandera bordada a la derecha',
+          },
+          {
+            archivo: 'tommy-hilfiger-back-flag-logo-pullover-hoodie-crema-espalda.jpg',
+            alt: 'Hoodie Tommy Hilfiger crema, vista de espalda con la gran bandera azul marino y roja y el nombre Tommy Hilfiger en relieve',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'tommy-hilfiger-cable-knit-quarter-zip-sweater',
+    nombre: 'Cable Knit Quarter-Zip Sweater',
+    marca: 'Tommy Hilfiger',
+    categoria: 'hombre',
+    tipo: 'buzo',
+    precio: 260000,
+    precioAnterior: 450000,
+    tallas: ['L'],
+    descripcion:
+      'Buzo Tommy Hilfiger de punto trenzado en algodón, cuello alto con cremallera hasta el pecho, cinta tricolor en el cuello y bandera bordada en el costado.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-cable-knit-quarter-zip-sweater-negro-frente.jpg',
+            alt: 'Buzo Tommy Hilfiger negro de punto trenzado, vista frontal de la prenda sola con la cremallera hasta el pecho y la bandera bordada a la derecha',
+          },
+          {
+            archivo: 'tommy-hilfiger-cable-knit-quarter-zip-sweater-negro-espalda.jpg',
+            alt: 'Buzo Tommy Hilfiger negro de punto trenzado, vista de espalda de la prenda sola con la cinta tricolor en el cuello',
+          },
+          {
+            archivo: 'tommy-hilfiger-cable-knit-quarter-zip-sweater-negro-modelo.jpg',
+            alt: 'Buzo Tommy Hilfiger negro puesto, plano medio de un modelo que lo lleva con camisa blanca debajo y jean azul',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'ralph-lauren-loopback-fleece-hoodie',
+    nombre: 'Loopback Fleece Hoodie',
+    marca: 'Ralph Lauren',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 390000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Hoodie Polo Ralph Lauren en felpa loopback de algodón, capucha con cordones, bolsillo canguro y el jugador de polo bordado tono sobre tono en el pecho.',
+    variantes: [
+      {
+        color: 'Crema',
+        slug: 'crema',
+        imagenes: [
+          {
+            archivo: 'ralph-lauren-loopback-fleece-hoodie-crema-frente.jpg',
+            alt: 'Hoodie Polo Ralph Lauren crema, vista frontal de la prenda sola con capucha de cordones, bolsillo canguro y el jugador de polo bordado a la derecha',
+          },
+          {
+            archivo: 'ralph-lauren-loopback-fleece-hoodie-crema-modelo.jpg',
+            alt: 'Hoodie Polo Ralph Lauren crema puesto, plano medio de un modelo que lo lleva con camiseta blanca debajo, gorra beige y pantalón caqui',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'diesel-oval-d-sleeve-sweatshirt',
+    nombre: 'Oval D Sleeve Sweatshirt',
+    marca: 'Diesel',
+    categoria: 'hombre',
+    tipo: 'buzo',
+    precio: 446000,
+    tallas: ['L'],
+    descripcion:
+      'Buzo Diesel en felpa de algodón, corte amplio con hombros caídos, cuello redondo acanalado, etiqueta roja de la marca y logo Oval D metálico en la manga.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'diesel-oval-d-sleeve-sweatshirt-negro-frente.jpg',
+            alt: 'Buzo Diesel negro, vista frontal de la prenda sola con cuello redondo, etiqueta roja en el cuello y el logo Oval D metálico en la manga',
+          },
+          {
+            archivo: 'diesel-oval-d-sleeve-sweatshirt-negro-detalle.jpg',
+            alt: 'Buzo Diesel negro puesto, detalle de perfil del hombro con el logo Oval D metálico en la manga',
+          },
+          {
+            archivo: 'diesel-oval-d-sleeve-sweatshirt-negro-modelo.jpg',
+            alt: 'Buzo Diesel negro puesto, plano medio de un modelo que lo lleva con pantalón negro de costuras blancas',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'diesel-zip-shoulder-hoodie',
+    nombre: 'Zip Shoulder Hoodie',
+    marca: 'Diesel',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 550000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: ['S', 'M', 'L', 'XL'].includes(talla) })),
+    descripcion:
+      'Hoodie Diesel en felpa de algodón, corte amplio con mangas raglán, paneles blancos con cremalleras en los hombros, capucha con cordones, bolsillo canguro y logo Diesel en el pecho.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'diesel-zip-shoulder-hoodie-negro-frente.jpg',
+            alt: 'Hoodie Diesel negro, vista frontal de la prenda sola con paneles blancos y cremalleras en los hombros, bolsillo canguro y logo Diesel en el pecho',
+          },
+          {
+            archivo: 'diesel-zip-shoulder-hoodie-negro-modelo.jpg',
+            alt: 'Hoodie Diesel negro puesto, plano medio de un modelo que lo lleva con pantalón negro',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'diesel-ginn-crewneck-sweatshirt',
+    nombre: 'Ginn Crewneck Sweatshirt',
+    marca: 'Diesel',
+    categoria: 'hombre',
+    tipo: 'buzo',
+    precio: 310000,
+    tallas: ['M'],
+    descripcion:
+      'Buzo Diesel en felpa de algodón, cuello redondo acanalado y estampado Diesel Industry Denim Division en el pecho.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'diesel-ginn-crewneck-sweatshirt-azul-marino-frente.jpg',
+            alt: 'Buzo Diesel azul marino, vista frontal de la prenda sola con el estampado Diesel Industry Denim Division en azul y rojo en el pecho',
+          },
+          {
+            archivo: 'diesel-ginn-crewneck-sweatshirt-azul-marino-modelo.jpg',
+            alt: 'Buzo Diesel azul marino puesto, plano medio de frente de un modelo que lo lleva con jean gris',
+          },
+          {
+            archivo: 'diesel-ginn-crewneck-sweatshirt-azul-marino-modelo-espalda.jpg',
+            alt: 'Buzo Diesel azul marino puesto, vista de espalda lisa de un modelo que lo lleva con jean gris',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'diesel-successful-living-hoodie',
+    nombre: 'Successful Living Hoodie',
+    marca: 'Diesel',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 430000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: ['S', 'M', 'L'].includes(talla) })),
+    descripcion:
+      'Hoodie Diesel en felpa de algodón, capucha con cordones, bolsillo canguro con costuras en contraste, logo Diesel en la manga y estampado Successful Living en la espalda, ambos en rosa.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'diesel-successful-living-hoodie-negro-frente.jpg',
+            alt: 'Hoodie Diesel negro, vista frontal de la prenda sola con capucha de cordones, bolsillo canguro y el logo Diesel en rosa en la manga',
+          },
+          {
+            archivo: 'diesel-successful-living-hoodie-negro-espalda.jpg',
+            alt: 'Hoodie Diesel negro, vista de espalda de la prenda sola con el estampado Successful Living en rosa',
+          },
+          {
+            archivo: 'diesel-successful-living-hoodie-negro-detalle.jpg',
+            alt: 'Hoodie Diesel negro puesto, detalle de la manga con el logo Diesel en rosa y el bolsillo canguro',
           },
         ],
         disponible: true,

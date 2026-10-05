@@ -1,0 +1,110 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import Migas from '../../components/Migas.astro'
+import { marcas } from '../../data/marcas'
+import { productos } from '../../data/productos'
+import { deMarca } from '../../lib/catalogo'
+import { fichaCategoria, fichaMigas, serializar, type Miga } from '../../lib/datos-estructurados'
+import { CONFIG } from '../../config'
+
+/**
+ * El archivo de marcas: todas, en orden alfabetico, con su origen y su
+ * propuesta en una linea. Las que no tienen ficha todavia salen igual --
+ * tienen pagina --, y dicen que la ficha esta en camino.
+ */
+const entrada = `Las marcas que ${CONFIG.nombre} trae a Colombia: de dónde vienen, quién las fundó y por qué las escogimos.`
+
+if (!Astro.site) {
+  throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
+}
+const migas: Miga[] = [{ nombre: 'Inicio', ruta: '/' }, { nombre: 'Archivo de marcas' }]
+const migasJson = serializar(fichaMigas(migas, Astro.site))
+
+/**
+ * El listado para el buscador nombra solo las marcas cuya pagina tiene algo
+ * que contar: una ficha o prendas. Las provisionales siguen enlazadas desde
+ * la lista y el menu, pero no se le piden a Google como contenido.
+ */
+const conContenido = marcas.filter(
+  (marca) => marca.ficha || deMarca(productos, marca.slug).length > 0
+)
+const listadoJson = serializar(
+  fichaCategoria({
+    nombre: 'Archivo de marcas',
+    descripcion: `Las marcas que trae ${CONFIG.nombre} al mercado colombiano, con su origen y su propuesta.`,
+    url: new URL('/marca/', Astro.site).href,
+    urls: conContenido.map((marca) => new URL(`/marca/${marca.slug}/`, Astro.site).href),
+  })
+)
+
+const ordenadas = [...marcas].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+---
+<Layout titulo="Archivo de marcas" descripcion={entrada}>
+  <script type="application/ld+json" is:inline set:html={migasJson}></script>
+  <script type="application/ld+json" is:inline set:html={listadoJson}></script>
+
+  <div class="contenedor archivo">
+    <Migas migas={migas} />
+
+    <header class="archivo__cabecera">
+      <h1>Archivo de marcas</h1>
+      <p class="archivo__entrada">{entrada}</p>
+    </header>
+
+    {ordenadas.length === 0 ? (
+      <p class="archivo__vacio">Todavía no hay marcas en el archivo.</p>
+    ) : (
+      <ul class="archivo__lista">
+        {ordenadas.map((marca) => (
+          <li>
+            <a href={`/marca/${marca.slug}/`}>
+              <h2>{marca.nombre}</h2>
+              <p class="archivo__datos">
+                {marca.ficha ? `${marca.ficha.pais} · ${marca.ficha.fundacion}` : 'Ficha en camino'}
+              </p>
+              {marca.ficha && <p class="archivo__propuesta">{marca.ficha.propuesta}</p>}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</Layout>
+
+<style>
+  .archivo { padding-block: var(--espacio-2) var(--espacio-4); }
+  .archivo__cabecera { margin-block: var(--espacio-3); }
+  .archivo__entrada {
+    max-width: 52ch;
+    color: var(--texto-suave);
+  }
+
+  /* Una lista de lineas, como un indice: el nombre grande, y debajo de
+     donde viene y que propone. */
+  .archivo__lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-block-start: 1px solid var(--linea);
+  }
+  .archivo__lista li { border-block-end: 1px solid var(--linea); }
+  .archivo__lista a {
+    display: block;
+    padding-block: var(--espacio-3);
+    color: inherit;
+    text-decoration: none;
+  }
+  .archivo__lista a:hover h2 { text-decoration: underline; }
+  .archivo__lista h2 { margin: 0; }
+  .archivo__datos {
+    margin-block: 0.25rem;
+    color: var(--texto-suave);
+    font-family: var(--fuente-marca);
+    font-size: 0.8125rem;
+  }
+  .archivo__propuesta {
+    max-width: 52ch;
+    margin: 0;
+  }
+  .archivo__vacio { color: var(--texto-suave); }
+</style>

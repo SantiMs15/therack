@@ -13,7 +13,8 @@ import '../styles/global.css'
  */
 import logoUrl from '../assets/logo-web.svg?url'
 import MenuPantallaCompleta from '../components/MenuPantallaCompleta.astro'
-import { CONFIG, INSTAGRAM_URL } from '../config'
+import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
+import { formatearPrecio } from '../lib/formato'
 
 interface Props {
   titulo: string
@@ -26,6 +27,13 @@ interface Props {
    */
   sinCanonica?: boolean
   /**
+   * Pagina que existe pero no tiene nada que ofrecer todavia: una marca sin
+   * ficha ni piezas, o el sale sin rebajas. Se rastrea -- los enlaces siguen
+   * contando -- pero no se pide que salga en resultados. Tambien la saca del
+   * sitemap (lo hace la integracion de astro.config.mjs leyendo esta etiqueta).
+   */
+  sinIndexar?: boolean
+  /**
    * Foto para la tarjeta que se pinta al compartir el enlace. URL absoluta.
    * Sin ella va el logo sobre el gris del sitio, que es lo correcto para la
    * portada y la tienda; una ficha de producto manda la foto de la prenda.
@@ -36,18 +44,34 @@ interface Props {
   imagenAlto?: number
   /** 'product' en las fichas, 'website' en el resto. */
   tipo?: 'website' | 'product'
+  /**
+   * Precio en COP de la prenda, solo en las fichas. Abre la descripcion de la
+   * tarjeta para compartir -- en un chat lo primero que se pregunta es cuanto
+   * cuesta -- y va en product:price para quien lea esas etiquetas.
+   */
+  precio?: number
 }
 
 const {
   titulo,
   descripcion = 'Tienda de ropa en ' + CONFIG.ciudad,
   sinCanonica = false,
+  sinIndexar = false,
   imagen,
   imagenAlt,
   imagenAncho,
   imagenAlto,
   tipo = 'website',
+  precio,
 } = Astro.props
+
+// La del buscador no lleva el precio: cambia con las rebajas y Google ya lo
+// lee de la ficha estructurada. La de compartir si, con el envio detras.
+const envio = VENTA.envio.costo === 0 ? 'Envío gratis a toda Colombia' : null
+const descripcionCompartir =
+  precio === undefined
+    ? descripcion
+    : [formatearPrecio(precio), envio].filter(Boolean).join(' · ') + `. ${descripcion}`
 
 /**
  * Canonica auto-referenciada, construida con el pathname y NO con Astro.url
@@ -77,7 +101,35 @@ const tarjeta = {
   ancho: imagenAncho ?? 1200,
   alto: imagenAlto ?? 630,
 }
-const tituloCompleto = `${titulo} — ${CONFIG.nombre}`
+/**
+ * El nombre de la tienda va detras solo si cabe. Google corta el titulo hacia
+ * los 60 caracteres, y en una ficha como "Camiseta Pleasures Twitch Studded
+ * Crewneck T-Shirt · Blanco" el que se quedaba fuera era el color, que es lo
+ * que distingue esa pagina de la del otro color. La marca de la tienda ya
+ * viaja en el og:site_name y en la URL.
+ */
+const SUFIJO = ` | ${CONFIG.nombre}`
+const MAXIMO_TITULO = 60
+const tituloCompleto =
+  titulo.length + SUFIJO.length <= MAXIMO_TITULO ? `${titulo}${SUFIJO}` : titulo
+
+/**
+ * Las dos secciones del catalogo, siempre a la vista en la cabecera: la
+ * rebaja y la tienda entera. Marcan la que se esta viendo; las categorias y
+ * las marcas ya tienen su propio camino, los filtros y el menu.
+ */
+const ruta = Astro.url.pathname
+const secciones = [
+  { href: '/sale/', texto: 'Sale', clase: 'enlace-catalogo--sale' },
+  { href: '/', texto: 'Exclusives', clase: '' },
+]
+
+/**
+ * El archivo de marcas entra y sale fundido: es otra forma de leer la
+ * tienda, mas de revista que de catalogo, y el corte seco al llegar a el se
+ * veia como un salto a otro sitio.
+ */
+const enArchivo = ruta.startsWith('/marca/')
 
 /*
  * El pie ya no enlaza las categorias: ese camino es ahora el desplegable de
@@ -94,41 +146,196 @@ const tituloCompleto = `${titulo} — ${CONFIG.nombre}`
     <title>{tituloCompleto}</title>
     <meta name="description" content={descripcion} />
     {!sinCanonica && <link rel="canonical" href={canonica.href} />}
+    {sinIndexar && <meta name="robots" content="noindex, follow" />}
+
+    {/* El PNG de 192 primero: es el que pide Google para el icono junto al
+        resultado de busqueda, y lo exige multiplo de 48. El .ico queda para
+        los navegadores viejos y el SVG para los que lo entienden. */}
+    <link rel="icon" href="/favicon-192.png" sizes="192x192" type="image/png" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <meta property="og:type" content={tipo} />
     <meta property="og:site_name" content={CONFIG.nombre} />
     <meta property="og:locale" content="es_CO" />
     <meta property="og:url" content={canonica.href} />
     <meta property="og:title" content={tituloCompleto} />
-    <meta property="og:description" content={descripcion} />
+    <meta property="og:description" content={descripcionCompartir} />
     <meta property="og:image" content={tarjeta.imagen} />
     <meta property="og:image:width" content={String(tarjeta.ancho)} />
     <meta property="og:image:height" content={String(tarjeta.alto)} />
     <meta property="og:image:alt" content={tarjeta.alt} />
+    {precio !== undefined && (
+      <>
+        <meta property="product:price:amount" content={String(precio)} />
+        <meta property="product:price:currency" content={VENTA.moneda} />
+      </>
+    )}
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={tituloCompleto} />
-    <meta name="twitter:description" content={descripcion} />
+    <meta name="twitter:description" content={descripcionCompartir} />
     <meta name="twitter:image" content={tarjeta.imagen} />
     <meta name="twitter:image:alt" content={tarjeta.alt} />
 
     <link rel="preconnect" href="https://use.typekit.net" crossorigin />
     <link rel="preconnect" href="https://p.typekit.net" crossorigin />
-    <link rel="stylesheet" href="https://use.typekit.net/uat3sbv.css" />
+    {/* Sin bloquear el pintado: la hoja de Typekit tardaba en llegar y
+        retenia la pagina entera en blanco. Se pide como `print`, que el
+        navegador baja sin esperar, y al cargar pasa a `all`. Mientras tanto
+        se lee la Geist de reserva. */}
+    <link
+      rel="stylesheet"
+      href="https://use.typekit.net/uat3sbv.css"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript><link rel="stylesheet" href="https://use.typekit.net/uat3sbv.css" /></noscript>
   </head>
   <body>
-    <header class="cabecera contenedor">
-      <a href="/" aria-label={CONFIG.nombre}>
-        {/* alt vacio: el enlace ya se anuncia con su aria-label, y repetir el
-            nombre aqui lo haria sonar dos veces. Ancho y alto declarados
-            (680x122.61 del viewBox, escalado a 200) para que la cabecera no
-            de un salto mientras el archivo llega. */}
-        <img src={logoUrl} width="200" height="36" alt="" />
-      </a>
-      <MenuPantallaCompleta />
+    {/* El fondo de la cabecera ocupa todo el ancho y el contenido va en el
+        contenedor de dentro: con el contenedor en la propia cabecera, el
+        fondo pegajoso se cortaba en los margenes y la rejilla asomaba por
+        los lados al bajar. */}
+    <header class="cabecera">
+      <div class="cabecera__interior contenedor">
+        <a href="/" aria-label={CONFIG.nombre}>
+          {/* alt vacio: el enlace ya se anuncia con su aria-label, y repetir el
+              nombre aqui lo haria sonar dos veces. Ancho y alto declarados
+              (680x122.61 del viewBox, escalado a 200) para que la cabecera no
+              de un salto mientras el archivo llega. */}
+          <img src={logoUrl} width="200" height="36" alt="" />
+        </a>
+        <div class="cabecera__acciones">
+          <nav class="secciones" aria-label="Catálogo">
+            {secciones.map((s) => (
+              <a
+                class:list={['enlace-catalogo', s.clase]}
+                href={s.href}
+                aria-current={ruta === s.href ? 'page' : undefined}
+                data-seccion
+              >
+                {s.texto}
+              </a>
+            ))}
+          </nav>
+          <MenuPantallaCompleta />
+        </div>
+      </div>
     </header>
 
+    {/* Antes de pintar <main>: si la pagina tiene que entrar fundida, tiene
+        que nacer ya transparente. Desde un script diferido se veria un
+        fotograma con todo a la vista antes de apagarse. */}
+    <script is:inline define:vars={{ enArchivo }}>
+      try {
+        // Dos motivos para entrar fundido: que la pagina anterior lo dejara
+        // pedido al apagarse -- y entonces da igual a donde se vaya, el
+        // catalogo incluido --, o que se llegue al archivo por las bravas,
+        // escribiendo la direccion o desde fuera del sitio.
+        var pedido = sessionStorage.getItem('fundido-entrada')
+        if (pedido) sessionStorage.removeItem('fundido-entrada')
+
+        if ((pedido || enArchivo) && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          document.documentElement.dataset.entrando = ''
+          // Red de seguridad: quien enciende es el script de abajo, y si no
+          // llegara a ejecutarse la pagina no puede quedarse invisible.
+          setTimeout(function () {
+            delete document.documentElement.dataset.entrando
+          }, 1000)
+        }
+      } catch {}
+    </script>
+
     <main><slot /></main>
+
+    <script>
+      // --- Salida fundida ---
+      // Al ir hacia el archivo de marcas o salir de el, la pagina se apaga
+      // antes de navegar y deja pedido que la siguiente entre fundida. Entre
+      // dos paginas del catalogo no: alli el cambio ya lo cuenta la rejilla.
+      {
+        const quietud = matchMedia('(prefers-reduced-motion: reduce)')
+        const esArchivo = (ruta: string) => ruta.startsWith('/marca/')
+
+        document.addEventListener('click', (evento) => {
+          // Abrir en otra pestana, o con boton central, no es navegar aqui.
+          if (
+            evento.defaultPrevented ||
+            evento.button !== 0 ||
+            evento.metaKey ||
+            evento.ctrlKey ||
+            evento.shiftKey ||
+            evento.altKey ||
+            quietud.matches
+          ) {
+            return
+          }
+          const enlace = (evento.target as HTMLElement | null)?.closest?.('a')
+          if (!(enlace instanceof HTMLAnchorElement)) return
+          if (enlace.target === '_blank' || enlace.hasAttribute('download')) return
+
+          const destino = new URL(enlace.href, location.href)
+          if (destino.origin !== location.origin) return
+          if (!esArchivo(destino.pathname) && !esArchivo(location.pathname)) return
+          if (destino.href === location.href) return
+
+          evento.preventDefault()
+          try {
+            sessionStorage.setItem('fundido-entrada', '1')
+          } catch {}
+          document.documentElement.dataset.saliendo = ''
+          // Lo que dura el fundido de body en el CSS de abajo.
+          setTimeout(() => {
+            location.href = enlace.href
+          }, 300)
+        })
+      }
+
+      // --- Volver atras ---
+      // El navegador puede restaurar la pagina anterior tal cual la dejo,
+      // apagada a medio fundido. Se marca la salida para congelar las
+      // transiciones (un parpadeo de vuelta no tiene sentido) y, al volver,
+      // se quitan todas las marcas de fundido antes de soltarlas.
+      {
+        const raiz = document.documentElement
+        addEventListener('pagehide', () => {
+          raiz.dataset.restaurando = ''
+        })
+        addEventListener('pageshow', (evento) => {
+          if (!evento.persisted) {
+            delete raiz.dataset.restaurando
+            return
+          }
+          delete raiz.dataset.saliendo
+          delete raiz.dataset.entrando
+          delete raiz.dataset.filtrando
+          delete raiz.dataset.barrido
+          for (const resultados of document.querySelectorAll<HTMLElement>('[data-resultados]')) {
+            delete resultados.dataset.cambiando
+          }
+          // Dos fotogramas: el primero pinta el estado ya limpio sin
+          // transiciones, el segundo las devuelve.
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              delete raiz.dataset.restaurando
+            })
+          })
+        })
+      }
+
+      // Encender la pagina que llego apagada. Dos fotogramas: el primero deja
+      // que el navegador pinte el estado apagado, el segundo quita la marca y
+      // esa diferencia es la que la transicion puede animar.
+      if (document.documentElement.hasAttribute('data-entrando')) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            delete document.documentElement.dataset.entrando
+          })
+        })
+      }
+    </script>
 
     <footer class="pie contenedor">
       {/* Sin calle: la tienda es solo online. Queda la ciudad, que sigue
@@ -151,22 +358,69 @@ const tituloCompleto = `${titulo} — ${CONFIG.nombre}`
     /* Con el menu abierto la cabecera deja de pintar fondo: si no, dejaria
        una franja clara cruzando el panel oscuro. */
     transition: background 300ms ease;
+    padding-block: var(--espacio-3);
+  }
+  .cabecera__interior {
     display: flex;
     flex-wrap: wrap;
     gap: var(--espacio-2);
     align-items: center;
     justify-content: space-between;
-    padding-block: var(--espacio-3);
+  }
+  .cabecera__acciones {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-4);
+  }
+
+  /* Sale y Exclusives: mismo cuerpo que el boton del menu, que es su vecino.
+     Por encima del panel abierto, igual que el boton, para que se puedan
+     seguir pulsando. */
+  .enlace-catalogo {
+    position: relative;
+    z-index: 30;
+    color: var(--texto);
+    font-size: 1.0566rem;
+  }
+  /* El burdeos es el unico color de la paleta y se gasta en lo que vende: la
+     rebaja. */
+  .enlace-catalogo--sale {
+    color: var(--burdeos);
+    text-transform: uppercase;
+  }
+  .enlace-catalogo:hover { text-decoration: underline; }
+  .enlace-catalogo[aria-current='page'] {
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+  .cabecera .secciones { display: flex; gap: inherit; }
+  :global(body[data-menu='abierto']) .enlace-catalogo { color: var(--fondo); }
+
+  @media (max-width: 480px) {
+    .enlace-catalogo { font-size: 0.75rem; }
+    .cabecera__acciones { gap: var(--espacio-3); }
   }
   :global(body[data-menu='abierto']) .cabecera { background: transparent; }
 
   .cabecera nav { display: flex; gap: var(--espacio-2); flex-wrap: wrap; }
   :global(body[data-menu='abierto']) .cabecera { background: transparent; }
 
-  .cabecera nav a { font-size: 0.9375rem; }
+  .cabecera nav a { font-size: 1.0566rem; }
   :global(body[data-menu='abierto']) .cabecera { background: transparent; }
 
   .cabecera nav a:hover { text-decoration: underline; }
+
+  /* --- Fundido entre paginas --- */
+  /* La entrada es mas lenta que la salida: la pagina se va rapido y se
+     asienta despacio, que es lo que hace que se lea como un cambio de pagina
+     y no como un parpadeo. */
+  main { transition: opacity 620ms cubic-bezier(0.65, 0.01, 0.05, 0.99); }
+  :global(html[data-entrando]) main {
+    opacity: 0;
+    transition: none;
+  }
+  :global(body) { transition: opacity 300ms cubic-bezier(0.65, 0.01, 0.05, 0.99); }
+  :global(html[data-saliendo] body) { opacity: 0; }
   .pie {
     border-top: 1px solid var(--linea);
     margin-top: var(--espacio-4);

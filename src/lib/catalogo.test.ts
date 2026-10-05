@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { validarCatalogo, type Producto } from '../data/schema'
-import { descripcionDeCategoria, enumerar, generosDe, marcasDe, tiposDe } from './catalogo'
+import { descripcionDeCategoria, enRebaja, enumerar, generosDe, marcasDe, tiposDe } from './catalogo'
 
 /**
  * Productos de mentira, pero pasados por el mismo validador que el catalogo
@@ -129,5 +129,45 @@ describe('descripcionDeCategoria', () => {
     const d = descripcionDeCategoria([], 'calzado', cierre)
     expect(d).toBe('Ropa de calzado. Envío gratis a toda Colombia.')
     expect(d).not.toContain('  ')
+  })
+})
+
+describe('enRebaja', () => {
+  const base = {
+    slug: 'buzo',
+    nombre: 'Buzo',
+    categoria: 'hombre',
+    tipo: 'buzo',
+    precio: 290000,
+    tallas: ['M'],
+    descripcion: 'Buzo.',
+    destacado: true,
+  }
+  const color = (slug: string, extra: object = {}) => ({
+    color: slug,
+    slug,
+    imagenes: [`buzo-${slug}.jpg`],
+    disponible: true,
+    ...extra,
+  })
+
+  it('deja solo los colores rebajados de cada prenda', () => {
+    const [prenda] = enRebaja(
+      validarCatalogo([
+        { ...base, variantes: [color('beige'), color('borgona', { precio: 248000, precioAnterior: 290000 })] },
+      ])
+    )
+    expect(prenda!.variantes.map((v) => v.slug)).toEqual(['borgona'])
+  })
+
+  it('la rebaja de la prenda entra con todos sus colores', () => {
+    const [prenda] = enRebaja(
+      validarCatalogo([{ ...base, precioAnterior: 450000, variantes: [color('negro'), color('gris')] }])
+    )
+    expect(prenda!.variantes).toHaveLength(2)
+  })
+
+  it('una prenda sin ningun color rebajado no entra', () => {
+    expect(enRebaja(validarCatalogo([{ ...base, variantes: [color('negro')] }]))).toEqual([])
   })
 })

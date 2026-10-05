@@ -12,8 +12,20 @@ export const CONFIG = {
   // OnlineStore a LocalBusiness, que es lo que la mete en el mapa.
   ciudad: 'Bogotá',
   horarios: 'Lunes a sábado, 10:00 - 19:00', // PENDIENTE: confirmar
-  sobre: 'PENDIENTE: texto de quienes somos', // PENDIENTE
 } as const
+
+/**
+ * Las marcas que se nombran primero cuando un texto no da para todas: la
+ * descripcion de la portada y la de cada categoria. Van en el orden en que
+ * se quieren leer. Las que no estan aqui siguen detras, por orden alfabetico.
+ */
+export const MARCAS_PRIMERO = [
+  'Eme Studios',
+  'Lacoste',
+  'Tommy Hilfiger',
+  'Aimé Leon Dore',
+  'Essentials',
+] as const
 
 /**
  * Condiciones de venta. Viven aqui y no en cada prenda porque son de la

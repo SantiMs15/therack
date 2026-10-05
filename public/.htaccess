@@ -13,6 +13,34 @@
   RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
 </IfModule>
 
+# --- URLs viejas de las fichas ---
+# Las fichas pasaron a llevar la marca delante del nombre (marca-producto),
+# la misma regla que los nombres de las fotos. Las URLs de antes ya estaban
+# compartidas por WhatsApp e Instagram y algunas en Google: el 301 las
+# manda a la nueva con el color incluido, y le dice a Google que traslade lo
+# que tuvieran. No borrar aunque parezca que ya nadie las usa: un enlace
+# viejo en un chat no caduca.
+#
+# `(/.*)?` y no `/(.*)`: tambien entra la URL sin barra ni color.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^producto/intarsia-wool-sweater(/.*)?$ /producto/lacoste-intarsia-wool-sweater$1 [R=301,L]
+  RewriteRule ^producto/multi-print-fleece-hoodie(/.*)?$ /producto/lacoste-multi-print-fleece-hoodie$1 [R=301,L]
+  RewriteRule ^producto/striped-cable-knit-polo(/.*)?$ /producto/lacoste-striped-cable-knit-polo$1 [R=301,L]
+  RewriteRule ^producto/crew-neck-lacoste(/.*)?$ /producto/lacoste-classic-printed-crew-neck$1 [R=301,L]
+  RewriteRule ^producto/classic-quarter-zip-sweater(/.*)?$ /producto/tommy-hilfiger-classic-quarter-zip-sweater$1 [R=301,L]
+  RewriteRule ^producto/quarter-zip-sweater(/.*)?$ /producto/tommy-hilfiger-quarter-zip-sweater$1 [R=301,L]
+  RewriteRule ^producto/crewneck-favorite-t-shirt(/.*)?$ /producto/tommy-hilfiger-crewneck-favorite-t-shirt$1 [R=301,L]
+  RewriteRule ^producto/mixed-media-puffer-jacket(/.*)?$ /producto/tommy-hilfiger-mixed-media-puffer-jacket$1 [R=301,L]
+  RewriteRule ^producto/unisphere-tee(/.*)?$ /producto/aime-leon-dore-unisphere-tee$1 [R=301,L]
+  RewriteRule ^producto/unisphere-waffle-thermal(/.*)?$ /producto/aime-leon-dore-unisphere-waffle-thermal$1 [R=301,L]
+  RewriteRule ^producto/souvenir-tee(/.*)?$ /producto/aime-leon-dore-souvenir-tee$1 [R=301,L]
+  RewriteRule ^producto/geo-print-crewneck(/.*)?$ /producto/aime-leon-dore-new-balance-geo-print-crewneck$1 [R=301,L]
+  RewriteRule ^producto/astronaut-tee(/.*)?$ /producto/kidsuper-studios-astronaut-tee$1 [R=301,L]
+  RewriteRule ^producto/twitch-studded-crewneck-t-shirt(/.*)?$ /producto/pleasures-twitch-studded-crewneck-t-shirt$1 [R=301,L]
+  RewriteRule ^producto/pinstripe-night-sky-knit-sweater(/.*)?$ /producto/eme-studios-pinstripe-night-sky-knit-sweater$1 [R=301,L]
+</IfModule>
+
 # Sirve la pagina 404 propia (con logo y salida al catalogo) en vez de la
 # generica del hosting.
 ErrorDocument 404 /404.html

@@ -1,5 +1,6 @@
 ---
 import { productos as CATALOGO } from '../data/productos'
+import { marcas as ARCHIVO } from '../data/marcas'
 import type { Genero, Producto } from '../data/schema'
 import { generosDe, marcasDe, tarjetasEnOrden, tiposDe } from '../lib/catalogo'
 import FiltrosProductos from './FiltrosProductos.astro'
@@ -11,8 +12,10 @@ interface Props {
   ordenable?: boolean
   /** Genero de la pagina, o null en la portada. Lo marca el desplegable. */
   generoActivo?: Genero | null
+  /** En la pagina de una marca: la firma con que se lee cada tarjeta. */
+  marcaPagina?: string
 }
-const { productos, ordenable = false, generoActivo = null } = Astro.props
+const { productos, ordenable = false, generoActivo = null, marcaPagina } = Astro.props
 
 // Se ordena en el build, no en el navegador: el HTML sale ya en el orden que
 // se ve al entrar, y las cuatro primeras fotos pueden marcarse como
@@ -35,6 +38,7 @@ const ordenadas = tarjetasEnOrden(productos)
           generos={generosDe(CATALOGO)}
           tipos={tiposDe(productos)}
           marcas={marcasDe(productos)}
+          marcasValidas={ARCHIVO.map((marca) => marca.slug)}
           generoActivo={generoActivo}
         />
       )}
@@ -65,7 +69,7 @@ const ordenadas = tarjetasEnOrden(productos)
           otra, y no solo las tarjetas. */}
       <div class="resultados" data-resultados>
       <ul class="rejilla" data-rejilla>
-        {ordenadas.map(({ producto, variante, indice, turno, precio, destacado, genero, tipo, marca }, i) => (
+        {ordenadas.map(({ producto, variante, indice, turno, precio, destacado, genero, tipo, marcas }, i) => (
           <li
             data-indice={indice}
             data-turno={turno}
@@ -73,13 +77,14 @@ const ordenadas = tarjetasEnOrden(productos)
             data-destacado={destacado ? '1' : '0'}
             data-genero={genero ?? undefined}
             data-tipo={tipo}
-            data-marca={marca ?? undefined}
+            data-marca={marcas.length ? marcas.join(' ') : undefined}
           >
             <TarjetaProducto
               producto={producto}
               variante={variante}
               prioridad={i < 4}
               principal={i === 0}
+              marcaVisible={marcaPagina}
             />
           </li>
         ))}
@@ -115,10 +120,11 @@ const ordenadas = tarjetasEnOrden(productos)
   @media (min-width: 768px) {
     .rejilla {
       grid-template-columns: repeat(3, 1fr);
-      /* 6rem: por encima del token mas grande (--espacio-4, 4rem). A cuatro
+      /* 4.5rem: por encima del token mas grande (--espacio-4, 4rem). A cuatro
          columnas es lo que hace que cada prenda se lea aislada en vez de en
-         bloque, a costa de unos 25px de ancho por tarjeta. */
-      gap: 6rem;
+         bloque. Con 6rem las fotos quedaban demasiado pequenas al lado del
+         nombre y el precio. */
+      gap: 4.5rem;
     }
   }
 

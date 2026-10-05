@@ -1,0 +1,77 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import RejillaProductos from '../../components/RejillaProductos.astro'
+import { productos } from '../../data/productos'
+import { enRebaja, marcasParaTexto, tarjetasEnOrden } from '../../lib/catalogo'
+import { fichaCategoria, fichaMigas, serializar, type Miga } from '../../lib/datos-estructurados'
+import { CONFIG, MARCAS_PRIMERO, VENTA } from '../../config'
+
+/**
+ * Las prendas rebajadas: las que declaran `precioAnterior` en productos.ts.
+ *
+ * La pagina existe siempre, haya rebajas o no: Sale esta fijo en la
+ * cabecera, y un enlace de la cabecera que unas semanas lleva a un 404 es
+ * peor que una pagina que dice que hoy no hay nada.
+ */
+const rebajadas = enRebaja(productos)
+
+const descripcion = rebajadas.length
+  ? `Sale de ${CONFIG.nombre}: ${marcasParaTexto(rebajadas, MARCAS_PRIMERO, 3)} con descuento. ` +
+    `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
+  : `Sale de ${CONFIG.nombre}: ropa de marca con descuento. Ahora mismo no hay rebajas.`
+
+if (!Astro.site) {
+  throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
+}
+const migas: Miga[] = [{ nombre: 'Inicio', ruta: '/' }, { nombre: 'Sale' }]
+const migasJson = serializar(fichaMigas(migas, Astro.site))
+
+// Sin rebajas no hay listado que declarar: un ItemList vacio no lista nada.
+const listadoJson = rebajadas.length
+  ? serializar(
+      fichaCategoria({
+        nombre: 'Sale',
+        descripcion,
+        url: new URL('/sale/', Astro.site).href,
+        urls: tarjetasEnOrden(rebajadas).map(
+          ({ producto, variante }) =>
+            new URL(`/producto/${producto.slug}/${variante.slug}/`, Astro.site).href
+        ),
+      })
+    )
+  : null
+---
+<Layout
+  titulo="Sale: ropa de marca con descuento"
+  descripcion={descripcion}
+  sinIndexar={rebajadas.length === 0}
+>
+  <script type="application/ld+json" is:inline set:html={migasJson}></script>
+  {listadoJson && <script type="application/ld+json" is:inline set:html={listadoJson}></script>}
+
+  <div class="contenedor catalogo-pagina">
+    {/* Oculto a la vista, como el de las paginas de catalogo: es la misma
+        rejilla con otras prendas. */}
+    <h1 class="visualmente-oculto">Sale</h1>
+    {rebajadas.length ? (
+      <RejillaProductos productos={rebajadas} ordenable />
+    ) : (
+      <p class="vacio">
+        Ahora mismo no hay prendas en rebaja. <a href="/">Mira las Exclusives</a>.
+      </p>
+    )}
+  </div>
+</Layout>
+
+<style>
+  /* El mismo aire que las paginas de catalogo. */
+  .catalogo-pagina { padding-block: var(--espacio-2) var(--espacio-4); }
+  .vacio {
+    color: var(--texto-suave);
+    padding-block: var(--espacio-4);
+  }
+  .vacio a {
+    color: var(--texto);
+    text-underline-offset: 0.35em;
+  }
+</style>

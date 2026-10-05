@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { SIN_FILTROS, hayFiltros, pasa, slugMarca, type Filtrable } from './filtros'
 
-const hoodieLacosteHombre: Filtrable = { genero: 'hombre', tipo: 'hoodie', marca: 'lacoste' }
-const camisetaTommyMujer: Filtrable = { genero: 'mujer', tipo: 'camiseta', marca: 'tommy-hilfiger' }
-const zapatoSinMarca: Filtrable = { genero: null, tipo: 'sweater', marca: null }
+const hoodieLacosteHombre: Filtrable = { genero: 'hombre', tipo: 'hoodie', marcas: ['lacoste'] }
+const camisetaTommyMujer: Filtrable = { genero: 'mujer', tipo: 'camiseta', marcas: ['tommy-hilfiger'] }
+const zapatoSinMarca: Filtrable = { genero: null, tipo: 'sweater', marcas: [] }
 
 describe('pasa', () => {
   it('sin filtros pasa todo', () => {
@@ -34,7 +34,7 @@ describe('pasa', () => {
     const filtros = { genero: 'hombre' as const, tipo: 'hoodie' as const, marca: 'lacoste' }
     expect(pasa(hoodieLacosteHombre, filtros)).toBe(true)
     // Cumple genero y tipo, pero no la marca: no pasa.
-    expect(pasa({ ...hoodieLacosteHombre, marca: 'essentials' }, filtros)).toBe(false)
+    expect(pasa({ ...hoodieLacosteHombre, marcas: ['essentials'] }, filtros)).toBe(false)
   })
 
   it('una prenda sin genero cae fuera de cualquier filtro de genero', () => {

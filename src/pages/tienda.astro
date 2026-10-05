@@ -4,10 +4,15 @@ import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
 import { formatearPrecio } from '../lib/formato'
 
 /**
- * La tienda es solo online, asi que aqui ya no van direccion ni horario de
- * puerta: lo que un cliente necesita saber antes de escribir es cuanto cuesta
- * el envio, cuanto tarda, como se paga y si puede cambiar la prenda. Eso es
- * lo que se responde una y otra vez por WhatsApp.
+ * Quienes somos y las condiciones de venta.
+ *
+ * La tienda es solo online, asi que aqui no van direccion ni horario de
+ * puerta: lo que un cliente necesita saber antes de escribir es si la ropa es
+ * original, cuanto cuesta el envio, cuanto tarda, como se paga y si puede
+ * cambiar la prenda. Eso es lo que se responde una y otra vez por WhatsApp.
+ *
+ * Lo de "original" va primero y en el texto, no solo en la lista: con marcas
+ * que en Colombia casi no se ven, es la duda que frena la compra.
  */
 const envio =
   VENTA.envio.costo === 0
@@ -15,19 +20,49 @@ const envio =
     : `${formatearPrecio(VENTA.envio.costo)} · ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días`
 ---
 <Layout
-  titulo="La tienda"
-  descripcion={`Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días, pago por transferencia y cambios hasta ${VENTA.cambios.dias} días.`}
+  titulo="Quiénes somos, envíos y cambios"
+  descripcion={`Ropa de marca original, nueva y con etiquetas, traída a Colombia desde tiendas oficiales. Envío gratis en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días y cambios hasta ${VENTA.cambios.dias} días.`}
 >
   <div class="contenedor tienda">
-    <h1>La tienda</h1>
-    <p class="sobre">{CONFIG.sobre}</p>
+    <h1>Quiénes somos</h1>
+    <div class="sobre">
+      <p>
+        {CONFIG.nombre} trae a Colombia marcas que aquí casi no se consiguen:{' '}
+        <a href="/marca/eme-studios/">Eme Studios</a>,{' '}
+        <a href="/marca/aime-leon-dore/">Aimé Leon Dore</a>,{' '}
+        <a href="/marca/kidsuper-studios/">KidSuper Studios</a> y{' '}
+        <a href="/marca/pleasures/">Pleasures</a>. Y junto a ellas, clásicas como{' '}
+        <a href="/marca/lacoste/">Lacoste</a> y <a href="/marca/tommy-hilfiger/">Tommy Hilfiger</a>.
+      </p>
+      <p>
+        Toda la ropa es original, nueva y con sus etiquetas. La compramos en tiendas oficiales de
+        cada marca y distribuidores autorizados de Estados Unidos y Europa, y la llevamos hasta tu
+        casa.
+      </p>
+      <p>
+        No solo vendemos la prenda. En el <a href="/marca/">archivo de marcas</a> contamos quién
+        está detrás de cada marca, de dónde viene y por qué la escogimos: es difícil animarse con
+        una marca que nunca has visto, y ahí está lo que necesitas saber.
+      </p>
+      <p>
+        Somos una tienda online desde {CONFIG.ciudad}. Atendemos por WhatsApp e Instagram, y
+        enviamos a toda Colombia.
+      </p>
+    </div>
+
+    <h2>Envíos, pagos y cambios</h2>
     <dl>
+      <dt>Originalidad</dt>
+      <dd>Original, nueva y con etiquetas</dd>
       <dt>Envíos</dt>
       <dd>{envio}</dd>
       <dt>Pagos</dt>
       <dd>{VENTA.pago.texto}</dd>
       <dt>Cambios</dt>
-      <dd>Hasta {VENTA.cambios.dias} días después de recibir la prenda</dd>
+      <dd>
+        Hasta {VENTA.cambios.dias} días después de recibir la prenda. El envío del cambio corre por
+        tu cuenta.
+      </dd>
       <dt>Atención</dt>
       <dd>{CONFIG.horarios}</dd>
       <dt>Instagram</dt>
@@ -39,7 +74,11 @@ const envio =
 <style>
   .tienda { padding-block: var(--espacio-3) var(--espacio-4); max-width: 55ch; }
   .sobre { color: var(--texto-suave); margin-top: var(--espacio-2); }
-  dl { margin-top: var(--espacio-3); }
+  .sobre p + p { margin-top: var(--espacio-2); }
+  .sobre a,
+  dd a { text-decoration: underline; }
+  h2 { margin-top: var(--espacio-4); }
+  dl { margin-top: var(--espacio-2); }
   dt {
     font-size: 0.8125rem;
     letter-spacing: 0.04em;
@@ -48,5 +87,4 @@ const envio =
     margin-top: var(--espacio-2);
   }
   dd { margin: 0; }
-  dd a { text-decoration: underline; }
 </style>

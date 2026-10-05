@@ -3,11 +3,27 @@ import { Image, getImage } from 'astro:assets'
 import Layout from '../../../layouts/Layout.astro'
 import BotonWhatsApp from '../../../components/BotonWhatsApp.astro'
 import Migas from '../../../components/Migas.astro'
+import Precio from '../../../components/Precio.astro'
 import { productos } from '../../../data/productos'
-import { ETIQUETAS_CATEGORIA, ETIQUETAS_TIPO_UNA, ultimaTalla } from '../../../data/schema'
-import { fichaMigas, fichaProducto, serializar, type Miga } from '../../../lib/datos-estructurados'
+import {
+  ETIQUETAS_CATEGORIA,
+  ETIQUETAS_TIPO_UNA,
+  marcasDeProducto,
+  nombreMarca,
+  precioDe,
+  tallasDe,
+  ultimaTalla,
+} from '../../../data/schema'
+import {
+  fichaGrupo,
+  fichaMigas,
+  fichaProducto,
+  serializar,
+  type Miga,
+} from '../../../lib/datos-estructurados'
+import { slugMarca } from '../../../lib/filtros'
 import { resolverImagen } from '../../../lib/imagenes-productos'
-import { formatearPrecio, resumir } from '../../../lib/formato'
+import { resumir } from '../../../lib/formato'
 import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
 import { CONFIG, INSTAGRAM_URL } from '../../../config'
 
@@ -38,12 +54,29 @@ const titulo = `${producto.nombre} - ${variante.color}`
  * Jacket". El nombre oficial sigue estando en el h1, en la descripcion y en
  * la ficha estructurada, asi que quien busque el modelo exacto lo encuentra.
  *
- * Se queda corto a proposito: con el " — The Rack store" que anade el layout
- * el mas largo ronda los 55 caracteres, por debajo de donde Google corta.
+ * Lleva el modelo cuando cabe: "Hoodie Essentials Fleece Hoodie II · Negro"
+ * distingue la prenda de los otros hoodies de la marca, y es lo que escribe
+ * quien ya la vio en otro sitio. Si con el modelo se pasa de los 60
+ * caracteres en que Google corta, se queda en tipo, marca y color, que es lo
+ * que no puede faltar. El nombre de la tienda lo anade el layout si cabe.
  */
-const tituloBuscador = [ETIQUETAS_TIPO_UNA[producto.tipo], producto.marca]
+const marca = nombreMarca(producto)
+const MAXIMO_TITULO = 60
+// El tipo ya abre el titulo: si el nombre del fabricante lo repite ("Fleece
+// Hoodie") se quita del nombre, que "Hoodie Essentials Fleece Hoodie" gasta
+// caracteres y se lee como un error.
+const tipoUna = ETIQUETAS_TIPO_UNA[producto.tipo]
+const nombreSinTipo = producto.nombre
+  .split(' ')
+  .filter((palabra) => palabra.toLowerCase() !== tipoUna.toLowerCase())
+  .join(' ')
+const tituloLargo = [tipoUna, marca, nombreSinTipo || producto.nombre]
   .filter(Boolean)
   .join(' ') + ` · ${variante.color}`
+const tituloCorto = [tipoUna, marca]
+  .filter(Boolean)
+  .join(' ') + ` · ${variante.color}`
+const tituloBuscador = tituloLargo.length <= MAXIMO_TITULO ? tituloLargo : tituloCorto
 
 /**
  * La descripcion para el buscador, que no es la que se lee en la ficha.
@@ -58,7 +91,7 @@ const descripcionBuscador =
   (producto.variantes.length > 1 ? ` Color ${variante.color.toLowerCase()}.` : '')
 // El alt describe cada foto por separado. Donde la variante no lo declara se
 // compone con marca y color, que es lo que distingue una ficha de otra.
-const alternativoPorDefecto = [producto.marca, producto.nombre, variante.color]
+const alternativoPorDefecto = [marca, producto.nombre, variante.color]
   .filter(Boolean)
   .join(' ')
 const imagenes = variante.imagenes.map((foto) => {
@@ -76,7 +109,8 @@ if (!Astro.site) {
 }
 // Solo se anuncia sobre una variante que se puede pedir: si el color esta
 // agotado la ficha no llega a pintar las tallas.
-const ultima = variante.disponible ? ultimaTalla(producto) : null
+const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
+const tallas = tallasDe(producto, variante)
 // Con barra final: el build usa `format: 'directory'`, asi que esa es la forma
 // canonica. Sin ella el servidor redirige, y ademas el enlace no coincidiria
 // con el canonical ni con el `offers.url` del schema.
@@ -117,9 +151,31 @@ const iPortada = Math.max(0, variante.imagenes.findIndex((foto) => foto.portada)
 // Ficha estructurada para el buscador. La arma datos-estructurados.ts, que
 // esta cubierto por tests: son datos que no se ven en la pagina, asi que un
 // error ahi no lo nota nadie hasta que Google rechaza la ficha.
+//
+// Con mas de un color va como grupo, para que Google no vea dos prendas
+// casi iguales compitiendo entre si.
+const datosFicha = { producto, variante, url, imagenes: absolutas }
 const fichaJson = serializar(
-  fichaProducto({ producto, variante, url, imagenes: absolutas })
+  producto.variantes.length > 1
+    ? fichaGrupo({
+        ...datosFicha,
+        urlDe: (v) => new URL(`/producto/${producto.slug}/${v.slug}/`, Astro.site).href,
+      })
+    : fichaProducto(datosFicha)
 )
+
+/**
+ * La tarjeta para compartir la genera /tarjeta/<slug>/<color>.jpg: la foto
+ * de portada entera sobre un fondo de su propio color, en 1200x630. La foto
+ * vertical recortada a esa proporcion se quedaba en una franja del pecho.
+ */
+const tarjeta = new URL(`/tarjeta/${producto.slug}/${variante.slug}.jpg`, Astro.site).href
+
+// Las marcas de la prenda, cada una con su pagina.
+const marcasConPagina = marcasDeProducto(producto).map((nombre) => ({
+  nombre,
+  ruta: `/marca/${slugMarca(nombre)}/`,
+}))
 
 /**
  * El camino hasta esta ficha.
@@ -127,16 +183,21 @@ const fichaJson = serializar(
  * La categoria de una prenda siempre tiene pagina: /catalogo/<categoria> se
  * genera para las categorias con prendas, y esta prenda es una de ellas.
  *
+ * Entre la categoria y la prenda va la marca, con enlace a su pagina: es el
+ * otro camino para subir, y en una colaboracion se pintan las dos.
+ *
  * El ultimo escalon es el nombre del fabricante a secas, sin el color: el
  * rastro dice donde cae la pagina, y el color ya lo dicen el h1 y el
  * selector de mas abajo.
  */
+const [primeraMarca, ...otrasMarcas] = marcasConPagina
 const migas: Miga[] = [
   { nombre: 'Inicio', ruta: '/' },
   {
     nombre: ETIQUETAS_CATEGORIA[producto.categoria],
     ruta: `/catalogo/${producto.categoria}/`,
   },
+  ...(primeraMarca ? [{ ...primeraMarca, junto: otrasMarcas }] : []),
   { nombre: producto.nombre },
 ]
 const migasJson = serializar(fichaMigas(migas, Astro.site))
@@ -145,10 +206,11 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
   titulo={tituloBuscador}
   descripcion={descripcionBuscador}
   tipo="product"
-  imagen={absolutas[iPortada]}
+  precio={precioDe(producto, variante)}
+  imagen={tarjeta}
   imagenAlt={imagenes[iPortada]!.alt}
-  imagenAncho={imagenes[iPortada]!.datos.width}
-  imagenAlto={imagenes[iPortada]!.datos.height}
+  imagenAncho={1200}
+  imagenAlto={630}
 >
   <script type="application/ld+json" is:inline set:html={fichaJson}></script>
   <script type="application/ld+json" is:inline set:html={migasJson}></script>
@@ -182,6 +244,7 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
             widths={[600, 900, 1200]}
             sizes="(max-width: 767px) 100vw, 50vw"
             loading={i === 0 ? 'eager' : 'lazy'}
+            fetchpriority={i === 0 ? 'high' : undefined}
           />
         </button>
       ))}
@@ -213,11 +276,20 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
     <div class="columna">
       <header class="encabezado">
         <h1>{titulo}</h1>
-        {producto.marca && <p class="marca">{producto.marca}</p>}
+        {marcasConPagina.length > 0 && (
+          <p class="marca">
+            {marcasConPagina.map((m, i) => (
+              <>
+                {i > 0 && <span aria-hidden="true"> × </span>}
+                <a href={m.ruta}>{m.nombre}</a>
+              </>
+            ))}
+          </p>
+        )}
       </header>
 
       <div class="detalle">
-      <p class="precio">{formatearPrecio(producto.precio)}</p>
+      <Precio producto={producto} variante={variante} />
       <p class="descripcion">{producto.descripcion}</p>
 
       {variante.disponible ? (
@@ -245,7 +317,7 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
               {/* Nace vacio: el estado contesta a una eleccion, no la adelanta. */}
               <span class="tallas__estado" data-talla-estado aria-live="polite"></span>
             </legend>
-            {producto.tallas.map(({ talla, disponible }) => (
+            {tallas.map(({ talla, disponible }) => (
               <label>
                 {/* Deshabilitada: la agotada no se puede elegir. El clic sobre
                     la etiqueta si llega al script, que es lo que permite
@@ -537,6 +609,14 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
   @media (max-width: 899px) {
     .marca { font-size: 1.125rem; }
   }
+  /* La marca lleva a su pagina en el archivo. Subrayada fino para que se
+     note que es un enlace sin que pese mas que el nombre de la prenda. */
+  .marca a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
   /* El doble que en la tarjeta del catalogo, y por encima del nombre de la
      prenda: en la ficha el precio es el dato que decide la compra. */
   .precio { font-size: 2.5rem; margin-block: var(--espacio-2) var(--espacio-3); }
@@ -650,7 +730,9 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
     color: var(--texto-suave);
   }
 
-  .descripcion { color: var(--texto-suave); max-width: 55ch; }
+  /* En la sans de la marca, como el texto de las fichas del archivo: la
+     typewriter se cansa a partir de la segunda linea. */
+  .descripcion { font-family: var(--fuente-marca); color: var(--texto-suave); max-width: 55ch; }
   .colores { margin-block: var(--espacio-3) var(--espacio-2); }
   .etiqueta {
     display: block;

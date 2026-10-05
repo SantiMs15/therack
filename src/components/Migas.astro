@@ -30,6 +30,14 @@ const { migas } = Astro.props
           /* El ultimo escalon no es un enlace: lleva a donde ya se esta. */
           <span aria-current="page">{miga.nombre}</span>
         )}
+        {/* Las otras marcas de una colaboracion, en el mismo escalon: cada
+            una lleva a su pagina. */}
+        {miga.junto?.map((otra) => (
+          <>
+            <span class="migas__y" aria-hidden="true">×</span>
+            <a href={otra.ruta}>{otra.nombre}</a>
+          </>
+        ))}
       </li>
     ))}
   </ol>
@@ -62,6 +70,10 @@ const { migas } = Astro.props
   .migas li + li::before {
     content: '›';
     margin-inline-end: 0.6ch;
+    color: var(--linea);
+  }
+  .migas__y {
+    margin-inline: 0.5ch;
     color: var(--linea);
   }
 

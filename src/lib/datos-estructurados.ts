@@ -9,7 +9,14 @@
  * Solo se declara lo que se sostiene. Un dato inventado en una ficha
  * estructurada es peor que la ausencia del dato.
  */
-import { tallasDisponibles, type Producto, type Variante } from '../data/schema'
+import {
+  marcasDeProducto,
+  precioDe,
+  tallasDisponibles,
+  type FichaMarca,
+  type Producto,
+  type Variante,
+} from '../data/schema'
 import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
 
 export interface DatosFicha {
@@ -21,14 +28,46 @@ export interface DatosFicha {
   imagenes: string[]
 }
 
-export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha) {
+/**
+ * La politica de cambios, igual en cada ficha y en la de la tienda.
+ *
+ * Google la lee de las dos: en la tienda vale para todo el sitio, y en cada
+ * oferta es lo que deja que el resultado diga "Cambios en 30 dias" junto al
+ * precio. Escrita dos veces acabaria diciendo dos plazos distintos.
+ */
+export function politicaCambios() {
+  return {
+    '@type': 'MerchantReturnPolicy',
+    applicableCountry: VENTA.pais,
+    returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+    merchantReturnDays: VENTA.cambios.dias,
+    // Sin estos dos, Search Console marca la politica como incompleta. Es lo
+    // que se hace hoy: la prenda vuelve por mensajeria y ese envio lo paga
+    // el cliente, que es lo que dice /tienda.
+    returnMethod: 'https://schema.org/ReturnByMail',
+    returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
+    // Cambio, no devolucion del dinero: es lo que ofrece la tienda.
+    refundType: 'https://schema.org/ExchangeRefund',
+  }
+}
+
+/**
+ * La marca para el schema. En una colaboracion va solo la primera: Brand
+ * admite un nombre, y la que firma primero es la que vende la prenda.
+ */
+function marcaSchema(producto: Producto) {
+  const [primera] = marcasDeProducto(producto)
+  return primera ? { brand: { '@type': 'Brand', name: primera } } : {}
+}
+
+/** Un color de una prenda, sin @context: va suelto o dentro de un grupo. */
+function productoVariante({ producto, variante, url, imagenes }: DatosFicha) {
   // Agotado es tanto la variante marcada como tal como la que se quedo sin
   // ninguna talla pedible: por fuera es lo mismo, no se puede comprar.
-  const tallas = tallasDisponibles(producto)
+  const tallas = tallasDisponibles(producto, variante)
   const hayStock = variante.disponible && tallas.length > 0
 
   return {
-    '@context': 'https://schema.org',
     '@type': 'Product',
     name: `${producto.nombre} - ${variante.color}`,
     description: producto.descripcion,
@@ -39,12 +78,12 @@ export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha)
     // internos, asi que sirve el par slug+color: identifica una pieza
     // concreta, es unico por construccion y no cambia con el tiempo.
     sku: `${producto.slug}-${variante.slug}`,
-    ...(producto.marca ? { brand: { '@type': 'Brand', name: producto.marca } } : {}),
+    ...marcaSchema(producto),
     offers: {
       '@type': 'Offer',
       url,
       priceCurrency: VENTA.moneda,
-      price: producto.precio,
+      price: precioDe(producto, variante),
       availability: hayStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: VENTA.condicion,
       seller: { '@type': 'Organization', name: CONFIG.nombre },
@@ -73,15 +112,44 @@ export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha)
           },
         },
       },
-      hasMerchantReturnPolicy: {
-        '@type': 'MerchantReturnPolicy',
-        applicableCountry: VENTA.pais,
-        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
-        merchantReturnDays: VENTA.cambios.dias,
-        // Cambio, no devolucion del dinero: es lo que ofrece la tienda.
-        refundType: 'https://schema.org/ExchangeRefund',
-      },
+      hasMerchantReturnPolicy: politicaCambios(),
     },
+  }
+}
+
+export function fichaProducto(datos: DatosFicha) {
+  return { '@context': 'https://schema.org', ...productoVariante(datos) }
+}
+
+/**
+ * La ficha de una prenda con varios colores.
+ *
+ * Con un Product suelto por pagina, Google veia dos prendas casi iguales
+ * compitiendo entre si. El grupo le dice que son colores de la misma: el
+ * color de esta pagina va completo, y los otros solo con su URL, que es como
+ * Google documenta los grupos repartidos en varias paginas -- cada una
+ * declara entera su variante y enlaza las demas.
+ */
+export function fichaGrupo(
+  datos: DatosFicha & {
+    /** URL absoluta de cada color, en el orden del catalogo. */
+    urlDe: (variante: Variante) => string
+  }
+) {
+  const { producto, variante, urlDe } = datos
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProductGroup',
+    name: producto.nombre,
+    description: producto.descripcion,
+    productGroupID: producto.slug,
+    variesBy: ['https://schema.org/color'],
+    ...marcaSchema(producto),
+    hasVariant: producto.variantes.map((v) =>
+      v.slug === variante.slug
+        ? { ...productoVariante(datos), inProductGroupWithID: producto.slug }
+        : { '@type': 'Product', url: urlDe(v) }
+    ),
   }
 }
 
@@ -154,6 +222,12 @@ export interface Miga {
    * `fichaMigas`, que es quien sabe cual es el sitio.
    */
   ruta?: string
+  /**
+   * Hermanos del escalon, que se pintan a su lado: las otras marcas de una
+   * colaboracion. Solo se ven -- el JSON-LD es una cadena y lleva solo el
+   * primero --, pero sin ellos la segunda marca no tendria enlace en la ficha.
+   */
+  junto?: { nombre: string; ruta: string }[]
 }
 
 /**
@@ -203,6 +277,7 @@ export function fichaTienda({ url, logo }: { url: string; logo: string }) {
     // actividad de la tienda: es lo que deja a un buscador entender que son
     // el mismo negocio.
     sameAs: [INSTAGRAM_URL],
+    hasMerchantReturnPolicy: politicaCambios(),
     areaServed: { '@type': 'Country', name: 'Colombia' },
     paymentAccepted: VENTA.pago.texto,
     contactPoint: {
@@ -211,5 +286,76 @@ export function fichaTienda({ url, logo }: { url: string; logo: string }) {
       telephone: CONFIG.telefono,
       availableLanguage: 'Spanish',
     },
+  }
+}
+
+/**
+ * El sitio, para la portada.
+ *
+ * Es de donde Google saca el nombre que pinta encima de cada resultado. Sin
+ * el, adivinaba a partir del dominio y salia "therackstore". Los
+ * `alternateName` son las formas en que la gente escribe la tienda.
+ */
+export function fichaSitio({ url }: { url: string }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: CONFIG.nombre,
+    alternateName: ['The Rack', 'therackstore'],
+    url,
+  }
+}
+
+/**
+ * La ficha de la pagina de una marca: un listado (CollectionPage) que trata
+ * SOBRE una marca (about: Brand).
+ *
+ * El Brand lleva lo que la ficha cuenta en la pagina -- fundacion,
+ * fundadores, origen --, salido de los mismos datos que pintan el texto. Las
+ * prendas van como en las paginas de catalogo: solo sus URLs, en el orden en
+ * que se ven. Sin prendas no hay ItemList: un listado vacio no lista nada.
+ */
+export function fichaMarca({
+  nombre,
+  ficha,
+  url,
+  imagen,
+  lugar,
+  urls,
+}: {
+  nombre: string
+  ficha: FichaMarca
+  url: string
+  /** Foto de portada, absoluta. */
+  imagen: string
+  /** "Elche, España": el mismo texto que se lee en la pagina. */
+  lugar: string
+  urls: readonly string[]
+}) {
+  const fundadores = ficha.fundadores.map((n) => ({ '@type': 'Person', name: n }))
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: nombre,
+    description: ficha.propuesta,
+    url,
+    about: {
+      '@type': 'Brand',
+      name: nombre,
+      description: ficha.propuesta,
+      foundingDate: String(ficha.fundacion),
+      founder: fundadores.length === 1 ? fundadores[0] : fundadores,
+      foundingLocation: { '@type': 'Place', name: lugar },
+      image: imagen,
+    },
+    ...(urls.length
+      ? {
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: urls.length,
+            itemListElement: urls.map((u, i) => ({ '@type': 'ListItem', position: i + 1, url: u })),
+          },
+        }
+      : {}),
   }
 }

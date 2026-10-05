@@ -157,3 +157,12 @@ img { max-width: 100%; display: block; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Al volver atras, el navegador puede devolver la pagina tal cual la dejo,
+   a medio fundido. Mientras se limpia, nada se anima: ver la pagina
+   encenderse otra vez seria un parpadeo sin sentido. */
+html[data-restaurando] *,
+html[data-restaurando] *::before,
+html[data-restaurando] *::after {
+  transition: none !important;
+}

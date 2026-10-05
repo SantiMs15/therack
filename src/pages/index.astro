@@ -2,14 +2,18 @@
 import Layout from '../layouts/Layout.astro'
 import RejillaProductos from '../components/RejillaProductos.astro'
 import { productos } from '../data/productos'
-import { fichaTienda, serializar } from '../lib/datos-estructurados'
-import { enumerar, marcasDe } from '../lib/catalogo'
-import { CONFIG, VENTA } from '../config'
+import { fichaSitio, fichaTienda, serializar } from '../lib/datos-estructurados'
+import { marcasParaTexto } from '../lib/catalogo'
+import { MARCAS_PRIMERO, VENTA } from '../config'
 
 // Nombra las marcas que hay de verdad y las condiciones de venta, en vez de
-// la generica de 24 caracteres que compartia con media web.
+// la generica de 24 caracteres que compartia con media web. Con ocho marcas
+// ya no caben todas: van las cinco que mas traen a la gente y "y más".
+//
+// "Colombia" y no la ciudad: la tienda es online y envia a todo el pais, y
+// "ropa de marca en Bogotá" dejaba fuera a quien busca desde Medellin.
 const descripcion =
-  `Ropa de marca en ${CONFIG.ciudad}: ${enumerar(marcasDe(productos).map((m) => m.etiqueta))}. ` +
+  `Tienda de ropa original: ${marcasParaTexto(productos, MARCAS_PRIMERO, 5)}. ` +
   `Envío gratis a toda Colombia y cambios hasta ${VENTA.cambios.dias} días.`
 
 if (!Astro.site) {
@@ -17,6 +21,7 @@ if (!Astro.site) {
 }
 // Solo en la portada: es la ficha del negocio entero, y repetirla en cada
 // pagina no la refuerza, solo la duplica.
+const sitioJson = serializar(fichaSitio({ url: Astro.site.href }))
 const tiendaJson = serializar(
   fichaTienda({
     url: Astro.site.href,
@@ -24,7 +29,8 @@ const tiendaJson = serializar(
   })
 )
 ---
-<Layout titulo="Inicio" descripcion={descripcion}>
+<Layout titulo="Ropa de marca en Colombia" descripcion={descripcion}>
+  <script type="application/ld+json" is:inline set:html={sitioJson}></script>
   <script type="application/ld+json" is:inline set:html={tiendaJson}></script>
 
   <div class="contenedor portada">
@@ -36,7 +42,7 @@ const tiendaJson = serializar(
         fotos a proposito, y meter un titular grande encima cambiaria la pagina
         entera por un problema que es de jerarquia, no de composicion. Un
         lector de pantalla y un buscador si lo reciben. */}
-    <h1 class="visualmente-oculto">Ropa de marca en {CONFIG.ciudad}</h1>
+    <h1 class="visualmente-oculto">Ropa de marca en Colombia</h1>
     <RejillaProductos productos={productos} ordenable />
   </div>
 </Layout>

@@ -12,30 +12,30 @@
  * La paleta se pasa a la del sitio: el original usaba indigo, violeta y rosa,
  * que el spec y el DESIGN.md del proyecto prohiben expresamente.
  */
-import { productos } from '../data/productos'
-import { marcasDe } from '../lib/catalogo'
+import { marcas } from '../data/marcas'
 
 /**
- * El menu lista las MARCAS del catalogo, no las categorias: genero y tipo de
- * prenda ya se eligen en la barra de filtros de la rejilla, y repetirlos aqui
- * daria dos caminos para lo mismo. La marca no tiene desplegable propio
- * porque es lo que trae al cliente a la tienda, asi que se queda en el sitio
- * mas visible de la cabecera.
+ * El menu es el ARCHIVO DE MARCAS: todas las que la tienda trae o va a traer,
+ * cada una con su pagina, tengan hoy prendas o no. Genero y tipo de prenda se
+ * eligen en la barra de filtros de la rejilla, y repetirlos aqui daria dos
+ * caminos para lo mismo.
  *
- * Cada marca lleva a la portada con el filtro puesto. No hay una pagina por
- * marca: la rejilla de la portada ya sabe filtrar, y /marca/<slug> seria una
- * segunda ruta que mantener para pintar exactamente lo mismo.
+ * Antes cada marca llevaba a la portada filtrada (/?marca=lacoste). Ahora
+ * cada una tiene /marca/<slug>/, que cuenta la marca ademas de listar sus
+ * prendas, y es una pagina que un buscador puede indexar -- un filtro en la
+ * query no lo es.
  *
- * La lista sale del catalogo, no escrita a mano: una marca nueva aparece en
- * el menu en cuanto entra su primera prenda.
+ * En orden alfabetico, como sale del archivo: es una lista que se recorre con
+ * la vista, y que una marca cambie de sitio la vuelve imposible de encontrar
+ * dos veces seguidas.
  */
 const enlaces = [
-  ...marcasDe(productos).map((marca) => ({
-    href: `/?marca=${marca.valor}`,
-    texto: marca.etiqueta,
-    aparte: false,
-  })),
-  // Tienda no es una marca: se separa para que no se lea como una mas.
+  ...[...marcas]
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    .map((marca) => ({ href: `/marca/${marca.slug}/`, texto: marca.nombre, aparte: false })),
+  // El archivo entero y la tienda no son marcas: se separan para que no se
+  // lean como una mas.
+  { href: '/marca/', texto: 'Archivo de marcas', aparte: true },
   { href: '/tienda/', texto: 'Tienda', aparte: true },
 ]
 ---
@@ -44,11 +44,11 @@ const enlaces = [
   type="button"
   class="boton-menu"
   aria-expanded="false"
-  aria-controls="menu-pantalla-completa"
+  aria-controls="menu-archivo"
   data-menu-boton
 >
   <span class="boton-menu__textos">
-    <span>Marcas</span>
+    <span>Archivo de marcas</span>
     <span>Cerrar</span>
   </span>
   <span class="boton-menu__icono" aria-hidden="true">
@@ -59,21 +59,26 @@ const enlaces = [
   </span>
 </button>
 
-<div class="menu" id="menu-pantalla-completa" data-menu data-estado="cerrado">
+<div class="menu" id="menu-archivo" data-menu data-estado="cerrado">
   <div class="menu__velo" data-menu-cerrar></div>
 
-  <nav class="menu__panel" aria-label="Marcas de la tienda">
+  <nav class="menu__panel" aria-label="Archivo de marcas">
     <span class="menu__capa" aria-hidden="true"></span>
     <span class="menu__capa" aria-hidden="true"></span>
     <span class="menu__capa" aria-hidden="true"></span>
 
-    <ul class="menu__lista">
-      {enlaces.map((e) => (
-        <li class:list={['menu__item', { 'menu__item--aparte': e.aparte }]}>
-          <a href={e.href} class="menu__enlace"><span>{e.texto}</span></a>
-        </li>
-      ))}
-    </ul>
+    {/* Con veintitantas marcas la lista ya no cabe en una pantalla de movil:
+        se desplaza dentro del panel, que sigue ocupando el alto de la
+        ventana. */}
+    <div class="menu__desplazable">
+      <ul class="menu__lista menu__lista--columnas">
+        {enlaces.map((e, i) => (
+          <li class:list={['menu__item', { 'menu__item--aparte': e.aparte }]} style={`--i: ${i}`}>
+            <a href={e.href} class="menu__enlace"><span>{e.texto}</span></a>
+          </li>
+        ))}
+      </ul>
+    </div>
   </nav>
 </div>
 
@@ -93,7 +98,8 @@ const enlaces = [
     padding: 0.25rem 0;
     color: var(--texto);
     font: inherit;
-    font-size: 0.9375rem;
+    /* El mismo cuerpo que Sale y Exclusives, sus vecinos en la cabecera. */
+    font-size: 1.0566rem;
     cursor: pointer;
   }
 
@@ -107,7 +113,15 @@ const enlaces = [
   }
   .boton-menu__textos span {
     display: block;
+    /* "Archivo de marcas" son tres palabras: partidas en dos lineas, la
+       segunda quedaria fuera de la ventana que recorta. */
+    white-space: nowrap;
     transition: transform 400ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
+  }
+  /* En un movil estrecho los tres enlaces de la cabecera no caben al lado
+     del logo con su tamano: bajan juntos, para seguir en una sola fila. */
+  @media (max-width: 480px) {
+    .boton-menu { font-size: 0.75rem; }
   }
   /* Con el menu abierto el boton queda sobre el panel oscuro: sin invertir
      el color seria texto #111 sobre negro, ilegible. */
@@ -170,6 +184,23 @@ const enlaces = [
   .menu[data-estado='abierto'] .menu__panel {
     transform: translateX(0);
   }
+  /* Mas ancho desde tablet: a dos columnas las marcas largas ("Maison Mihara
+     Yasuhiro") necesitan sitio para no partirse. */
+  @media (min-width: 768px) {
+    .menu__panel { width: min(100%, 44rem); }
+  }
+
+  .menu__desplazable {
+    position: relative;
+    width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    /* Al llegar al final de la lista el gesto no pasa a la pagina de
+       debajo, que esta bloqueada y daria un tiron. */
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .menu__desplazable::-webkit-scrollbar { display: none; }
 
   /* Tres capas que entran escalonadas detras del panel. En el original eran
      paneles de color; aqui son tonos del propio sistema, que es lo que deja
@@ -197,6 +228,17 @@ const enlaces = [
     width: 100%;
   }
 
+  /* Dos columnas desde tablet. Archivo y Tienda cruzan las dos: son la salida
+     del menu, no una marca mas que caiga donde le toque. */
+  @media (min-width: 768px) {
+    .menu__lista--columnas {
+      columns: 2;
+      column-gap: var(--espacio-4);
+    }
+    .menu__lista--columnas .menu__item { break-inside: avoid; }
+    .menu__lista--columnas .menu__item--aparte { column-span: all; }
+  }
+
   /* Cada enlace vive en una ventana que recorta: el texto sube desde abajo
      rotando ligeramente, como en el original. */
   .menu__item { overflow: hidden; }
@@ -205,8 +247,10 @@ const enlaces = [
     display: block;
     color: var(--fondo);
     font-family: var(--fuente-titular);
-    font-size: clamp(2rem, 7vw, 3.5rem);
-    line-height: 1.25;
+    /* Mas pequeno que cuando eran cuatro marcas: con veintitantas, a ese
+       tamano la lista ocupaba tres pantallas. */
+    font-size: clamp(1.25rem, 3.2vw, 1.75rem);
+    line-height: 1.35;
     letter-spacing: -0.02em;
     padding-block: 0.15em;
   }
@@ -223,13 +267,12 @@ const enlaces = [
     opacity: 1;
   }
 
-  /* Escalonado: cada enlace entra 60 ms despues del anterior, tras la entrada
-     del panel. */
-  .menu__item:nth-child(1) .menu__enlace span { transition-delay: 350ms; }
-  .menu__item:nth-child(2) .menu__enlace span { transition-delay: 410ms; }
-  .menu__item:nth-child(3) .menu__enlace span { transition-delay: 470ms; }
-  .menu__item:nth-child(4) .menu__enlace span { transition-delay: 530ms; }
-  .menu__item:nth-child(5) .menu__enlace span { transition-delay: 590ms; }
+  /* Escalonado: cada enlace entra 20 ms despues del anterior, tras la entrada
+     del panel. El indice llega en --i desde el HTML, y el tope de 600 ms
+     evita que con treinta enlaces el ultimo tarde un segundo en salir. */
+  .menu__item .menu__enlace span {
+    transition-delay: calc(350ms + min(var(--i, 0) * 20ms, 600ms));
+  }
 
   /* Tienda no es una marca: baja a la typewriter de la interfaz y se
      descuelga del bloque, para que la vista no la cuente como una mas de la
@@ -248,11 +291,9 @@ const enlaces = [
   /* Al abrir entra primero el panel y despues los enlaces. Al cerrar se
      invierte: salen los enlaces escalonados y solo entonces se retira el
      panel, en vez de desvanecerse todo a la vez. */
-  .menu[data-estado='cerrado'] .menu__item:nth-child(1) .menu__enlace span { transition-delay: 240ms; }
-  .menu[data-estado='cerrado'] .menu__item:nth-child(2) .menu__enlace span { transition-delay: 180ms; }
-  .menu[data-estado='cerrado'] .menu__item:nth-child(3) .menu__enlace span { transition-delay: 120ms; }
-  .menu[data-estado='cerrado'] .menu__item:nth-child(4) .menu__enlace span { transition-delay: 60ms; }
-  .menu[data-estado='cerrado'] .menu__item:nth-child(5) .menu__enlace span { transition-delay: 0ms; }
+  /* Al cerrar salen todos a la vez: escalonar treinta enlaces de vuelta
+     haria esperar al panel casi un segundo. */
+  .menu[data-estado='cerrado'] .menu__item .menu__enlace span { transition-delay: 0ms; }
 
   /* El panel y sus capas esperan a que los enlaces hayan salido. */
   .menu[data-estado='cerrado'] .menu__panel { transition-delay: 340ms; }
@@ -265,14 +306,19 @@ const enlaces = [
 <script>
   // Unico JavaScript de este componente: abrir, cerrar y devolver el foco.
   // La animacion entera vive en CSS.
-  const menu = document.querySelector<HTMLElement>('[data-menu]')
   const boton = document.querySelector<HTMLButtonElement>('[data-menu-boton]')
-  const velo = document.querySelector<HTMLElement>('[data-menu-cerrar]')
+  // El panel se busca por el aria-controls del boton y no por un selector
+  // propio: asi los dos no pueden dejar de apuntarse.
+  const menu = document.getElementById(boton?.getAttribute('aria-controls') ?? '')
 
-  if (menu && boton) {
+  if (boton && menu) {
     const enlaces = menu.querySelectorAll<HTMLAnchorElement>('.menu__enlace')
 
-    const abrir = (si: boolean) => {
+    // `devolverFoco` es para el cierre que pide el cliente: el foco vuelve al
+    // boton. Al restaurar la pagina desde la cache no hay nadie mirando el
+    // boton, y robarle el foco haria saltar la pagina hasta la cabecera.
+    const abrir = (si: boolean, devolverFoco = true) => {
+      const estabaAbierto = menu.dataset.estado === 'abierto'
       menu.dataset.estado = si ? 'abierto' : 'cerrado'
       // La cabecera es un ancestro y CSS no puede seleccionar hacia arriba:
       // se marca el estado en <body> para que pueda volverse transparente.
@@ -283,13 +329,21 @@ const enlaces = [
       enlaces.forEach((a) => a.setAttribute('tabindex', si ? '0' : '-1'))
       document.body.style.overflow = si ? 'hidden' : ''
       if (si) enlaces[0]?.focus()
-      else boton.focus()
+      // Solo si de verdad estaba abierto: el cierre del arranque no tiene
+      // ningun foco que devolver.
+      else if (estabaAbierto && devolverFoco) boton.focus()
     }
 
     abrir(false)
 
+    // Volver atras a una pagina que se fue con el menu abierto la restaura
+    // tal cual desde la cache del navegador, panel incluido. Se cierra.
+    addEventListener('pageshow', (evento) => {
+      if (evento.persisted && menu.dataset.estado === 'abierto') abrir(false, false)
+    })
+
     boton.addEventListener('click', () => abrir(menu.dataset.estado !== 'abierto'))
-    velo?.addEventListener('click', () => abrir(false))
+    menu.querySelector('[data-menu-cerrar]')?.addEventListener('click', () => abrir(false))
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && menu.dataset.estado === 'abierto') abrir(false)
     })

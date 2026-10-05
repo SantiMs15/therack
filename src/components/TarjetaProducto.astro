@@ -1,8 +1,8 @@
 ---
 import { Image } from 'astro:assets'
-import { ultimaTalla, type Producto, type Variante } from '../data/schema'
+import { nombreMarca, ultimaTalla, type Producto, type Variante } from '../data/schema'
 import { resolverImagen } from '../lib/imagenes-productos'
-import { formatearPrecio } from '../lib/formato'
+import Precio from './Precio.astro'
 
 interface Props {
   producto: Producto
@@ -16,10 +16,17 @@ interface Props {
    * verdad manda llega mas tarde que si solo estuviera ella.
    */
   principal?: boolean
+  /**
+   * La marca que se lee bajo el nombre, si no es la de la prenda. En la pagina
+   * de una marca una colaboracion firma solo con esa marca: la otra ya la dice
+   * el nombre de la prenda, y repetirla parece otra prenda.
+   */
+  marcaVisible?: string
 }
-const { producto, variante, prioridad = false, principal = false } = Astro.props
+const { producto, variante, prioridad = false, principal = false, marcaVisible } = Astro.props
 
-const alternativoPorDefecto = [producto.marca, producto.nombre, variante.color]
+const marca = nombreMarca(producto)
+const alternativoPorDefecto = [marca, producto.nombre, variante.color]
   .filter(Boolean)
   .join(' ')
 
@@ -39,7 +46,7 @@ const enlace = `/producto/${producto.slug}/${variante.slug}/`
 
 // Si la prenda esta agotada no hay ultima talla que anunciar: lo que falta ya
 // lo dice el aviso de abajo, y dos avisos sobre la misma foto se estorban.
-const ultima = variante.disponible ? ultimaTalla(producto) : null
+const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
 ---
 <article class="tarjeta">
   <div class="marco" data-galeria data-indice={indiceInicial}>
@@ -83,8 +90,8 @@ const ultima = variante.disponible ? ultimaTalla(producto) : null
         un <a>, que ni es HTML valido ni dejaria pulsar las flechas. */}
     <a class="enlace" href={enlace}>{producto.nombre} - {variante.color}</a>
   </h3>
-  {producto.marca && <p class="marca">{producto.marca}</p>}
-  <p class="precio">{formatearPrecio(producto.precio)}</p>
+  {(marcaVisible ?? marca) && <p class="marca">{marcaVisible ?? marca}</p>}
+  <Precio producto={producto} variante={variante} />
 </article>
 
 <style>
@@ -217,6 +224,8 @@ const ultima = variante.disponible ? ultimaTalla(producto) : null
     color: var(--texto);
     font-size: 1.0625rem;
   }
+  /* Con rebaja el precio es una fila flexible; centrada como el resto. */
+  .precio { justify-content: center; }
 </style>
 
 <script>

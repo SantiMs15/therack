@@ -9,7 +9,10 @@ type ModuloImagen = { default: ImageMetadata }
  * Recibe el mapa por parametro en lugar de leerlo directamente para que
  * sea probable sin archivos en disco.
  */
-export function crearResolvedorImagenes(mapa: Record<string, ModuloImagen>) {
+export function crearResolvedorImagenes(
+  mapa: Record<string, ModuloImagen>,
+  carpeta = 'src/assets/productos/'
+) {
   const porNombre = new Map<string, ImageMetadata>()
   for (const [ruta, modulo] of Object.entries(mapa)) {
     const nombre = ruta.split('/').pop()
@@ -22,7 +25,7 @@ export function crearResolvedorImagenes(mapa: Record<string, ModuloImagen>) {
       const disponibles = [...porNombre.keys()].join(', ') || '(ninguna)'
       throw new Error(
         `Imagen no encontrada: "${nombre}".\n` +
-          `  Colocala en src/assets/productos/ con ese nombre exacto.\n` +
+          `  Colocala en ${carpeta} con ese nombre exacto.\n` +
           `  Disponibles ahora mismo: ${disponibles}`
       )
     }
