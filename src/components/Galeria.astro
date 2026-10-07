@@ -1,0 +1,109 @@
+---
+/**
+ * La galeria de la pagina de una marca: una fila de fotos en acordeon. La
+ * activa se abre y las demas quedan estrechas y apagadas; al pasar el raton,
+ * tocar o tabular, se abre otra.
+ *
+ * Se lee como una sola pieza de campaña en vez de una rejilla mas: abajo ya
+ * esta la rejilla de prendas, y dos seguidas no se distinguirian.
+ */
+import { Image } from 'astro:assets'
+import type { FotoGaleria } from '../lib/marcas'
+
+interface Props {
+  fotos: FotoGaleria[]
+}
+
+const { fotos } = Astro.props
+// Abre por la del medio: con las otras repartidas a los dos lados, se ve
+// enseguida que hay mas fotos que mirar.
+const activa = Math.floor(fotos.length / 2)
+---
+<div class="galeria" data-galeria>
+  {fotos.map((foto, i) => (
+    // tabindex: sin el, quien navega con teclado no podria abrir otra foto.
+    <figure class="galeria__item" data-activa={i === activa ? '' : undefined} tabindex="0">
+      <Image
+        class="galeria__foto"
+        src={foto.datos}
+        alt={foto.alt}
+        widths={[480, 800, 1200]}
+        sizes="(min-width: 900px) 40vw, 100vw"
+        loading="lazy"
+      />
+    </figure>
+  ))}
+</div>
+
+<style>
+  .galeria {
+    --curva: cubic-bezier(0.25, 1, 0.5, 1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-1);
+    height: 500px;
+  }
+  /* En pantalla ancha va en fila, al lado del texto de la marca. */
+  @media (min-width: 900px) {
+    .galeria {
+      flex-direction: row;
+      gap: var(--espacio-2);
+      height: 600px;
+    }
+  }
+
+  .galeria__item {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--texto);
+    filter: brightness(0.5);
+    transition:
+      flex 700ms var(--curva),
+      filter 700ms var(--curva);
+  }
+  .galeria__item:hover { filter: brightness(0.75); }
+  .galeria__item[data-activa] {
+    flex: 4;
+    filter: brightness(1);
+  }
+  .galeria__item:focus-visible {
+    outline: 2px solid var(--texto);
+    outline-offset: 3px;
+  }
+
+  /* La foto llena su franja y entra con un acercamiento suave al abrirse. */
+  .galeria__foto {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.1);
+    transition: transform 1000ms var(--curva);
+  }
+  .galeria__item[data-activa] .galeria__foto { transform: scale(1); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .galeria__item,
+    .galeria__foto { transition: none; }
+  }
+</style>
+
+<script>
+  for (const galeria of document.querySelectorAll<HTMLElement>('[data-galeria]')) {
+    const fotos = galeria.querySelectorAll<HTMLElement>('.galeria__item')
+    const abrir = (elegida: HTMLElement) => {
+      for (const foto of fotos) foto.toggleAttribute('data-activa', foto === elegida)
+    }
+    for (const foto of fotos) {
+      foto.addEventListener('mouseenter', () => abrir(foto))
+      foto.addEventListener('click', () => abrir(foto))
+      foto.addEventListener('focus', () => abrir(foto))
+    }
+  }
+</script>

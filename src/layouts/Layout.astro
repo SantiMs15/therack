@@ -12,10 +12,9 @@ import '../styles/global.css'
  * lo sirve con cache de un ano.
  */
 import logoUrl from '../assets/logo-web.svg?url'
-import MenuPantallaCompleta, { type Enlace } from '../components/MenuPantallaCompleta.astro'
-import { marcasTodas } from '../data/marcas'
-import { hrefDeMarca } from '../lib/archivo-marcas'
-import { CONFIG, INSTAGRAM_URL } from '../config'
+import MenuPantallaCompleta from '../components/MenuPantallaCompleta.astro'
+import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
+import { formatearPrecio } from '../lib/formato'
 
 interface Props {
   titulo: string
@@ -28,12 +27,12 @@ interface Props {
    */
   sinCanonica?: boolean
   /**
-   * Pagina que existe pero hoy no tiene nada que ensenar a un buscador. Hoy
-   * solo Sale sin rebajas: se queda publicada para que el enlace de la
-   * cabecera no lleve a un 404, pero una pagina vacia indexada resta al
-   * sitio entero. `follow` para que los enlaces de la pagina sigan contando.
+   * Pagina que existe pero no tiene nada que ofrecer todavia: una marca sin
+   * ficha ni piezas, o el sale sin rebajas. Se rastrea -- los enlaces siguen
+   * contando -- pero no se pide que salga en resultados. Tambien la saca del
+   * sitemap (lo hace la integracion de astro.config.mjs leyendo esta etiqueta).
    */
-  indexable?: boolean
+  sinIndexar?: boolean
   /**
    * Foto para la tarjeta que se pinta al compartir el enlace. URL absoluta.
    * Sin ella va el logo sobre el gris del sitio, que es lo correcto para la
@@ -46,34 +45,33 @@ interface Props {
   /** 'product' en las fichas, 'website' en el resto. */
   tipo?: 'website' | 'product'
   /**
-   * Texto de la tarjeta al compartir, cuando no es el del buscador. Las
-   * fichas lo usan para poner el precio delante; sin el, va `descripcion`.
+   * Precio en COP de la prenda, solo en las fichas. Abre la descripcion de la
+   * tarjeta para compartir -- en un chat lo primero que se pregunta es cuanto
+   * cuesta -- y va en product:price para quien lea esas etiquetas.
    */
-  descripcionTarjeta?: string
-  /**
-   * Sin " | The Rack store" al final del titulo. Solo para las fichas cuyo
-   * modelo no cabe con el: en un resultado de busqueda pesa mas el modelo
-   * que el nombre de la tienda, que ya sale encima en la URL.
-   */
-  sinNombreTienda?: boolean
-  /** Precio de la prenda, para las etiquetas product:price que leen Facebook y Pinterest. */
-  precio?: { monto: number; moneda: string }
+  precio?: number
 }
 
 const {
   titulo,
   descripcion = 'Tienda de ropa en ' + CONFIG.ciudad,
   sinCanonica = false,
-  indexable = true,
+  sinIndexar = false,
   imagen,
   imagenAlt,
   imagenAncho,
   imagenAlto,
   tipo = 'website',
-  descripcionTarjeta = descripcion,
-  sinNombreTienda = false,
   precio,
 } = Astro.props
+
+// La del buscador no lleva el precio: cambia con las rebajas y Google ya lo
+// lee de la ficha estructurada. La de compartir si, con el envio detras.
+const envio = VENTA.envio.costo === 0 ? 'Envío gratis a toda Colombia' : null
+const descripcionCompartir =
+  precio === undefined
+    ? descripcion
+    : [formatearPrecio(precio), envio].filter(Boolean).join(' · ') + `. ${descripcion}`
 
 /**
  * Canonica auto-referenciada, construida con el pathname y NO con Astro.url
@@ -103,58 +101,35 @@ const tarjeta = {
   ancho: imagenAncho ?? 1200,
   alto: imagenAlto ?? 630,
 }
-// Barra vertical y no raya: es el separador que se lee en un resultado de
-// busqueda, y el que pidio el dueno.
-const tituloCompleto = sinNombreTienda ? titulo : `${titulo} | ${CONFIG.nombre}`
+/**
+ * El nombre de la tienda va detras solo si cabe. Google corta el titulo hacia
+ * los 60 caracteres, y en una ficha como "Camiseta Pleasures Twitch Studded
+ * Crewneck T-Shirt · Blanco" el que se quedaba fuera era el color, que es lo
+ * que distingue esa pagina de la del otro color. La marca de la tienda ya
+ * viaja en el og:site_name y en la URL.
+ */
+const SUFIJO = ` | ${CONFIG.nombre}`
+const MAXIMO_TITULO = 60
+const tituloCompleto =
+  titulo.length + SUFIJO.length <= MAXIMO_TITULO ? `${titulo}${SUFIJO}` : titulo
 
 /**
- * Las dos secciones del catalogo, siempre a la vista: Exclusives, que es la
- * portada, y Sale. Antes solo habia un enlace "Catalogo" y solo dentro del
- * archivo de marcas; con dos secciones, desde la portada tambien hay que
- * poder saltar a la otra.
- *
- * Son enlaces y no un boton con panel como el del archivo: una seccion es un
- * sitio al que se va, no una lista entre la que elegir. Se distinguen a
- * proposito.
- *
- * Sale sale siempre, tenga prendas o no: la seccion es parte de la tienda
- * aunque hoy no haya rebajas, y su pagina se publica siempre (vacia, con
- * noindex), asi que el enlace nunca lleva a un 404.
+ * Las dos secciones del catalogo, siempre a la vista en la cabecera: la
+ * rebaja y la tienda entera. Marcan la que se esta viendo; las categorias y
+ * las marcas ya tienen su propio camino, los filtros y el menu.
  */
 const ruta = Astro.url.pathname
 const secciones = [
-  { href: '/sale/', texto: 'Sale', actual: ruta.startsWith('/sale') },
-  { href: '/', texto: 'Exclusives', actual: ruta === '/' },
+  { href: '/sale/', texto: 'Sale', clase: 'enlace-catalogo--sale' },
+  { href: '/', texto: 'Exclusives', clase: '' },
 ]
-
-/** Las paginas del archivo entran fundidas; ver el script de mas abajo. */
-const enArchivo = Astro.url.pathname.startsWith('/marca/')
 
 /**
- * Aqui la marca no filtra: PRESENTA. Cada nombre lleva a la pagina donde se
- * cuenta de donde viene esa marca y por que esta en la tienda, que es lo que
- * el cliente que no la conoce necesita antes que ver diez prendas suyas.
- *
- * Todas llevan a su pagina, tengan ficha escrita o no: el destino lo decide
- * `hrefDeMarca` en un solo sitio, y la que aun no tiene texto presenta alli su
- * nombre y sus piezas mientras llega.
- *
- * La lista es la de marcas.ts, no la del catalogo: el menu anuncia lo que la
- * tienda vende, y una marca sin stock hoy lleva a una rejilla vacia que lo
- * dice. Esconderla hasta que entre la primera prenda seria contar menos de lo
- * que hay.
+ * El archivo de marcas entra y sale fundido: es otra forma de leer la
+ * tienda, mas de revista que de catalogo, y el corte seco al llegar a el se
+ * veia como un salto a otro sitio.
  */
-const enlacesArchivo: Enlace[] = [
-  ...marcasTodas().map((marca) => ({
-    href: hrefDeMarca(marca.valor),
-    texto: marca.etiqueta,
-    aparte: false,
-  })),
-  // Ni el archivo ni la tienda son marcas: se separan para que no se lean
-  // como dos mas de la lista.
-  { href: '/marca/', texto: 'Archivo de marcas', aparte: true },
-  { href: '/tienda/', texto: 'Tienda', aparte: true },
-]
+const enArchivo = ruta.startsWith('/marca/')
 
 /*
  * El pie ya no enlaza las categorias: ese camino es ahora el desplegable de
@@ -171,17 +146,11 @@ const enlacesArchivo: Enlace[] = [
     <title>{tituloCompleto}</title>
     <meta name="description" content={descripcion} />
     {!sinCanonica && <link rel="canonical" href={canonica.href} />}
-    {!indexable && <meta name="robots" content="noindex, follow" />}
+    {sinIndexar && <meta name="robots" content="noindex, follow" />}
 
-    {/* El isotipo sin el punto: es el doble de ancho que de alto, y sin el
-        punto crece un cuarto en una pestana cuadrada. El SVG cambia de negro a blanco con el tema del sistema;
-        el .ico es para quien no lee SVG, y el PNG con fondo negro es el
-        acceso directo de iOS, que rellenaria el transparente por su cuenta.
-
-        El de 192 es para el resultado de Google: lo pinta en un circulo sobre
-        blanco o sobre gris oscuro, y el isotipo negro transparente del .ico
-        desaparecia en el modo oscuro. Fondo negro solido, como el de iOS, y
-        un multiplo de 48 que es lo que Google pide. */}
+    {/* El PNG de 192 primero: es el que pide Google para el icono junto al
+        resultado de busqueda, y lo exige multiplo de 48. El .ico queda para
+        los navegadores viejos y el SVG para los que lo entienden. */}
     <link rel="icon" href="/favicon-192.png" sizes="192x192" type="image/png" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -192,76 +161,73 @@ const enlacesArchivo: Enlace[] = [
     <meta property="og:locale" content="es_CO" />
     <meta property="og:url" content={canonica.href} />
     <meta property="og:title" content={tituloCompleto} />
-    <meta property="og:description" content={descripcionTarjeta} />
+    <meta property="og:description" content={descripcionCompartir} />
     <meta property="og:image" content={tarjeta.imagen} />
     <meta property="og:image:width" content={String(tarjeta.ancho)} />
     <meta property="og:image:height" content={String(tarjeta.alto)} />
     <meta property="og:image:alt" content={tarjeta.alt} />
-    {precio && <meta property="product:price:amount" content={String(precio.monto)} />}
-    {precio && <meta property="product:price:currency" content={precio.moneda} />}
+    {precio !== undefined && (
+      <>
+        <meta property="product:price:amount" content={String(precio)} />
+        <meta property="product:price:currency" content={VENTA.moneda} />
+      </>
+    )}
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={tituloCompleto} />
-    <meta name="twitter:description" content={descripcionTarjeta} />
+    <meta name="twitter:description" content={descripcionCompartir} />
     <meta name="twitter:image" content={tarjeta.imagen} />
     <meta name="twitter:image:alt" content={tarjeta.alt} />
 
     <link rel="preconnect" href="https://use.typekit.net" crossorigin />
     <link rel="preconnect" href="https://p.typekit.net" crossorigin />
-    {/* Typekit trae una sola fuente, la de maquina de escribir de la
-        interfaz, y como hoja normal bloqueaba el pintado de toda la pagina
-        hasta que respondia un servidor ajeno. Con media="print" el navegador
-        la baja sin esperar y la activa al llegar: mientras tanto se lee en
-        Geist, que es la siguiente de la pila. */}
-    <link rel="stylesheet" href="https://use.typekit.net/uat3sbv.css" media="print" onload="this.media='all'" />
+    {/* Sin bloquear el pintado: la hoja de Typekit tardaba en llegar y
+        retenia la pagina entera en blanco. Se pide como `print`, que el
+        navegador baja sin esperar, y al cargar pasa a `all`. Mientras tanto
+        se lee la Geist de reserva. */}
+    <link
+      rel="stylesheet"
+      href="https://use.typekit.net/uat3sbv.css"
+      media="print"
+      onload="this.media='all'"
+    />
     <noscript><link rel="stylesheet" href="https://use.typekit.net/uat3sbv.css" /></noscript>
   </head>
   <body>
-    {/* Dos cajas y no una: la de fuera pinta el fondo de punta a punta y es la
-        que se queda pegada arriba; la de dentro centra el contenido en el
-        ancho del sitio. Cuando las dos eran la misma, el fondo media lo que
-        .contenedor y al desplazarse asomaban por los lados la foto a sangre
-        de la pagina de marca y las tarjetas del catalogo. */}
+    {/* El fondo de la cabecera ocupa todo el ancho y el contenido va en el
+        contenedor de dentro: con el contenedor en la propia cabecera, el
+        fondo pegajoso se cortaba en los margenes y la rejilla asomaba por
+        los lados al bajar. */}
     <header class="cabecera">
       <div class="cabecera__interior contenedor">
-      <a href="/" aria-label={CONFIG.nombre}>
-        {/* alt vacio: el enlace ya se anuncia con su aria-label, y repetir el
-            nombre aqui lo haria sonar dos veces. Ancho y alto declarados
-            (680x122.61 del viewBox, escalado a 200) para que la cabecera no
-            de un salto mientras el archivo llega. */}
-        <img src={logoUrl} width="200" height="36" alt="" />
-      </a>
-      {/* Enlace y boton van juntos a la derecha: con justify-content:
-          space-between y tres hijos sueltos, el del catalogo se habria
-          quedado flotando en mitad de la cabecera. */}
-      <div class="cabecera__acciones">
-        <nav class="secciones" aria-label="Catálogo">
-          {secciones.map(({ href, texto, actual }) => (
-            <a class:list={['enlace-catalogo', { 'enlace-catalogo--sale': href === '/sale/' }]} href={href} aria-current={actual ? 'page' : undefined} data-seccion>{texto}</a>
-          ))}
-        </nav>
-        <MenuPantallaCompleta
-          id="menu-archivo"
-          rotulo="Archivo de marcas"
-          enlaces={enlacesArchivo}
-        />
-      </div>
+        <a href="/" aria-label={CONFIG.nombre}>
+          {/* alt vacio: el enlace ya se anuncia con su aria-label, y repetir el
+              nombre aqui lo haria sonar dos veces. Ancho y alto declarados
+              (680x122.61 del viewBox, escalado a 200) para que la cabecera no
+              de un salto mientras el archivo llega. */}
+          <img src={logoUrl} width="200" height="36" alt="" />
+        </a>
+        <div class="cabecera__acciones">
+          <nav class="secciones" aria-label="Catálogo">
+            {secciones.map((s) => (
+              <a
+                class:list={['enlace-catalogo', s.clase]}
+                href={s.href}
+                aria-current={ruta === s.href ? 'page' : undefined}
+                data-seccion
+              >
+                {s.texto}
+              </a>
+            ))}
+          </nav>
+          <MenuPantallaCompleta />
+        </div>
       </div>
     </header>
 
-    {/* Las paginas del archivo entran fundidas, con el mismo encendido que la
-        rejilla al cambiar de filtro: son el sitio donde se lee, y llegar a
-        ellas de golpe se sentia mas brusco que el catalogo, que al menos se
-        recompone gradualmente.
-
-        Va aqui y no en un script diferido porque tiene que correr ANTES de
-        que se pinte <main>: puesto despues se veria un fotograma con la
-        pagina encendida y el fundido empezaria de un salto. Mismo recurso que
-        el cambio de genero en la rejilla y el barrido de la ficha.
-
-        El apagado lo pone el JavaScript, nunca el marcado: sin JavaScript no
-        hay atributo, no hay opacidad 0 y la pagina se lee entera. Una
-        aparicion que no ocurre es un detalle; una pagina en blanco, no. */}
+    {/* Antes de pintar <main>: si la pagina tiene que entrar fundida, tiene
+        que nacer ya transparente. Desde un script diferido se veria un
+        fotograma con todo a la vista antes de apagarse. */}
     <script is:inline define:vars={{ enArchivo }}>
       try {
         // Dos motivos para entrar fundido: que la pagina anterior lo dejara
@@ -284,77 +250,59 @@ const enlacesArchivo: Enlace[] = [
 
     <main><slot /></main>
 
-    {/* Encender lo que llego apagado. Va en un script diferido a proposito: en
-        el inline de arriba los dos fotogramas se consumen mientras el
-        documento aun se parsea, antes de que <main> se haya pintado nunca, y
-        la marca se quitaba sin que el estado apagado llegara a verse -- que es
-        exactamente el cambio abrupto que esto viene a quitar. Aqui el
-        documento ya esta pintado. */}
     <script>
-      // --- La ida ---
-      // Los enlaces al archivo se apagan antes de navegar. Es la mitad que
-      // faltaba: la pagina que llega ya sabe encenderse, pero la que se va
-      // desaparecia de un corte.
-      //
-      // Se aplica cuando el archivo esta en alguna de las dos puntas del
-      // camino: al entrar en el desde donde sea -- cualquier marca del menu,
-      // la marca de una ficha de producto -- y al salir de el a donde sea --
-      // el enlace al catalogo de la cabecera, la marca sin ficha que lleva a
-      // la portada filtrada. Ponerselo a todos los enlaces del sitio le
-      // anadiria 300ms a cada navegacion para arreglar algo que no pasaba.
+      // --- Salida fundida ---
+      // Al ir hacia el archivo de marcas o salir de el, la pagina se apaga
+      // antes de navegar y deja pedido que la siguiente entre fundida. Entre
+      // dos paginas del catalogo no: alli el cambio ya lo cuenta la rejilla.
       {
-        const SALIDA = 300
         const quietud = matchMedia('(prefers-reduced-motion: reduce)')
         const esArchivo = (ruta: string) => ruta.startsWith('/marca/')
 
         document.addEventListener('click', (evento) => {
-          if (evento.defaultPrevented || evento.button !== 0) return
-          // Abrir en otra pestana, o con teclas, no es navegar aqui.
-          if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) return
-          if (quietud.matches) return
-
-          const enlace = (evento.target as Element | null)?.closest?.('a')
+          // Abrir en otra pestana, o con boton central, no es navegar aqui.
+          if (
+            evento.defaultPrevented ||
+            evento.button !== 0 ||
+            evento.metaKey ||
+            evento.ctrlKey ||
+            evento.shiftKey ||
+            evento.altKey ||
+            quietud.matches
+          ) {
+            return
+          }
+          const enlace = (evento.target as HTMLElement | null)?.closest?.('a')
           if (!(enlace instanceof HTMLAnchorElement)) return
           if (enlace.target === '_blank' || enlace.hasAttribute('download')) return
 
           const destino = new URL(enlace.href, location.href)
           if (destino.origin !== location.origin) return
           if (!esArchivo(destino.pathname) && !esArchivo(location.pathname)) return
-          // Ir a donde ya se esta no es una entrada: seria apagar la pagina
-          // para volver a la misma. Se compara la direccion entera y no solo
-          // la ruta: /?marca=nike desde /marca/ si es un viaje.
           if (destino.href === location.href) return
 
           evento.preventDefault()
-          // La pagina que llegue se pintara apagada y se encendera sola. El
-          // aviso viaja aqui y no en la direccion para no ensuciar una URL
-          // que el visitante puede copiar o compartir.
           try {
             sessionStorage.setItem('fundido-entrada', '1')
           } catch {}
           document.documentElement.dataset.saliendo = ''
+          // Lo que dura el fundido de body en el CSS de abajo.
           setTimeout(() => {
             location.href = enlace.href
-          }, SALIDA)
+          }, 300)
         })
       }
 
-      // --- El boton Atras ---
-      // El navegador guarda la pagina en su cache al salir (bfcache) y con
-      // Atras la devuelve TAL COMO SE FUE: con el body a opacidad 0 del
-      // fundido de salida, la rejilla apagada del cambio de seccion o el
-      // barrido de la ficha tapandolo todo. Se veia una pagina en blanco.
-      //
-      // Al irse se congelan las transiciones -- ya no se ve, no cuesta nada --
-      // y al volver se quitan las marcas de los fundidos con la pagina quieta.
-      // El menu se cierra solo con el mismo aviso (MenuPantallaCompleta).
+      // --- Volver atras ---
+      // El navegador puede restaurar la pagina anterior tal cual la dejo,
+      // apagada a medio fundido. Se marca la salida para congelar las
+      // transiciones (un parpadeo de vuelta no tiene sentido) y, al volver,
+      // se quitan todas las marcas de fundido antes de soltarlas.
       {
         const raiz = document.documentElement
-
         addEventListener('pagehide', () => {
           raiz.dataset.restaurando = ''
         })
-
         addEventListener('pageshow', (evento) => {
           if (!evento.persisted) {
             delete raiz.dataset.restaurando
@@ -367,8 +315,8 @@ const enlacesArchivo: Enlace[] = [
           for (const resultados of document.querySelectorAll<HTMLElement>('[data-resultados]')) {
             delete resultados.dataset.cambiando
           }
-          // Dos fotogramas, como al encender: el primero pinta el reposo sin
-          // animar, y solo despues vuelven las transiciones.
+          // Dos fotogramas: el primero pinta el estado ya limpio sin
+          // transiciones, el segundo las devuelve.
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               delete raiz.dataset.restaurando
@@ -377,11 +325,10 @@ const enlacesArchivo: Enlace[] = [
         })
       }
 
-      // --- La vuelta ---
+      // Encender la pagina que llego apagada. Dos fotogramas: el primero deja
+      // que el navegador pinte el estado apagado, el segundo quita la marca y
+      // esa diferencia es la que la transicion puede animar.
       if (document.documentElement.hasAttribute('data-entrando')) {
-        // Dos fotogramas: el primero deja que el navegador pinte el estado
-        // apagado, el segundo quita la marca y esa diferencia es la que la
-        // transicion anima.
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             delete document.documentElement.dataset.entrando
@@ -413,10 +360,6 @@ const enlacesArchivo: Enlace[] = [
     transition: background 300ms ease;
     padding-block: var(--espacio-3);
   }
-
-  /* El padding-inline lo pone .contenedor; aqui solo el reparto. La suma
-     sigue siendo --alto-cabecera: 2rem x2 de la caja de fuera mas los 36 px
-     del logo. */
   .cabecera__interior {
     display: flex;
     flex-wrap: wrap;
@@ -424,66 +367,40 @@ const enlacesArchivo: Enlace[] = [
     align-items: center;
     justify-content: space-between;
   }
-  :global(body[data-menu='abierto']) .cabecera { background: transparent; }
-
-  /* Separacion generosa: los dos rotulos van del mismo tamano y del mismo
-     color, asi que con poco hueco se leian como una sola frase --
-     "Catalogo Archivo de marcas" -- en vez de como dos destinos. */
   .cabecera__acciones {
     display: flex;
     align-items: center;
     gap: var(--espacio-4);
   }
 
-  /* Del tamano y la familia del boton de al lado para que la cabecera se lea
-     como una sola linea, pero sin la cruz ni el cambio a "Cerrar": lo que
-     hacen al pulsarlos no es lo mismo y no deben prometer lo mismo. */
+  /* Sale y Exclusives: mismo cuerpo que el boton del menu, que es su vecino.
+     Por encima del panel abierto, igual que el boton, para que se puedan
+     seguir pulsando. */
   .enlace-catalogo {
-    /* Por encima del panel del menu, como el boton: si no, con el archivo
-       abierto quedaria debajo y sin poder pulsarse. */
     position: relative;
     z-index: 30;
     color: var(--texto);
     font-size: 1.0566rem;
   }
-
-  /* Sale en burdeos, el color de la rebaja en la rejilla y la ficha: el
-     enlace ya dice lo que se va a encontrar. */
+  /* El burdeos es el unico color de la paleta y se gasta en lo que vende: la
+     rebaja. */
   .enlace-catalogo--sale {
     color: var(--burdeos);
-    /* Mayusculas por CSS y no en el texto: un lector de pantalla lee "Sale",
-       no deletrea S-A-L-E. */
     text-transform: uppercase;
   }
-
   .enlace-catalogo:hover { text-decoration: underline; }
-  /* La seccion en la que se esta, subrayada fija: el mismo gesto que el
-     hover, pero sin tener que pasar por encima. */
   .enlace-catalogo[aria-current='page'] {
     text-decoration: underline;
     text-underline-offset: 0.3em;
   }
-
-  /* Entre las dos secciones, el mismo hueco que entre ellas y el archivo:
-     los tres rotulos a igual distancia. `inherit` y no el valor copiado, para
-     que el recorte de movil de .cabecera__acciones llegue tambien aqui.
-     `.cabecera` delante para ganarle al `.cabecera nav` de mas abajo. */
-  .cabecera .secciones {
-    display: flex;
-    gap: inherit;
-  }
-
-  /* Con el panel abierto el enlace queda sobre el velo oscuro. */
+  .cabecera .secciones { display: flex; gap: inherit; }
   :global(body[data-menu='abierto']) .enlace-catalogo { color: var(--fondo); }
 
-  /* Mismo achique que el boton del menu en movil, por la misma razon: el
-     nombre largo de al lado y el logo de 200 px no dejan sitio. */
   @media (max-width: 480px) {
     .enlace-catalogo { font-size: 0.75rem; }
-    /* En movil el hueco se recorta: aqui lo que falta es ancho, y a 0.75rem
-       los dos rotulos ya no se tocan. */
     .cabecera__acciones { gap: var(--espacio-3); }
   }
+  :global(body[data-menu='abierto']) .cabecera { background: transparent; }
 
   .cabecera nav { display: flex; gap: var(--espacio-2); flex-wrap: wrap; }
   :global(body[data-menu='abierto']) .cabecera { background: transparent; }
@@ -492,32 +409,18 @@ const enlacesArchivo: Enlace[] = [
   :global(body[data-menu='abierto']) .cabecera { background: transparent; }
 
   .cabecera nav a:hover { text-decoration: underline; }
-  /* La curva es la de la rejilla; el tiempo, mas largo. Aqui no se recompone
-     una lista dentro de una pagina que ya esta: llega una pagina entera, y a
-     360ms se leia como un pestaneo en vez de como una entrada. */
-  main {
-    transition: opacity 620ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
-  }
 
+  /* --- Fundido entre paginas --- */
+  /* La entrada es mas lenta que la salida: la pagina se va rapido y se
+     asienta despacio, que es lo que hace que se lea como un cambio de pagina
+     y no como un parpadeo. */
+  main { transition: opacity 620ms cubic-bezier(0.65, 0.01, 0.05, 0.99); }
   :global(html[data-entrando]) main {
     opacity: 0;
     transition: none;
   }
-
-  /* La IDA. Sin ella el corte se ve: se sale de golpe del panel oscuro del
-     menu, el navegador pinta el salto en blanco y solo despues empieza el
-     encendido -- eso es el parpadeo.
-     Se apaga el BODY entero, no solo <main>: el panel del menu y la cabecera
-     tambien estan a la vista, y dejarlos encendidos mientras se va el resto
-     seria cambiar un parpadeo por otro. Debajo queda el fondo del sitio, que
-     es el mismo con el que abre la pagina siguiente: entre las dos no hay
-     ningun color que no estuviera ya. */
-  body {
-    transition: opacity 300ms cubic-bezier(0.65, 0.01, 0.05, 0.99);
-  }
-
-  :global(html[data-saliendo]) body { opacity: 0; }
-
+  :global(body) { transition: opacity 300ms cubic-bezier(0.65, 0.01, 0.05, 0.99); }
+  :global(html[data-saliendo] body) { opacity: 0; }
   .pie {
     border-top: 1px solid var(--linea);
     margin-top: var(--espacio-4);

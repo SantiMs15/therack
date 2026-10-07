@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { slugMarca } from '../lib/filtros'
 
 export const CATEGORIAS = ['mujer', 'hombre', 'calzado', 'accesorios'] as const
 export type Categoria = (typeof CATEGORIAS)[number]
@@ -42,24 +43,25 @@ export function generoDe(categoria: Categoria): Genero | null {
  * buscando algo concreto: "un hoodie", "una camiseta". Va en orden
  * alfabetico porque es el orden en que se pinta el desplegable.
  *
- * No hay "sweater" ni "sueter": en Colombia la prenda de punto es un
- * BUZO, y sueter/sweater arrastran busquedas de Mexico y Argentina (ver
- * docs/keywords-decisiones.md). El punto fino y el grueso van los dos aqui.
- *
  * Anadir un tipo aqui obliga a declararlo en cada producto: el build falla
  * si una prenda se queda sin el, que es preferible a una prenda que no
  * aparece en ningun filtro.
  */
-export const TIPOS = ['buzo', 'camiseta', 'chaqueta', 'hoodie', 'polo'] as const
+export const TIPOS = ['bolso', 'buzo', 'camiseta', 'chaqueta', 'gafas', 'hoodie', 'morral', 'pantalon', 'polo', 'sweater'] as const
 export type Tipo = (typeof TIPOS)[number]
 
 /** En plural: el desplegable nombra grupos de prendas, no una prenda. */
 export const ETIQUETAS_TIPO: Record<Tipo, string> = {
+  bolso: 'Bolsos',
   buzo: 'Buzos',
   camiseta: 'Camisetas',
   chaqueta: 'Chaquetas',
+  gafas: 'Gafas',
   hoodie: 'Hoodies',
+  morral: 'Morrales',
+  pantalon: 'Pantalones',
   polo: 'Polos',
+  sweater: 'Suéteres',
 }
 
 /**
@@ -69,11 +71,16 @@ export const ETIQUETAS_TIPO: Record<Tipo, string> = {
  * de los diez titulos llevaba esa palabra.
  */
 export const ETIQUETAS_TIPO_UNA: Record<Tipo, string> = {
+  bolso: 'Bolso',
   buzo: 'Buzo',
   camiseta: 'Camiseta',
   chaqueta: 'Chaqueta',
+  gafas: 'Gafas',
   hoodie: 'Hoodie',
+  morral: 'Morral',
+  pantalon: 'Pantalón',
   polo: 'Polo',
+  sweater: 'Suéter',
 }
 
 /**
@@ -86,6 +93,13 @@ export const TALLAS_MUJER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 
 /** La misma escala para la ropa de hombre, que empieza una talla mas arriba. */
 export const TALLAS_HOMBRE = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
+
+/**
+ * La talla de lo que no tiene tallas: gafas, gorras, bolsos. Se declara como
+ * una talla mas para que la ficha y el mensaje de WhatsApp funcionen igual,
+ * pero nunca es "ultima talla": que haya una sola es lo normal, no un aviso.
+ */
+export const TALLA_UNICA = 'Única'
 
 /**
  * Una foto. Se acepta el nombre del archivo suelto o un objeto con `alt`
@@ -117,6 +131,12 @@ export const ImagenSchema = z
 export type Imagen = z.infer<typeof ImagenSchema>
 
 /**
+ * Una variante es un color concreto de una prenda. Cada una tiene sus
+ * propias fotos, su propia disponibilidad y su propia pagina, para que el
+ * enlace que viaja en el mensaje de WhatsApp lleve al color exacto que el
+ * cliente miraba y no a una ficha generica donde tenga que volver a elegir.
+ */
+/**
  * Una talla. Se acepta el nombre suelto, que se da por disponible, o un
  * objeto que declara `disponible: false`: la talla agotada sigue apareciendo
  * en la ficha, tachada, porque el rango que cubre la prenda es informacion
@@ -137,110 +157,68 @@ export const TallaSchema = z
 export type Talla = z.infer<typeof TallaSchema>
 
 /**
- * Una variante es un color concreto de una prenda. Cada una tiene sus
- * propias fotos, su propia disponibilidad y su propia pagina, para que el
- * enlace que viaja en el mensaje de WhatsApp lleve al color exacto que el
- * cliente miraba y no a una ficha generica donde tenga que volver a elegir.
- *
- * `tallas` es opcional: sin ella el color tiene las de la prenda, que es lo
- * normal. Se declara cuando un color tiene otras piezas que el resto, como la
- * Twitch de Pleasures, que en negro queda en M y en blanco en M y L.
+ * `tallas` es opcional y, si se declara, MANDA sobre las de la prenda: hay
+ * colores de los que queda una talla mientras del otro quedan dos, y con un
+ * solo campo por prenda la ficha del negro y la del blanco mentirian a la vez.
  */
 export const VarianteSchema = z.strictObject({
   color: z.string().min(1, 'color: no puede estar vacio'),
   slug: z.string().regex(SLUG, 'variante.slug: solo minusculas, numeros y guiones'),
   imagenes: z.array(ImagenSchema).min(1, 'imagenes: al menos una'),
-  tallas: z.array(TallaSchema).min(1, 'variante.tallas: al menos una si se declara').optional(),
   disponible: z.boolean(),
+  tallas: z.array(TallaSchema).min(1, 'variante.tallas: al menos una si se declara').optional(),
+  /**
+   * Opcionales y, si se declaran, MANDAN sobre los de la prenda: el mismo
+   * criterio que `tallas`. Hay colores que se rebajan mientras el otro sigue
+   * a precio normal, y solo ese color entra en /sale.
+   */
+  precio: z.number().int('variante.precio: debe ser entero').positive().optional(),
+  precioAnterior: z.number().int('variante.precioAnterior: debe ser entero').positive().optional(),
 })
 
 export type Variante = z.infer<typeof VarianteSchema>
 
-/**
- * De quien es una prenda. Se escribe como texto -- `marca: 'Lacoste'` -- y
- * como lista cuando es una colaboracion: `marca: ['Aimé Leon Dore', 'New
- * Balance']`.
- *
- * Un solo campo para las dos formas, y no una `marca` mas una
- * `colaboracion`: serian dos sitios donde mirar para responder la misma
- * pregunta, y el dia que alguien rellene solo uno la prenda desaparece de
- * media tienda.
- *
- * El orden de la lista es el que se escribe, y es el que se ve: la primera
- * manda donde solo cabe una (el reparto de la rejilla, el escalon de las
- * migas).
- */
-const MarcaSchema = z.union([
-  z.string().min(1, 'marca: no puede estar vacia si se declara'),
-  z
-    .array(z.string().min(1, 'marca: ninguna marca de la lista puede estar vacia'))
-    .min(1, 'marca: la lista no puede estar vacia'),
-])
-
-/**
- * Donde se vende la prenda. Una categoria como texto -- `categoria: 'hombre'`
- * -- o, para una prenda unisex, la lista de los dos generos:
- * `categoria: ['hombre', 'mujer']`. La unisex sale en /catalogo/hombre y en
- * /catalogo/mujer sin duplicarla en productos.ts.
- *
- * Solo los generos pueden ir juntos: una prenda no es a la vez calzado y
- * hombre en el sentido en que es de hombre y de mujer.
- */
-const CategoriaSchema = z.union([
-  z.enum(CATEGORIAS),
-  z
-    .array(z.enum(GENEROS))
-    .min(2, 'categoria: con un solo genero va como texto, no como lista')
-    .refine((lista) => new Set(lista).size === lista.length, 'categoria: genero repetido'),
-])
-
-const ProductoBase = z.strictObject({
+export const ProductoSchema = z.strictObject({
   slug: z.string().regex(SLUG, 'slug: solo minusculas, numeros y guiones'),
   nombre: z.string().min(1, 'nombre: no puede estar vacio'),
-  /** Opcional: no toda prenda de la tienda es de marca conocida. */
-  marca: MarcaSchema.optional(),
-  categoria: CategoriaSchema,
+  /**
+   * Opcional: no toda prenda de la tienda es de marca conocida.
+   *
+   * Una colaboracion se declara con la lista de sus marcas, la que firma
+   * primero delante: la prenda sale en la pagina de las dos, se ve como
+   * "Aimé Leon Dore × New Balance", y la ficha estructurada nombra solo a la
+   * primera, que es la que la vende.
+   */
+  marca: z
+    .union([
+      z.string().min(1, 'marca: no puede estar vacia si se declara'),
+      z.array(z.string().min(1)).min(2, 'marca: una colaboracion son al menos dos marcas'),
+    ])
+    .optional(),
+  categoria: z.enum(CATEGORIAS),
+  /**
+   * Otros generos en cuyo catalogo tambien sale la prenda. Una prenda de corte
+   * sin genero se declara en una categoria -- la que manda en las migas y en
+   * la tarjeta -- y aparece ademas en la rejilla de la otra.
+   */
+  tambienEn: z.array(z.enum(GENEROS)).min(1).optional(),
   tipo: z.enum(TIPOS),
   precio: z.number().int('precio: debe ser entero').positive('precio: debe ser positivo'),
   /**
-   * El precio de antes, cuando la prenda esta rebajada. Declararlo es lo que
-   * la manda a Sale: `precio` pasa a ser lo que se paga hoy y este se ve
-   * tachado al lado. Quitarlo la devuelve a Exclusives. No hay una lista
-   * aparte de prendas en sale que pueda contradecir al precio.
+   * Precio de antes de la rebaja. Declararlo es lo que mete la prenda en
+   * /sale y pinta el precio tachado con el descuento: no hay otro interruptor
+   * que mantener aparte y que pueda contradecirlo.
    */
-  precioAntes: z
+  precioAnterior: z
     .number()
-    .int('precioAntes: debe ser entero')
-    .positive('precioAntes: debe ser positivo')
+    .int('precioAnterior: debe ser entero')
+    .positive('precioAnterior: debe ser positivo')
     .optional(),
   tallas: z.array(TallaSchema).min(1, 'tallas: al menos una'),
   descripcion: z.string().min(1, 'descripcion: no puede estar vacia'),
   variantes: z.array(VarianteSchema).min(1, 'variantes: al menos un color'),
   destacado: z.boolean(),
 })
-
-/**
- * Fuera del validador, una prenda ya no tiene `marca`: tiene `marcas`, una
- * lista, vacia si no es de marca conocida. Asi nadie tiene que preguntarse si
- * lo que recibe es un texto, una lista o nada -- se recorre y ya.
- *
- * Lo mismo con `categoria`: fuera es `categorias`, con una o con los dos
- * generos de una prenda unisex.
- *
- * OJO: una lista vacia es `truthy` en JavaScript. Para saber si la prenda
- * tiene marca se mira `marcas.length`, nunca `if (producto.marcas)`.
- */
-export const ProductoSchema = ProductoBase.refine(
-  // Igual o menor no es una rebaja, y publicarla como tal seria mentirle al
-  // cliente con el precio tachado. Mejor que el build falle.
-  ({ precio, precioAntes }) => precioAntes === undefined || precioAntes > precio,
-  { message: 'precioAntes: debe ser mayor que precio', path: ['precioAntes'] }
-).transform(({ marca, categoria, ...resto }) => ({
-  ...resto,
-  marcas: marca === undefined ? [] : typeof marca === 'string' ? [marca] : marca,
-  /** Nunca vacia. La primera es la de las migas de la ficha. */
-  categorias: (typeof categoria === 'string' ? [categoria] : categoria) as Categoria[],
-}))
 
 export type Producto = z.infer<typeof ProductoSchema>
 
@@ -262,6 +240,16 @@ export function validarCatalogo(datos: unknown[]): Producto[] {
   })
 
   for (const producto of productos) {
+    for (const v of producto.variantes) {
+      const precio = precioDe(producto, v)
+      const antes = precioAnteriorDe(producto, v)
+      if (antes !== undefined && antes <= precio) {
+        throw new Error(
+          `Producto "${producto.slug}", color "${v.slug}": precioAnterior (${antes}) tiene que ser ` +
+            `mayor que precio (${precio}). Si ya no esta rebajada, borra precioAnterior.`
+        )
+      }
+    }
     const colores = new Set<string>()
     for (const v of producto.variantes) {
       if (colores.has(v.slug)) {
@@ -282,17 +270,120 @@ export function validarCatalogo(datos: unknown[]): Producto[] {
   return productos
 }
 
+/** Las tallas de un color: las suyas si las declara, si no las de la prenda. */
+export function tallasDe(producto: Producto, variante: Variante): Talla[] {
+  return variante.tallas ?? producto.tallas
+}
+
+/** El precio de un color: el suyo si lo declara, si no el de la prenda. */
+export function precioDe(producto: Producto, variante: Variante): number {
+  return variante.precio ?? producto.precio
+}
+
 /**
- * Las tallas de un color: las suyas si las declara, las de la prenda si no.
- * Sin variante, las de la prenda.
+ * El precio de antes de un color rebajado. Si el color declara su propio
+ * precio, la rebaja tambien tiene que ser suya: heredar el precioAnterior de
+ * la prenda pintaria un descuento que nadie decidio.
  */
-export function tallasDe(producto: Producto, variante?: Variante): Talla[] {
-  return variante?.tallas ?? producto.tallas
+export function precioAnteriorDe(producto: Producto, variante: Variante): number | undefined {
+  if (variante.precioAnterior !== undefined) return variante.precioAnterior
+  return variante.precio === undefined ? producto.precioAnterior : undefined
 }
 
 /** Las tallas que hoy se pueden pedir. Las agotadas siguen en la ficha, tachadas. */
-export function tallasDisponibles(producto: Producto, variante?: Variante): Talla[] {
+export function tallasDisponibles(producto: Producto, variante: Variante): Talla[] {
   return tallasDe(producto, variante).filter((talla) => talla.disponible)
+}
+
+/** Las marcas de una prenda como lista: una, varias si es colaboracion, o ninguna. */
+export function marcasDeProducto(producto: Producto): string[] {
+  if (!producto.marca) return []
+  return typeof producto.marca === 'string' ? [producto.marca] : producto.marca
+}
+
+/**
+ * Como se nombra la marca de una prenda a la vista: "Lacoste", o
+ * "Aimé Leon Dore × New Balance" en una colaboracion. Es la forma en que las
+ * propias marcas firman sus colaboraciones, y la que se busca.
+ */
+export function nombreMarca(producto: Producto): string | undefined {
+  const lista = marcasDeProducto(producto)
+  return lista.length ? lista.join(' × ') : undefined
+}
+
+/**
+ * Los generos en cuyo catalogo sale la prenda: el de su categoria y los de
+ * `tambienEn`. Calzado y accesorios no tienen genero propio.
+ */
+export function generosDeProducto(producto: Producto): Genero[] {
+  const propio = generoDe(producto.categoria)
+  return [...new Set([...(propio ? [propio] : []), ...(producto.tambienEn ?? [])])]
+}
+
+/**
+ * Una marca del archivo. El slug no se declara: sale del nombre.
+ *
+ * `ficha` es el relato de la marca. Sin ella la marca tiene pagina igual, y
+ * la pagina dice que la ficha esta en camino.
+ */
+export const FichaMarcaSchema = z.strictObject({
+  /**
+   * Como la escribe quien la busca, si no es el nombre: "Polo Ralph Lauren".
+   * Solo va al titulo y a la descripcion para el buscador; en la pagina manda
+   * el nombre de la marca.
+   */
+  nombreBusqueda: z.string().min(1).optional(),
+  pais: z.string().min(1, 'ficha.pais: no puede estar vacio'),
+  /** Opcional: de algunas marcas se cuenta el pais y basta. */
+  ciudad: z.string().min(1).optional(),
+  fundacion: z.number().int().min(1800).max(2100),
+  fundadores: z.array(z.string().min(1)).min(1, 'ficha.fundadores: al menos uno'),
+  /** Una frase. Se lee bajo los datos, en el archivo y en el buscador. */
+  propuesta: z.string().min(1, 'ficha.propuesta: no puede estar vacia'),
+  /** Remate del titulo para el buscador: "Lacoste en Colombia: <lema>". */
+  lema: z.string().min(1).optional(),
+  /** Los parrafos de "Por que trajimos <marca> a Colombia". */
+  texto: z.array(z.string().min(1)).min(1, 'ficha.texto: al menos un parrafo'),
+})
+
+export const ImagenMarcaSchema = z.strictObject({
+  archivo: z.string().min(1),
+  alt: z.string().min(1, 'alt: no puede estar vacio'),
+})
+
+export const MarcaSchema = z.strictObject({
+  nombre: z.string().min(1, 'nombre: no puede estar vacio'),
+  ficha: FichaMarcaSchema.optional(),
+  portada: ImagenMarcaSchema.extend({
+    /** Ruta en public/. La foto queda de poster y para quien pide menos movimiento. */
+    video: z.string().startsWith('/').optional(),
+  }).optional(),
+  /** SVG en blanco en src/assets/marcas/: sustituye al nombre sobre la portada. */
+  logo: z.string().min(1).optional(),
+  galeria: z.array(ImagenMarcaSchema).min(2, 'galeria: al menos dos fotos').optional(),
+})
+
+export type FichaMarca = z.infer<typeof FichaMarcaSchema>
+export type Marca = z.infer<typeof MarcaSchema> & { slug: string }
+
+/** Valida el archivo de marcas. Mismo criterio que el catalogo: falla en el build. */
+export function validarMarcas(datos: unknown[]): Marca[] {
+  const vistas = new Set<string>()
+  return datos.map((dato, indice) => {
+    const resultado = MarcaSchema.safeParse(dato)
+    if (!resultado.success) {
+      const detalles = resultado.error.issues
+        .map((i) => `    - ${i.path.join('.') || '(raiz)'}: ${i.message}`)
+        .join('\n')
+      throw new Error(`Marca #${indice} invalida:\n${detalles}`)
+    }
+    const slug = slugMarca(resultado.data.nombre)
+    if (vistas.has(slug)) {
+      throw new Error(`Marca repetida en el archivo: "${resultado.data.nombre}".`)
+    }
+    vistas.add(slug)
+    return { ...resultado.data, slug }
+  })
 }
 
 /**
@@ -305,24 +396,7 @@ export function tallasDisponibles(producto: Producto, variante?: Variante): Tall
  * Cero tallas disponibles no es "ultima talla" sino agotado, que la ficha ya
  * resuelve por su cuenta con `variante.disponible`.
  */
-export function ultimaTalla(producto: Producto, variante?: Variante): Talla | null {
+export function ultimaTalla(producto: Producto, variante: Variante): Talla | null {
   const quedan = tallasDisponibles(producto, variante)
-  return quedan.length === 1 ? quedan[0]! : null
-}
-
-/** Esta rebajada: tiene precio de antes. Es lo que la pone en Sale. */
-export function enSale(producto: Producto): boolean {
-  return producto.precioAntes !== undefined
-}
-
-/**
- * El porcentaje rebajado, redondeado, para la etiqueta "−30 %". null si la
- * prenda no esta en sale.
- *
- * Nunca 0: una rebaja de mil pesos sobre 390.000 redondea a cero, y una
- * etiqueta "−0 %" junto a un precio tachado se lee como un error.
- */
-export function descuento(producto: Producto): number | null {
-  if (producto.precioAntes === undefined) return null
-  return Math.max(1, Math.round((1 - producto.precio / producto.precioAntes) * 100))
+  return quedan.length === 1 && quedan[0]!.talla !== TALLA_UNICA ? quedan[0]! : null
 }

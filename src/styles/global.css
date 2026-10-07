@@ -5,9 +5,8 @@
   --texto: #111111;
   --texto-suave: #57534E;
   --linea: #E7E5E4;
-  /* Solo para avisar: lo que falta (una talla agotada, la ultima) y lo que
-     esta rebajado. Es el unico color de la paleta, asi que se gasta donde
-     tiene que frenar al que lee. */
+  /* Solo para avisar de lo que falta: una talla agotada. Es el unico color
+     de la paleta, asi que se gasta donde tiene que frenar al que lee. */
   --burdeos: #7B1E2E;
 
   --fuente-titular: 'Instrument Serif', Georgia, serif;
@@ -159,11 +158,9 @@ img { max-width: 100%; display: block; }
   }
 }
 
-/* Pagina que vuelve con el boton Atras desde la cache del navegador (bfcache).
-   Vuelve tal como se fue: apagada por el fundido de salida, con el menu
-   abierto o con el barrido de la ficha tapandola. El script del Layout la
-   devuelve a su estado de reposo, y mientras lo hace no se anima nada: la
-   pagina tiene que aparecer ya quieta, no deshaciendo la salida a la vista. */
+/* Al volver atras, el navegador puede devolver la pagina tal cual la dejo,
+   a medio fundido. Mientras se limpia, nada se anima: ver la pagina
+   encenderse otra vez seria un parpadeo sin sentido. */
 html[data-restaurando] *,
 html[data-restaurando] *::before,
 html[data-restaurando] *::after {

@@ -1,151 +1,87 @@
 ---
-/**
- * LA PAGINA DE UNA MARCA.
- *
- * La tienda no solo vende: presenta. En Colombia cuesta que alguien compre
- * una prenda de una marca que nunca ha visto, y esta pagina es donde se
- * responde a la pregunta que el cliente no llega a hacer en voz alta: quien
- * es esta gente y por que deberia importarme.
- *
- * Existe para TODAS las marcas de la tienda. La ficha -- pais, ano, fundador,
- * propuesta y el porque -- es lo que se ha escrito de la marca hasta hoy, no
- * el permiso para tener pagina: la que aun no la tiene presenta lo que ya se
- * sabe, que es su nombre y sus piezas, y espera al texto.
- *
- * Antes la marca sin ficha caia en la portada filtrada. Eran dos destinos
- * para el mismo gesto, y quien no conoce la marca -- que es justo quien pulsa
- * su nombre -- acababa viendo prendas sin saber de quien eran.
- */
 import { Image, getImage } from 'astro:assets'
 import Layout from '../../layouts/Layout.astro'
+import Galeria from '../../components/Galeria.astro'
 import Migas from '../../components/Migas.astro'
-import GaleriaElastica from '../../components/GaleriaElastica.astro'
 import RejillaProductos from '../../components/RejillaProductos.astro'
+import { marcas } from '../../data/marcas'
 import { productos } from '../../data/productos'
-import { archivoDeMarcas, marcaIndexable, type EntradaArchivo } from '../../lib/archivo-marcas'
+import { deMarca, enumerar, tarjetasEnOrden } from '../../lib/catalogo'
+import { fichaMarca, fichaMigas, serializar, type Miga } from '../../lib/datos-estructurados'
+import { resolverImagen, resolverImagenMarca, urlLogo } from '../../lib/imagenes-productos'
 import {
-  completarGaleria,
-  descripcionDeMarca,
-  enumerar,
-  galeriaDePiezas,
-  tarjetasEnOrden,
-} from '../../lib/catalogo'
-import { resolverImagen } from '../../lib/imagenes-productos'
-import { CONFIG, VENTA } from '../../config'
-import { slugMarca } from '../../lib/filtros'
-import { resolverImagenMarca } from '../../lib/imagenes-marcas'
-import { resolverLogoMarca } from '../../lib/logos-marcas'
-import {
-  fichaMarca,
-  fichaMigas,
-  serializar,
-  type Miga,
-} from '../../lib/datos-estructurados'
+  comprobarMarcas,
+  descripcionMarca,
+  galeriaDeMarca,
+  lugarDe,
+  tituloMarca,
+} from '../../lib/marcas'
 
+/**
+ * Una pagina por cada marca del archivo, tenga hoy prendas o no: el menu las
+ * enlaza todas, y la marca que todavia no tiene piezas dice que esta en
+ * camino en vez de dar un 404.
+ */
 export function getStaticPaths() {
-  return archivoDeMarcas().map((entrada) => ({
-    params: { slug: entrada.slug },
-    props: { entrada },
-  }))
+  // Aqui y no en cada pagina: una prenda de una marca que no esta en el
+  // archivo enlazaria a una pagina que no existe, y el build tiene que
+  // pararse antes de publicarla.
+  comprobarMarcas(productos, marcas)
+  return marcas.map((marca) => ({ params: { slug: marca.slug }, props: { marca } }))
 }
 
-const { entrada } = Astro.props as { entrada: EntradaArchivo }
-const { nombre, slug, ficha } = entrada
-
-/* Las piezas de esta marca, en el mismo orden con el que abre el catalogo.
-   `some` y no igualdad: una colaboracion es de dos marcas y sale en las dos
-   paginas, que es lo que la hace una colaboracion y no una prenda prestada. */
-const suyas = productos.filter((p) => p.marcas.some((m) => slugMarca(m) === slug))
-const enOrden = tarjetasEnOrden(suyas)
+const { marca } = Astro.props
+const { ficha } = marca
+const prendas = deMarca(productos, marca.slug)
 
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
 }
 
-/* La galeria de campana de la ficha, si la hay. Si no, fotos de las piezas
-   de la marca, hasta 5.
+/**
+ * La portada: la foto de campaña de la marca, o la de ciudad de reserva. La
+ * de reserva lleva su propio alt si la marca tiene ficha -- describe lo que
+ * se ve --, y uno generico si no, que es una pagina provisional de verdad.
+ */
+const reserva = resolverImagenMarca('placeholder-ciudad.jpg')
+const portada = marca.portada
+  ? { datos: resolverImagenMarca(marca.portada.archivo), alt: marca.portada.alt }
+  : {
+      datos: reserva,
+      alt: ficha
+        ? 'Siluetas de edificios de una ciudad en blanco y negro'
+        : `Fotografía de campaña de ${marca.nombre}`,
+    }
 
-   Una marca CON ficha ensena siempre las 5: lo que falte lo cubre el
-   placeholder, y cada foto real que llegue desplaza a uno. Una marca sin
-   ficha solo tiene galeria si reune dos fotos de piezas: su pagina aun no
-   presenta nada, y un acordeon de relleno no lo disimula. */
-const dePiezas = galeriaDePiezas(enOrden, 5, ficha ? 0 : 2).map((foto) => ({
-  imagen: resolverImagen(foto.archivo),
-  alt: foto.alt,
-}))
-const galeria = ficha?.galeria
-  ? ficha.galeria.map((foto) => ({ imagen: resolverImagenMarca(foto.imagen), alt: foto.alt }))
-  : ficha
-    ? completarGaleria(dePiezas, {
-        imagen: resolverImagenMarca('placeholder-ciudad.jpg'),
-        alt: 'Siluetas de edificios de una ciudad en blanco y negro',
-      })
-    : dePiezas
+// La tarjeta para compartir: la portada recortada a 1200x630, la proporcion
+// que piden WhatsApp e Instagram.
+const tarjeta = await getImage({ src: portada.datos, width: 1200, height: 630, format: 'jpg' })
 
-/* La marca sin ficha todavia no tiene foto de campana propia, y una portada
-   sin imagen dejaria el nombre flotando sobre el fondo del sitio: se pinta la
-   de reserva, la misma que ya usa el archivo mientras llega la de verdad. */
-const imagen = resolverImagenMarca(ficha?.imagen ?? 'placeholder-ciudad.jpg')
-const alt = ficha?.alt ?? `Fotografía de campaña de ${nombre}`
-
-/* El logo de la marca, si ya esta dibujado. Los SVG llegan de uno en uno, asi
-   que faltar es lo normal y no un error: sin logo la portada pinta el nombre
-   en texto, que es lo que hacia hasta ahora. */
-const logo = resolverLogoMarca(slug)
-
-/* La descripcion del buscador: nombre y pais delante, que es como se busca,
-   y detras la propuesta y lo que hay de la marca. */
-const nombreBuscado = ficha?.nombreBusqueda ?? nombre
-const descripcion = descripcionDeMarca(
-  nombreBuscado,
-  ficha?.propuesta,
-  suyas,
-  `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`,
-  'Envío gratis a toda Colombia.'
+const galeria = galeriaDeMarca(
+  marca,
+  prendas,
+  (archivo, carpeta) => (carpeta === 'marcas' ? resolverImagenMarca(archivo) : resolverImagen(archivo)),
+  { datos: reserva, alt: 'Siluetas de edificios de una ciudad en blanco y negro' }
 )
-
-/* El titulo del buscador: el nombre y "en Colombia", que es como se busca,
-   y detras lo que es la marca si la ficha lo dice. Con `nombreBusqueda`
-   va la forma en que se busca -- "Polo Ralph Lauren" -- y no el nombre a
-   secas; el h1 sigue siendo el nombre real. */
-const titulo = ficha?.titular
-  ? `${nombreBuscado} en Colombia: ${ficha.titular}`
-  : `${nombreBuscado} en Colombia`
-/* La misma regla que las fichas de producto: si con " | The Rack store" pasa
-   de los ~60 caracteres donde Google corta, se suelta el nombre de la tienda
-   antes que el titular. */
-const sinNombreTienda = `${titulo} | ${CONFIG.nombre}`.length > 60
-
-/* La tarjeta al compartir el enlace es la portada de la marca, recortada al
-   1200x630 que piden WhatsApp e Instagram. Sin ella salia el logo de la
-   tienda, igual para las veinticinco marcas. */
-const tarjeta = await getImage({ src: imagen, width: 1200, height: 630, fit: 'cover', format: 'jpg' })
-
-/* Los fundadores en la linea de datos: "A y B" cuando son varios. */
-const fundadores = typeof ficha?.fundador === 'string' ? ficha.fundador : enumerar(ficha?.fundador ?? [])
 
 const migas: Miga[] = [
   { nombre: 'Inicio', ruta: '/' },
   { nombre: 'Archivo de marcas', ruta: '/marca/' },
-  { nombre },
+  { nombre: marca.nombre },
 ]
 const migasJson = serializar(fichaMigas(migas, Astro.site))
 
-/* Los datos estructurados de marca declaran fundacion, fundador y pais: sin
-   ficha no hay ninguno de los tres, y publicar un Brand vacio es afirmar algo
-   que no se sabe. La pagina se queda con sus migas, que si son ciertas. */
-const marcaJson = ficha
+// Solo con ficha: un Brand sin fundacion ni origen no le cuenta al buscador
+// nada que el titulo no diga ya.
+const fichaJson = ficha
   ? serializar(
       fichaMarca({
-        nombre,
-        propuesta: ficha.propuesta,
-        url: new URL(`/marca/${slug}/`, Astro.site).href,
-        pais: ficha.pais,
-        ciudad: ficha.ciudad,
-        anio: ficha.anio,
-        fundador: ficha.fundador,
-        imagen: new URL(imagen.src, Astro.site).href,
-        urls: enOrden.map(
+        nombre: marca.nombre,
+        ficha,
+        url: new URL(`/marca/${marca.slug}/`, Astro.site).href,
+        imagen: new URL(portada.datos.src, Astro.site).href,
+        lugar: lugarDe(ficha),
+        urls: tarjetasEnOrden(prendas).map(
           ({ producto, variante }) =>
             new URL(`/producto/${producto.slug}/${variante.slug}/`, Astro.site).href
         ),
@@ -153,122 +89,90 @@ const marcaJson = ficha
     )
   : null
 ---
-
 <Layout
-  titulo={titulo}
-  sinNombreTienda={sinNombreTienda}
-  descripcion={descripcion}
-  indexable={marcaIndexable(slug)}
+  titulo={tituloMarca(marca)}
+  descripcion={descripcionMarca(marca, prendas)}
   imagen={new URL(tarjeta.src, Astro.site).href}
-  imagenAlt={alt}
+  imagenAlt={portada.alt}
   imagenAncho={1200}
   imagenAlto={630}
+  sinIndexar={!ficha && prendas.length === 0}
 >
   <script type="application/ld+json" is:inline set:html={migasJson}></script>
-  {marcaJson && <script type="application/ld+json" is:inline set:html={marcaJson}></script>}
+  {fichaJson && <script type="application/ld+json" is:inline set:html={fichaJson}></script>}
 
-  {/* La foto abre la pagina a sangre, de punta a punta, con el nombre encima:
-      la marca se presenta como una portada, que es lo que hace que alguien que
-      no la conoce se pare a leer.
-
-      Va FUERA de .contenedor y no con el truco de `margin-inline: calc(50% -
-      50vw)`: el hueco de la barra de desplazamiento esta siempre reservado en
-      global.css, asi que 100vw es mas ancho que el area de contenido y la
-      pagina entera cogeria scroll horizontal. */}
+  {/* A todo el ancho, fuera del contenedor: es la portada de la marca, no
+      una foto mas de la pagina. */}
   <header class="marca__portada">
-    {/* `sizes` es 100vw porque la foto ya ocupa la ventana entera. Los anchos
-        llegan a 1920 por las pantallas grandes: a 1400 px de ventana la foto
-        mide 1400 CSS px, que en una pantalla 2x son 2800 reales. */}
     <Image
       class="marca__foto"
-      src={imagen}
-      alt={alt}
-      widths={[640, 960, 1280, 1600, 1920]}
+      src={portada.datos}
+      alt={portada.alt}
+      widths={[640, 960, 1280, 1600, 1800]}
       sizes="100vw"
       loading="eager"
     />
-    {/* El video va encima de la foto, en la misma celda: mientras carga, o
-        si no carga, se ve la foto, que es su primer fotograma. Mudo porque
-        sin `muted` el navegador no lo arranca solo, y decorativo porque lo
-        que cuenta la portada es el nombre. */}
-    {ficha?.video && (
+    {/* El video va encima de la foto y la tapa. Sin audio, en bucle y
+        oculto a los lectores de pantalla: es ambiente, la foto de debajo ya
+        lleva el alt. */}
+    {marca.portada?.video && (
       <video
         class="marca__foto marca__video"
-        src={`/videos/${ficha.video}`}
-        poster={imagen.src}
+        src={marca.portada.video}
+        poster={portada.datos.src}
         autoplay
         muted
         loop
         playsinline
         aria-hidden="true"
-      />
+      ></video>
     )}
-    {/* El logo va DENTRO del h1, no en lugar del h1: el titular de esta
-        pagina es el nombre de la marca, y es lo que lee el buscador y lo que
-        anuncia un lector de pantalla. Como <img> con `alt`, el h1 conserva
-        su texto -- el dibujo solo sustituye a la letra, no al titular. */}
     <h1 class="marca__nombre">
-      {logo ? <img class="marca__logo" src={logo} alt={nombre} /> : nombre}
+      {marca.logo ? <img class="marca__logo" src={urlLogo(marca.logo)} alt={marca.nombre} /> : marca.nombre}
     </h1>
   </header>
 
   <div class="contenedor marca-pagina">
     <Migas migas={migas} />
 
-    {/* Con galeria, el texto y las fotos van lado a lado en pantalla ancha:
-        se lee la marca mientras se la mira. Sin galeria el texto se queda
-        solo, a su medida de lectura, como estaba. */}
     <div class:list={['marca__cuerpo', { 'marca__cuerpo--galeria': galeria.length > 0 }]}>
       <div class="marca__relato">
         <div class="marca__cabecera">
           {ficha ? (
             <>
-              {/* Pais, ano y fundador en una linea: es la credencial de la marca,
-                  no el argumento. El argumento viene debajo. */}
               <p class="marca__datos">
-                <span>{ficha.ciudad ? `${ficha.ciudad}, ${ficha.pais}` : ficha.pais}</span>
+                <span>{lugarDe(ficha)}</span>
                 <span aria-hidden="true">·</span>
-                <span>{ficha.anio}</span>
+                <span>{ficha.fundacion}</span>
                 <span aria-hidden="true">·</span>
-                <span>{fundadores}</span>
+                <span>{enumerar(ficha.fundadores)}</span>
               </p>
               <p class="marca__propuesta">{ficha.propuesta}</p>
             </>
           ) : (
-            /* Se dice que falta en vez de disimularlo con relleno: quien llega
-               aqui merece saber si esta viendo todo lo que hay. */
-            <p class="marca__pendiente">La ficha de {nombre} todavía se está escribiendo.</p>
+            <p class="marca__pendiente">La ficha de {marca.nombre} todavía se está escribiendo.</p>
           )}
         </div>
 
         {ficha && (
           <div class="marca__texto">
-            {/* El relato con su titular: sin el, la pagina saltaba del h1 a
-                los parrafos y el buscador no tenia como leer de que van. */}
-            <h2 class="marca__texto-titulo">Por qué trajimos {nombre} a Colombia</h2>
-            {ficha.porQue.map((parrafo) => <p>{parrafo}</p>)}
+            <h2 class="marca__texto-titulo">Por qué trajimos {marca.nombre} a Colombia</h2>
+            {ficha.texto.map((parrafo) => <p>{parrafo}</p>)}
           </div>
         )}
       </div>
-      {galeria.length > 0 && <GaleriaElastica fotos={galeria} />}
+
+      {galeria.length > 0 && <Galeria fotos={galeria} />}
     </div>
 
-    {enOrden.length > 0 ? (
+    {prendas.length > 0 ? (
       <section class="marca__piezas">
         <h2>Piezas disponibles</h2>
-        {/* Sin barra de filtros: ya se esta dentro de un filtro, y con tres
-            piezas un desplegable de prenda solo puede estorbar. */}
-        {/* La marca de esta pagina viaja hasta la tarjeta: dentro del
-            archivo de New Balance, la colaboracion se presenta como New
-            Balance y no como las dos. */}
-        <RejillaProductos productos={suyas} marcaContexto={slug} />
+        <RejillaProductos productos={prendas} marcaPagina={marca.nombre} />
       </section>
     ) : (
-      /* La marca queda presentada aunque no haya nada que vender. Es
-         exactamente para lo que existe el archivo: se presenta antes de
-         tener, no despues. */
       <p class="marca__sin-piezas">
-        Ahora mismo no hay piezas de {nombre} en la tienda.
+        Ahora mismo no hay piezas de {marca.nombre} en la tienda.
         <a href="/">Mira el resto del catálogo</a>.
       </p>
     )}
@@ -280,20 +184,15 @@ const marcaJson = ficha
 
   .marca__cabecera { margin-block: var(--espacio-3); }
 
-  /* La galeria se pone a la altura de la cabecera, no del parrafo: el margen
-     de arriba de la cabecera pasa al cuerpo para que las dos columnas
-     arranquen en la misma linea. */
+  /* Con galeria, texto y fotos van en dos columnas desde tablet ancha: el
+     texto a su medida de lectura y la galeria con todo el resto. */
   .marca__cuerpo--galeria {
     display: grid;
     gap: var(--espacio-3);
     margin-block: var(--espacio-3);
   }
-
   .marca__cuerpo--galeria .marca__cabecera { margin-block-start: 0; }
-
   @media (min-width: 900px) {
-    /* El texto se queda en su medida de lectura y la galeria se lleva el
-       resto: es la parte que crece con la pantalla. */
     .marca__cuerpo--galeria {
       grid-template-columns: minmax(0, 62ch) minmax(0, 1fr);
       gap: var(--espacio-4);
@@ -301,20 +200,15 @@ const marcaJson = ficha
     }
   }
 
-  /* Foto y nombre en la MISMA celda de una rejilla de una sola celda: se
-     apilan sin sacar el nombre del flujo, asi que la altura de la portada
-     sigue siendo la de la foto y nada se solapa si el nombre crece. */
+  /* --- Portada --- */
+  /* Foto, video, velo y nombre en la misma celda de la rejilla: se apilan
+     sin posicionar nada a mano. */
   .marca__portada {
-    display: grid;
     position: relative;
+    display: grid;
   }
-
   .marca__portada > * { grid-area: 1 / 1; }
 
-  /* Una franja ancha, no una portada entera: el alto es el 60% del que daria
-     la foto completa. El 3:2 del archivo se recorta por el centro a 5:2, y el
-     tope de altura baja en la misma proporcion (80vh -> 48vh) para que en
-     pantalla ancha y en pantalla baja se corte igual. */
   .marca__foto {
     width: 100%;
     height: auto;
@@ -322,64 +216,43 @@ const marcaJson = ficha
     max-height: 48vh;
     object-fit: cover;
   }
-
-  /* Quien pide menos movimiento se queda con la foto. */
+  /* Quien pide menos movimiento se queda con la foto: el video no llega a
+     pintarse. */
   @media (prefers-reduced-motion: reduce) {
     .marca__video { display: none; }
   }
 
-  /* Velo oscuro, muy suave. Las fotos del archivo van viradas a blanco y
-     negro tirando a oscuro para que el nombre en blanco resalte; el velo es
-     el seguro de que se lea tambien sobre una que llegue mas clara. */
+  /* Un velo de arriba abajo para que el nombre en blanco se lea sobre
+     cualquier foto. */
   .marca__portada::after {
     content: '';
     grid-area: 1 / 1;
-    background: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4));
+    background: linear-gradient(rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.4));
   }
 
-  /* El nombre cruza la foto por la mitad. Va en la tercera capa -- foto,
-     velo, nombre -- y de ahi el z-index. */
   .marca__nombre {
     z-index: 1;
     align-self: center;
     margin: 0;
     padding-inline: var(--espacio-2);
-    color: #FFFFFF;
-    font-size: clamp(2rem, 8vw, 7rem);
+    color: #fff;
     text-align: center;
+    font-size: clamp(2rem, 8vw, 7rem);
     text-wrap: balance;
-    /* Sombra ancha y sin desplazamiento: no se ve como sombra, solo separa
-       las letras de lo que tengan detras. */
-    text-shadow: 0 0 2.5rem rgba(0, 0, 0, 0.55);
+    text-shadow: 0 0 2.5rem rgb(0 0 0 / 0.55);
   }
-
-  /* El logo ocupa el sitio del nombre y su mismo peso optico. Se mide por
-     ANCHO y no por alto porque casi todo logo de marca es una palabra tumbada
-     -- el de Aime Leon Dore es 6:1 -- y fijarle el alto dejaria unos cortos y
-     otros cruzando la foto de lado a lado.
-
-     El `max-height` es el freno para el logo que no sea una palabra: la
-     portada llega a 48vh, y un escudo cuadrado a 32rem de ancho la taparia
-     entera. A 15vh ninguno pasa de un tercio de la franja.
-
-     No lleva `filter: drop-shadow`: el SVG ya viene en blanco y el velo de
-     la portada es quien lo separa de la foto, igual que al nombre. Un
-     drop-shadow sobre un vector fino lo emborrona mas de lo que lo despega. */
   .marca__logo {
-    /* Bloque con margenes automaticos: el `text-align: center` del h1 centra
-       texto, no una caja de bloque. */
     display: block;
-    margin-inline: auto;
     width: min(58vw, 32rem);
-    max-height: 15vh;
     height: auto;
-    /* Con el alto topado, `width` deja de mandar y el navegador estiraria el
-       dibujo: `contain` conserva la proporcion pase lo que pase. */
+    max-height: 15vh;
+    margin-inline: auto;
     object-fit: contain;
   }
 
-  /* La misma typewriter chica que las migas y la barra de filtros: es un dato
-     de referencia, no una voz mas de la pagina. */
+  /* --- Relato --- */
+  /* Los datos en la sans de la marca y pequenos: son la ficha tecnica, se
+     leen de pasada antes de la propuesta. */
   .marca__datos {
     display: flex;
     flex-wrap: wrap;
@@ -389,7 +262,6 @@ const marcaJson = ficha
     font-family: var(--fuente-marca);
     font-size: 0.8125rem;
   }
-
   .marca__propuesta {
     max-width: 34ch;
     margin: 0;
@@ -397,29 +269,18 @@ const marcaJson = ficha
     font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
     line-height: 1.15;
   }
-
-  /* Medida de lectura: los parrafos son el sitio donde se convence, y a todo
-     el ancho de la pagina no se leen. Van en la sans de la descripcion de
-     las prendas: es texto corrido, y en typewriter cansaba igual. */
   .marca__texto {
-    font-family: var(--fuente-marca);
     max-width: 62ch;
     margin-block: var(--espacio-3);
+    font-family: var(--fuente-marca);
   }
-
   .marca__texto p + p { margin-block-start: var(--espacio-2); }
-
-  /* Titular de seccion, no de pagina: la typewriter de la propuesta pero a
-     tamano de lectura, para que no compita con ella. */
   .marca__texto-titulo {
     margin-block: 0 var(--espacio-2);
     font-family: var(--fuente-titular);
     font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
     line-height: 1.2;
   }
-
-  /* Del tamano de la propuesta a la que sustituye, pero en el gris de los
-     datos: ocupa su sitio sin sonar como si fuera el argumento de la marca. */
   .marca__pendiente {
     max-width: 34ch;
     margin: 0;
@@ -429,18 +290,16 @@ const marcaJson = ficha
     line-height: 1.2;
   }
 
+  /* --- Piezas --- */
   .marca__piezas { margin-block-start: var(--espacio-4); }
-
   .marca__piezas h2 {
     margin-block-end: var(--espacio-2);
     padding-block-end: var(--espacio-2);
     border-block-end: 1px solid var(--linea);
   }
-
   .marca__sin-piezas {
     margin-block-start: var(--espacio-4);
     color: var(--texto-suave);
   }
-
   .marca__sin-piezas a { color: inherit; }
 </style>

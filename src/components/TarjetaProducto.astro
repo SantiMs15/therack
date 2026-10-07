@@ -1,7 +1,6 @@
 ---
 import { Image } from 'astro:assets'
-import { ultimaTalla, type Producto, type Variante } from '../data/schema'
-import { nombreDeMarcas } from '../lib/archivo-marcas'
+import { nombreMarca, ultimaTalla, type Producto, type Variante } from '../data/schema'
 import { resolverImagen } from '../lib/imagenes-productos'
 import Precio from './Precio.astro'
 
@@ -18,23 +17,16 @@ interface Props {
    */
   principal?: boolean
   /**
-   * El slug de la marca cuya pagina esta pintando esta tarjeta, si la hay.
-   * Solo cambia algo para una colaboracion: dentro de /marca/new-balance/ la
-   * prenda se presenta como New Balance y no como las dos.
+   * La marca que se lee bajo el nombre, si no es la de la prenda. En la pagina
+   * de una marca una colaboracion firma solo con esa marca: la otra ya la dice
+   * el nombre de la prenda, y repetirla parece otra prenda.
    */
-  marcaContexto?: string | null
+  marcaVisible?: string
 }
-const {
-  producto,
-  variante,
-  prioridad = false,
-  principal = false,
-  marcaContexto = null,
-} = Astro.props
+const { producto, variante, prioridad = false, principal = false, marcaVisible } = Astro.props
 
-const nombreMarca = nombreDeMarcas(producto.marcas, marcaContexto)
-
-const alternativoPorDefecto = [nombreMarca, producto.nombre, variante.color]
+const marca = nombreMarca(producto)
+const alternativoPorDefecto = [marca, producto.nombre, variante.color]
   .filter(Boolean)
   .join(' ')
 
@@ -98,8 +90,8 @@ const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
         un <a>, que ni es HTML valido ni dejaria pulsar las flechas. */}
     <a class="enlace" href={enlace}>{producto.nombre} - {variante.color}</a>
   </h3>
-  {nombreMarca && <p class="marca">{nombreMarca}</p>}
-  <Precio class="precio" producto={producto} />
+  {(marcaVisible ?? marca) && <p class="marca">{marcaVisible ?? marca}</p>}
+  <Precio producto={producto} variante={variante} />
 </article>
 
 <style>
@@ -205,8 +197,6 @@ const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
   .nombre,
   .marca,
   .precio { text-align: center; }
-  /* Con rebaja el precio es una fila flexible, y ahi centra justify. */
-  .precio { justify-content: center; }
 
   .nombre {
     font-family: var(--fuente-ui);
@@ -234,6 +224,8 @@ const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
     color: var(--texto);
     font-size: 1.0625rem;
   }
+  /* Con rebaja el precio es una fila flexible; centrada como el resto. */
+  .precio { justify-content: center; }
 </style>
 
 <script>

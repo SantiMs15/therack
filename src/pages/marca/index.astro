@@ -1,85 +1,68 @@
 ---
-/**
- * EL ARCHIVO: la lista de las marcas que la tienda presenta.
- *
- * Le da al menu de la cabecera un destino propio -- hasta ahora "Marcas" solo
- * abria un panel -- y le da a un buscador una pagina que enumera la curaduria
- * de la tienda en vez de tener que deducirla de las fichas de producto.
- *
- * Lista TODAS las marcas de la tienda: todas tienen pagina. La que aun no
- * tiene ficha escrita se dice, en vez de esconderse -- el archivo cuenta lo
- * que la tienda trae, y una marca sin texto sigue siendo una marca que trae.
- */
 import Layout from '../../layouts/Layout.astro'
 import Migas from '../../components/Migas.astro'
-import { archivoDeMarcas, marcaIndexable } from '../../lib/archivo-marcas'
-import {
-  fichaArchivo,
-  fichaMigas,
-  serializar,
-  type Miga,
-} from '../../lib/datos-estructurados'
+import { marcas } from '../../data/marcas'
+import { productos } from '../../data/productos'
+import { deMarca } from '../../lib/catalogo'
+import { fichaCategoria, fichaMigas, serializar, type Miga } from '../../lib/datos-estructurados'
+import { CONFIG } from '../../config'
 
-const entradas = archivoDeMarcas()
+/**
+ * El archivo de marcas: todas, en orden alfabetico, con su origen y su
+ * propuesta en una linea. Las que no tienen ficha todavia salen igual --
+ * tienen pagina --, y dicen que la ficha esta en camino.
+ */
+const entrada = `Las marcas que ${CONFIG.nombre} trae a Colombia: de dónde vienen, quién las fundó y por qué las escogimos.`
 
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
 }
-
 const migas: Miga[] = [{ nombre: 'Inicio', ruta: '/' }, { nombre: 'Archivo de marcas' }]
 const migasJson = serializar(fichaMigas(migas, Astro.site))
 
-// A diferencia de /catalogo/<categoria>, esta pagina se genera siempre,
-// incluso con el archivo vacio. Un ItemList de cero elementos declara un
-// listado que no existe, asi que sin entradas no se emite fichaArchivo.
-const archivoJson =
-  entradas.length > 0
-    ? serializar(
-        fichaArchivo({
-          url: new URL('/marca/', Astro.site).href,
-          // Solo las indexables: listar aqui una pagina con noindex seria
-          // senalarle a Google una URL que la propia pagina le pide ignorar.
-          urls: entradas
-            .filter((e) => marcaIndexable(e.slug))
-            .map((e) => new URL(`/marca/${e.slug}/`, Astro.site).href),
-        })
-      )
-    : null
+/**
+ * El listado para el buscador nombra solo las marcas cuya pagina tiene algo
+ * que contar: una ficha o prendas. Las provisionales siguen enlazadas desde
+ * la lista y el menu, pero no se le piden a Google como contenido.
+ */
+const conContenido = marcas.filter(
+  (marca) => marca.ficha || deMarca(productos, marca.slug).length > 0
+)
+const listadoJson = serializar(
+  fichaCategoria({
+    nombre: 'Archivo de marcas',
+    descripcion: `Las marcas que trae ${CONFIG.nombre} al mercado colombiano, con su origen y su propuesta.`,
+    url: new URL('/marca/', Astro.site).href,
+    urls: conContenido.map((marca) => new URL(`/marca/${marca.slug}/`, Astro.site).href),
+  })
+)
 
-const descripcion =
-  'Las marcas que The Rack store trae a Colombia: de dónde vienen, quién las fundó y por qué las escogimos.'
+const ordenadas = [...marcas].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
 ---
-
-<Layout titulo="Archivo de marcas" descripcion={descripcion}>
+<Layout titulo="Archivo de marcas" descripcion={entrada}>
   <script type="application/ld+json" is:inline set:html={migasJson}></script>
-  {archivoJson && <script type="application/ld+json" is:inline set:html={archivoJson}></script>}
+  <script type="application/ld+json" is:inline set:html={listadoJson}></script>
 
   <div class="contenedor archivo">
     <Migas migas={migas} />
 
     <header class="archivo__cabecera">
       <h1>Archivo de marcas</h1>
-      <p class="archivo__entrada">{descripcion}</p>
+      <p class="archivo__entrada">{entrada}</p>
     </header>
 
-    {entradas.length === 0 ? (
+    {ordenadas.length === 0 ? (
       <p class="archivo__vacio">Todavía no hay marcas en el archivo.</p>
     ) : (
       <ul class="archivo__lista">
-        {entradas.map((entrada) => (
+        {ordenadas.map((marca) => (
           <li>
-            <a href={`/marca/${entrada.slug}/`}>
-              <h2>{entrada.nombre}</h2>
-              {entrada.ficha ? (
-                <>
-                  <p class="archivo__datos">
-                    {entrada.ficha.pais} · {entrada.ficha.anio}
-                  </p>
-                  <p class="archivo__propuesta">{entrada.ficha.propuesta}</p>
-                </>
-              ) : (
-                <p class="archivo__datos">Ficha en camino</p>
-              )}
+            <a href={`/marca/${marca.slug}/`}>
+              <h2>{marca.nombre}</h2>
+              <p class="archivo__datos">
+                {marca.ficha ? `${marca.ficha.pais} · ${marca.ficha.fundacion}` : 'Ficha en camino'}
+              </p>
+              {marca.ficha && <p class="archivo__propuesta">{marca.ficha.propuesta}</p>}
             </a>
           </li>
         ))}
@@ -90,47 +73,38 @@ const descripcion =
 
 <style>
   .archivo { padding-block: var(--espacio-2) var(--espacio-4); }
-
   .archivo__cabecera { margin-block: var(--espacio-3); }
-
   .archivo__entrada {
     max-width: 52ch;
     color: var(--texto-suave);
   }
 
+  /* Una lista de lineas, como un indice: el nombre grande, y debajo de
+     donde viene y que propone. */
   .archivo__lista {
     list-style: none;
     margin: 0;
     padding: 0;
     border-block-start: 1px solid var(--linea);
   }
-
   .archivo__lista li { border-block-end: 1px solid var(--linea); }
-
-  /* El enlace ocupa la fila entera: la marca, el dato y la propuesta son un
-     solo destino, y tres enlaces al mismo sitio se tabulan tres veces. */
   .archivo__lista a {
     display: block;
     padding-block: var(--espacio-3);
     color: inherit;
     text-decoration: none;
   }
-
   .archivo__lista a:hover h2 { text-decoration: underline; }
-
   .archivo__lista h2 { margin: 0; }
-
   .archivo__datos {
     margin-block: 0.25rem;
     color: var(--texto-suave);
     font-family: var(--fuente-marca);
     font-size: 0.8125rem;
   }
-
   .archivo__propuesta {
     max-width: 52ch;
     margin: 0;
   }
-
   .archivo__vacio { color: var(--texto-suave); }
 </style>

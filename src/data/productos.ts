@@ -1,4 +1,4 @@
-import { TALLAS_HOMBRE, TALLAS_MUJER, validarCatalogo, type Producto } from './schema'
+import { TALLA_UNICA, TALLAS_HOMBRE, TALLAS_MUJER, validarCatalogo, type Producto } from './schema'
 
 /**
  * FUENTE DE VERDAD DEL CATALOGO.
@@ -7,15 +7,22 @@ import { TALLAS_HOMBRE, TALLAS_MUJER, validarCatalogo, type Producto } from './s
  * src/assets/productos/ con los nombres que declares. Las fotos deben ir en
  * ratio 3:4 vertical.
  *
+ * El slug de la prenda y el nombre de sus fotos empiezan por la marca
+ * (lacoste-..., tommy-hilfiger-...): asi se ordenan solos en la carpeta y la
+ * URL ya dice de quien es la prenda. Si cambias el slug de una prenda
+ * publicada, anade su redireccion en public/.htaccess.
+ *
  * Cada color es una VARIANTE con sus propias fotos, su propia disponibilidad
  * y su propia pagina (/producto/<slug>/<color>), para que el enlace del
  * mensaje de WhatsApp lleve al color exacto que miraba el cliente.
+ *
+ * La marca tiene que existir en src/data/marcas.ts: es la que da la pagina a
+ * la que enlaza la ficha.
  *
  * Si algo esta mal, el build falla con un mensaje que dice que producto y que
  * campo. No publica una ficha rota.
  */
 const catalogo: unknown[] = [
-
   {
     slug: 'lacoste-intarsia-wool-sweater',
     nombre: 'Intarsia Branded Wool Sweater',
@@ -122,6 +129,7 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+
   {
     slug: 'lacoste-classic-printed-crew-neck',
     nombre: 'Classic Printed Crew Neck',
@@ -130,7 +138,8 @@ const catalogo: unknown[] = [
     tipo: 'buzo',
     precio: 290000,
     tallas: [...TALLAS_HOMBRE],
-    descripcion: 'Buzo Lacoste en algodón, corte clásico, estampado frontal Classic Logo.',
+    descripcion:
+      'Buzo Lacoste Classic Printed Crew Neck original en algodón, corte clásico y estampado Classic Logo al frente.',
     variantes: [
       {
         color: 'Negro',
@@ -192,6 +201,25 @@ const catalogo: unknown[] = [
           {
             archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-beige-modelo.jpg',
             alt: 'Buzo Tommy Hilfiger beige puesto, plano medio de un modelo que lo lleva con una camiseta blanca debajo y pantalón chino',
+          },
+        ],
+        disponible: true,
+      },
+      {
+        color: 'Borgoña',
+        slug: 'borgona',
+        // Rebajado solo este color: el beige sigue a precio normal y no entra en /sale.
+        precio: 248000,
+        precioAnterior: 290000,
+        tallas: ['M'],
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-borgona-frente.jpg',
+            alt: 'Buzo Tommy Hilfiger borgoña, vista frontal de la prenda sola con la cremallera abierta hasta el pecho y la bandera bordada a la derecha',
+          },
+          {
+            archivo: 'tommy-hilfiger-classic-quarter-zip-sweater-borgona-espalda.jpg',
+            alt: 'Buzo Tommy Hilfiger borgoña, vista de espalda de la prenda sola, lisa, con la cinta a rayas asomando por el cuello',
           },
         ],
         disponible: true,
@@ -293,7 +321,7 @@ const catalogo: unknown[] = [
             alt: 'Hoodie Essentials negro, vista de espalda con el logo Essentials Fear of God impreso en grande y en blanco entre los hombros',
             // Mismo criterio que el hoodie de Lacoste: en la rejilla va la
             // espalda, porque el logo grande distingue la prenda y el frente,
-            // con el logo pequeño en el pecho, no.
+            // con el logo pequeno en el pecho, no.
             portada: true,
           },
         ],
@@ -302,13 +330,14 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+
   {
     slug: 'tommy-hilfiger-mixed-media-puffer-jacket',
-    nombre: "Men's Mixed-Media Puffer Jacket",
+    nombre: 'Men\'s Mixed-Media Puffer Jacket',
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
     tipo: 'chaqueta',
-    precio: 390000,
+    precio: 515000,
     // Una sola talla, y es la que queda: la rejilla y la ficha lo avisan en
     // burdeos. No se declara la escala entera con las demas tachadas porque
     // de esta chaqueta no hay mas que esta pieza, y un rango tachado da a
@@ -331,6 +360,7 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+
   {
     slug: 'essentials-fleece-hoodie',
     nombre: 'Fleece Hoodie',
@@ -338,8 +368,6 @@ const catalogo: unknown[] = [
     categoria: 'hombre',
     tipo: 'hoodie',
     precio: 420000,
-    // De la S a la XL: no se declara TALLAS_HOMBRE entera porque de esta no
-    // hay ni XS ni XXL, y ofrecerlas tachadas daria a entender que vuelven.
     tallas: ['S', 'M', 'L', 'XL'],
     descripcion:
       'Hoodie Essentials de Fear of God en gris jaspeado, tejido fleece de algodón, corte oversize con hombros caídos, capucha sin cordones y puños y bajo acanalados. Lleva Fear of God Essentials en letras arqueadas sobre el pecho y la espalda lisa.',
@@ -356,15 +384,13 @@ const catalogo: unknown[] = [
             archivo: 'essentials-fleece-hoodie-gris-espalda.jpg',
             alt: 'Hoodie Essentials gris jaspeado, vista de espalda, lisa y sin ningún logo',
           },
-          // Sin `portada`: manda la primera, que es el frente. Al reves que el
-          // hoodie negro, este lleva el logo grande DELANTE y la espalda
-          // limpia, asi que lo que distingue la prenda ya esta en el frente.
         ],
         disponible: true,
       },
     ],
     destacado: true,
   },
+
   {
     slug: 'aime-leon-dore-unisphere-tee',
     nombre: 'Unisphere Tee',
@@ -387,9 +413,8 @@ const catalogo: unknown[] = [
           {
             archivo: 'aime-leon-dore-unisphere-tee-pristine-espalda.jpg',
             alt: 'Camiseta Aimé Leon Dore color crudo, vista de espalda con el globo Unisphere y los árboles de Flushing Meadows estampados en verde oscuro sobre la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough',
-            // Mismo criterio que el hoodie negro: manda la espalda, que es
-            // donde va el estampado grande. El frente solo lleva el escudo
-            // pequeño y en la rejilla pasaria por una camiseta lisa.
+            // En la rejilla va la espalda: el escudo grande es lo que se
+            // reconoce de lejos; el frente lo lleva pequeno.
             portada: true,
           },
         ],
@@ -404,9 +429,6 @@ const catalogo: unknown[] = [
     nombre: 'Long-Sleeve Unisphere Waffle Thermal',
     marca: 'Aimé Leon Dore',
     categoria: 'hombre',
-    // Buzo y no camiseta: el waffle es termico y pesa como una prenda de
-    // abrigo, y en Bogota quien la busca escribe "buzo", no "camiseta manga
-    // larga". El tipo es lo que nombra el titulo de la ficha en el buscador.
     tipo: 'buzo',
     precio: 660000,
     tallas: [...TALLAS_HOMBRE],
@@ -424,9 +446,8 @@ const catalogo: unknown[] = [
           {
             archivo: 'aime-leon-dore-unisphere-waffle-thermal-azul-marino-espalda.jpg',
             alt: 'Buzo Aimé Leon Dore de punto waffle azul marino, vista de espalda con el globo Unisphere y los árboles de Flushing Meadows estampados en crudo sobre la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough',
-            // Mismo criterio que la Unisphere Tee: manda la espalda, que es
-            // donde va el estampado grande. El frente solo lleva el escudo
-            // pequeño y en la rejilla pasaria por un buzo azul liso.
+            // Igual que la camiseta Unisphere: el escudo grande de la espalda
+            // es el que vende la prenda en la rejilla.
             portada: true,
           },
           {
@@ -454,9 +475,6 @@ const catalogo: unknown[] = [
       {
         color: 'Blanco',
         slug: 'blanco',
-        // Una sola foto: la prenda lleva el estampado delante y la espalda va
-        // lisa. La tarjeta esconde sola las flechas cuando no hay segunda
-        // foto que rotar.
         imagenes: [
           {
             archivo: 'aime-leon-dore-souvenir-tee-blanco-frente.jpg',
@@ -472,20 +490,11 @@ const catalogo: unknown[] = [
   {
     slug: 'aime-leon-dore-new-balance-geo-print-crewneck',
     nombre: 'Off-White New Balance Geo Print Crewneck',
-    /* La primera colaboracion del catalogo: la prenda es de las dos marcas,
-       no de una con la otra invitada. Sale al filtrar por cualquiera de las
-       dos y esta en las dos paginas del archivo. Dentro de una de esas dos
-       paginas se presenta con el nombre de esa marca; fuera, con los dos. */
     marca: ['Aimé Leon Dore', 'New Balance'],
     categoria: 'hombre',
     tipo: 'buzo',
     precio: 580000,
-    // Solo del medio de la escala. Las puntas siguen a la vista, tachadas: el
-    // rango que cubre la prenda es informacion util aunque hoy falte una talla.
-    tallas: TALLAS_HOMBRE.map((talla) => ({
-      talla,
-      disponible: talla === 'S' || talla === 'M' || talla === 'L',
-    })),
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: !['XS', 'XL', 'XXL'].includes(talla) })),
     descripcion:
       'Buzo Aimé Leon Dore × New Balance en punto de algodón color hueso, cuello redondo acanalado y puños y bajo en rib. Lleva el globo terráqueo de New Balance tramado en puntos grises, que cruza el pecho y baja por una manga, y la firma AIMÉ tejida abajo a la derecha.',
     variantes: [
@@ -507,6 +516,7 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+
   {
     slug: 'kidsuper-studios-astronaut-tee',
     nombre: 'Astronaut Tee',
@@ -514,8 +524,6 @@ const catalogo: unknown[] = [
     categoria: 'hombre',
     tipo: 'camiseta',
     precio: 220000,
-    // Una sola pieza, en M: mismo criterio que la chaqueta Tommy, sin la
-    // escala entera tachada.
     tallas: ['M'],
     descripcion:
       'Camiseta KidSuper Studios en algodón color crudo, cuello redondo acanalado y corte holgado de hombro caído. Lleva al frente un astronauta pintado a mano en acuarela, flotando con un libro abierto, y la firma de la marca con la leyenda A discovery tour of our universe.',
@@ -534,6 +542,7 @@ const catalogo: unknown[] = [
     ],
     destacado: true,
   },
+
   {
     slug: 'pleasures-twitch-studded-crewneck-t-shirt',
     nombre: 'Twitch Studded Crewneck T-Shirt',
@@ -541,7 +550,6 @@ const catalogo: unknown[] = [
     categoria: 'hombre',
     tipo: 'camiseta',
     precio: 220000,
-    // M y L son las del blanco; el negro declara las suyas abajo.
     tallas: ['M', 'L'],
     descripcion:
       'Camiseta Pleasures en algodón, cuello redondo acanalado y corte holgado. Cruza el pecho el logo Pleasures en letra gótica arqueada, aplicado en cuero sintético negro y tachonado con remaches plateados. En negro con lavado desgastado o en blanco.',
@@ -555,10 +563,9 @@ const catalogo: unknown[] = [
             alt: 'Camiseta Pleasures negra desgastada, vista frontal de la prenda sola con el logo Pleasures en letra gótica arqueada, aplicado en cuero negro con remaches plateados, y la etiqueta roja en el cuello',
           },
         ],
-        // Una sola pieza en negro: sin la L, que es del blanco, y sin
-        // tacharla, que daria a entender que puede volver.
-        tallas: ['M'],
         disponible: true,
+        // Del negro queda una sola talla; del blanco, dos.
+        tallas: ['M'],
       },
       {
         color: 'Blanco',
@@ -579,8 +586,9 @@ const catalogo: unknown[] = [
     slug: 'eme-studios-pinstripe-night-sky-knit-sweater',
     nombre: 'Pinstripe Night Sky Knit Sweater',
     marca: 'Eme Studios',
-    // Unisex: sale en hombre y en mujer.
-    categoria: ['hombre', 'mujer'],
+    categoria: 'hombre',
+    // Corte sin genero: tambien sale en el catalogo de mujer.
+    tambienEn: ['mujer'],
     tipo: 'buzo',
     precio: 420000,
     tallas: [...TALLAS_HOMBRE],
@@ -598,6 +606,704 @@ const catalogo: unknown[] = [
           {
             archivo: 'eme-studios-pinstripe-night-sky-knit-sweater-azul-marino-modelo-hombre.jpg',
             alt: 'Chico de cuerpo entero con el buzo Eme Studios azul marino a rayas y EME en granate, jean ancho y una gorra granate colgada del bolsillo',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'tommy-hilfiger-back-flag-logo-pullover-hoodie',
+    nombre: 'Back Flag Logo Pullover Hoodie',
+    marca: 'Tommy Hilfiger',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 370000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: ['XS', 'L', 'XL'].includes(talla) })),
+    descripcion:
+      'Hoodie Tommy Hilfiger en felpa de algodón, capucha con cordones, bolsillo canguro, bandera bordada al frente y gran bandera tricolor en la espalda con el nombre de la marca en relieve.',
+    variantes: [
+      {
+        color: 'Crema',
+        slug: 'crema',
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-back-flag-logo-pullover-hoodie-crema-frente.jpg',
+            alt: 'Hoodie Tommy Hilfiger crema, vista frontal de la prenda sola con capucha de cordones, bolsillo canguro y la bandera bordada a la derecha',
+          },
+          {
+            archivo: 'tommy-hilfiger-back-flag-logo-pullover-hoodie-crema-espalda.jpg',
+            alt: 'Hoodie Tommy Hilfiger crema, vista de espalda con la gran bandera azul marino y roja y el nombre Tommy Hilfiger en relieve',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'tommy-hilfiger-cable-knit-quarter-zip-sweater',
+    nombre: 'Cable Knit Quarter-Zip Sweater',
+    marca: 'Tommy Hilfiger',
+    categoria: 'hombre',
+    tipo: 'buzo',
+    precio: 260000,
+    precioAnterior: 450000,
+    tallas: ['L'],
+    descripcion:
+      'Buzo Tommy Hilfiger de punto trenzado en algodón, cuello alto con cremallera hasta el pecho, cinta tricolor en el cuello y bandera bordada en el costado.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-cable-knit-quarter-zip-sweater-negro-frente.jpg',
+            alt: 'Buzo Tommy Hilfiger negro de punto trenzado, vista frontal de la prenda sola con la cremallera hasta el pecho y la bandera bordada a la derecha',
+          },
+          {
+            archivo: 'tommy-hilfiger-cable-knit-quarter-zip-sweater-negro-espalda.jpg',
+            alt: 'Buzo Tommy Hilfiger negro de punto trenzado, vista de espalda de la prenda sola con la cinta tricolor en el cuello',
+          },
+          {
+            archivo: 'tommy-hilfiger-cable-knit-quarter-zip-sweater-negro-modelo.jpg',
+            alt: 'Buzo Tommy Hilfiger negro puesto, plano medio de un modelo que lo lleva con camisa blanca debajo y jean azul',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'ralph-lauren-loopback-fleece-hoodie',
+    nombre: 'Loopback Fleece Hoodie',
+    marca: 'Ralph Lauren',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 390000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Hoodie Polo Ralph Lauren en felpa loopback de algodón, capucha con cordones, bolsillo canguro y el jugador de polo bordado tono sobre tono en el pecho.',
+    variantes: [
+      {
+        color: 'Crema',
+        slug: 'crema',
+        imagenes: [
+          {
+            archivo: 'ralph-lauren-loopback-fleece-hoodie-crema-frente.jpg',
+            alt: 'Hoodie Polo Ralph Lauren crema, vista frontal de la prenda sola con capucha de cordones, bolsillo canguro y el jugador de polo bordado a la derecha',
+          },
+          {
+            archivo: 'ralph-lauren-loopback-fleece-hoodie-crema-modelo.jpg',
+            alt: 'Hoodie Polo Ralph Lauren crema puesto, plano medio de un modelo que lo lleva con camiseta blanca debajo, gorra beige y pantalón caqui',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'diesel-oval-d-sleeve-sweatshirt',
+    nombre: 'Oval D Sleeve Sweatshirt',
+    marca: 'Diesel',
+    categoria: 'hombre',
+    tipo: 'buzo',
+    precio: 446000,
+    tallas: ['L'],
+    descripcion:
+      'Buzo Diesel en felpa de algodón, corte amplio con hombros caídos, cuello redondo acanalado, etiqueta roja de la marca y logo Oval D metálico en la manga.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'diesel-oval-d-sleeve-sweatshirt-negro-frente.jpg',
+            alt: 'Buzo Diesel negro, vista frontal de la prenda sola con cuello redondo, etiqueta roja en el cuello y el logo Oval D metálico en la manga',
+          },
+          {
+            archivo: 'diesel-oval-d-sleeve-sweatshirt-negro-detalle.jpg',
+            alt: 'Buzo Diesel negro puesto, detalle de perfil del hombro con el logo Oval D metálico en la manga',
+          },
+          {
+            archivo: 'diesel-oval-d-sleeve-sweatshirt-negro-modelo.jpg',
+            alt: 'Buzo Diesel negro puesto, plano medio de un modelo que lo lleva con pantalón negro de costuras blancas',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'diesel-zip-shoulder-hoodie',
+    nombre: 'Zip Shoulder Hoodie',
+    marca: 'Diesel',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 550000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: ['S', 'M', 'L', 'XL'].includes(talla) })),
+    descripcion:
+      'Hoodie Diesel en felpa de algodón, corte amplio con mangas raglán, paneles blancos con cremalleras en los hombros, capucha con cordones, bolsillo canguro y logo Diesel en el pecho.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'diesel-zip-shoulder-hoodie-negro-frente.jpg',
+            alt: 'Hoodie Diesel negro, vista frontal de la prenda sola con paneles blancos y cremalleras en los hombros, bolsillo canguro y logo Diesel en el pecho',
+          },
+          {
+            archivo: 'diesel-zip-shoulder-hoodie-negro-modelo.jpg',
+            alt: 'Hoodie Diesel negro puesto, plano medio de un modelo que lo lleva con pantalón negro',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'diesel-ginn-crewneck-sweatshirt',
+    nombre: 'Ginn Crewneck Sweatshirt',
+    marca: 'Diesel',
+    categoria: 'hombre',
+    tipo: 'buzo',
+    precio: 310000,
+    tallas: ['M'],
+    descripcion:
+      'Buzo Diesel en felpa de algodón, cuello redondo acanalado y estampado Diesel Industry Denim Division en el pecho.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'diesel-ginn-crewneck-sweatshirt-azul-marino-frente.jpg',
+            alt: 'Buzo Diesel azul marino, vista frontal de la prenda sola con el estampado Diesel Industry Denim Division en azul y rojo en el pecho',
+          },
+          {
+            archivo: 'diesel-ginn-crewneck-sweatshirt-azul-marino-modelo.jpg',
+            alt: 'Buzo Diesel azul marino puesto, plano medio de frente de un modelo que lo lleva con jean gris',
+          },
+          {
+            archivo: 'diesel-ginn-crewneck-sweatshirt-azul-marino-modelo-espalda.jpg',
+            alt: 'Buzo Diesel azul marino puesto, vista de espalda lisa de un modelo que lo lleva con jean gris',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'diesel-successful-living-hoodie',
+    nombre: 'Successful Living Hoodie',
+    marca: 'Diesel',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 430000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: ['S', 'M', 'L'].includes(talla) })),
+    descripcion:
+      'Hoodie Diesel en felpa de algodón, capucha con cordones, bolsillo canguro con costuras en contraste, logo Diesel en la manga y estampado Successful Living en la espalda, ambos en rosa.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'diesel-successful-living-hoodie-negro-frente.jpg',
+            alt: 'Hoodie Diesel negro, vista frontal de la prenda sola con capucha de cordones, bolsillo canguro y el logo Diesel en rosa en la manga',
+          },
+          {
+            archivo: 'diesel-successful-living-hoodie-negro-espalda.jpg',
+            alt: 'Hoodie Diesel negro, vista de espalda de la prenda sola con el estampado Successful Living en rosa',
+          },
+          {
+            archivo: 'diesel-successful-living-hoodie-negro-detalle.jpg',
+            alt: 'Hoodie Diesel negro puesto, detalle de la manga con el logo Diesel en rosa y el bolsillo canguro',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'adidas-szn-french-terry-loose-pants',
+    nombre: 'SZN French Terry Loose Pants',
+    marca: 'Adidas',
+    // Corte unisex: va en el catalogo de mujer y sale tambien en el de hombre.
+    categoria: 'mujer',
+    tambienEn: ['hombre'],
+    tipo: 'pantalon',
+    precio: 185000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Pantalón Adidas en french terry de algodón, corte holgado, cintura elástica con cordón, puños elásticos en el tobillo y el logo Adidas tono sobre tono en la pierna.',
+    variantes: [
+      {
+        color: 'Beige',
+        slug: 'beige',
+        imagenes: [
+          {
+            archivo: 'adidas-szn-french-terry-loose-pants-beige-frente.jpg',
+            alt: 'Pantalón Adidas beige, vista frontal de la prenda sola con cintura elástica y cordón, puños en el tobillo y el logo Adidas en la pierna',
+          },
+          {
+            archivo: 'adidas-szn-french-terry-loose-pants-beige-modelo.jpg',
+            alt: 'Pantalón Adidas beige puesto, plano de la cintura para abajo de una persona que lo lleva con buzo a juego y tenis blancos',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'adidas-adilenium-season-5-cargo-pants',
+    nombre: 'Adilenium Season 5 Cargo Pants',
+    marca: 'Adidas',
+    categoria: 'hombre',
+    tipo: 'pantalon',
+    precio: 330000,
+    // Una sola pieza, en talla de cintura: la ficha la avisa como ultima talla.
+    tallas: ['34'],
+    descripcion:
+      'Pantalón cargo Adidas Originals en ripstop negro, corte ancho, cintura elástica con botón, bolsillo cargo con el trébol bordado y franjas laterales estampadas con las tres rayas.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'adidas-adilenium-season-5-cargo-pants-negro-frente.jpg',
+            alt: 'Pantalón cargo Adidas negro, vista frontal de la prenda sola con franjas laterales estampadas, las tres rayas y el bolsillo cargo con el trébol',
+          },
+          {
+            archivo: 'adidas-adilenium-season-5-cargo-pants-negro-modelo.jpg',
+            alt: 'Pantalón cargo Adidas negro puesto, plano de la cintura para abajo de un modelo con camiseta negra y tenis Superstar negros',
+          },
+          {
+            archivo: 'adidas-adilenium-season-5-cargo-pants-negro-detalle.jpg',
+            alt: 'Pantalón cargo Adidas negro puesto, detalle del bolsillo cargo con el trébol bordado sobre la franja estampada con las tres rayas',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'adidas-adicolor-spacer-oversized-hoodie',
+    nombre: 'Adicolor Spacer Oversized Hoodie',
+    marca: 'Adidas',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    precio: 255000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Hoodie Adidas Originals de corte oversize en tejido spacer, cremallera completa, capucha con cordones, bolsillos canguro, las tres rayas en las mangas y el trébol en el pecho.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'adidas-adicolor-spacer-oversized-hoodie-negro-frente.jpg',
+            alt: 'Hoodie Adidas negro con cremallera, vista frontal de la prenda sola con las tres rayas blancas en las mangas y el trébol blanco en el pecho',
+          },
+          {
+            archivo: 'adidas-adicolor-spacer-oversized-hoodie-negro-modelo.jpg',
+            alt: 'Hoodie Adidas negro puesto y abierto, plano medio de un modelo que lo lleva con camiseta negra y jean negro ancho',
+          },
+          {
+            archivo: 'adidas-adicolor-spacer-oversized-hoodie-negro-modelo-espalda.jpg',
+            alt: 'Hoodie Adidas negro puesto, vista de espalda lisa con la capucha caída y las rayas blancas en el hombro',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'nike-flyfree-shield-101',
+    nombre: 'Flyfree Shield 101',
+    marca: 'Nike',
+    // Accesorio sin genero: sale tambien en los catalogos de mujer y hombre.
+    categoria: 'accesorios',
+    tambienEn: ['mujer', 'hombre'],
+    tipo: 'gafas',
+    precio: 335000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Gafas de sol deportivas Nike de media montura blanca, lente envolvente espejada Nike Max Optics en rojo y violeta y patillas azul marino con agarre.',
+    variantes: [
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        imagenes: [
+          {
+            archivo: 'nike-flyfree-shield-101-blanco-frente.jpg',
+            alt: 'Gafas Nike Flyfree Shield blancas, vista de frente con la lente envolvente espejada en rojo y violeta y el puente azul marino',
+          },
+          {
+            archivo: 'nike-flyfree-shield-101-blanco-lado.jpg',
+            alt: 'Gafas Nike Flyfree Shield blancas, vista de lado con la lente espejada, el swoosh negro y la patilla azul marino',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-short-sleeve-logo-rashguard',
+    nombre: 'Short-Sleeve Logo Rashguard',
+    marca: 'Karl Lagerfeld',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 235000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: talla !== 'XS' })),
+    descripcion:
+      'Camiseta Karl Lagerfeld de manga corta tipo rashguard, en tejido elástico, cuello redondo acanalado y el logo Karl Lagerfeld Paris en blanco sobre el pecho.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-short-sleeve-logo-rashguard-negro-frente.jpg',
+            alt: 'Camiseta Karl Lagerfeld negra de manga corta, vista frontal de la prenda sola con el logo Karl Lagerfeld Paris en blanco sobre el pecho',
+          },
+          {
+            archivo: 'karl-lagerfeld-short-sleeve-logo-rashguard-negro-espalda.jpg',
+            alt: 'Camiseta Karl Lagerfeld negra de manga corta, vista de espalda lisa de la prenda sola',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-crewneck-t-shirt',
+    nombre: 'Crewneck T-Shirt',
+    marca: 'Karl Lagerfeld',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    precio: 270000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: !['XS', 'XXL'].includes(talla) })),
+    descripcion:
+      'Camiseta Karl Lagerfeld de algodón, cuello redondo acanalado y la figura de Karl con gafas oscuras y el logo Karl Lagerfeld Paris estampados en pequeño sobre el pecho.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-crewneck-t-shirt-negro-frente.jpg',
+            alt: 'Camiseta Karl Lagerfeld negra, vista frontal de la prenda sola con la figura de Karl con gafas oscuras y el logo estampados en el pecho',
+          },
+          {
+            archivo: 'karl-lagerfeld-crewneck-t-shirt-negro-espalda.jpg',
+            alt: 'Camiseta Karl Lagerfeld negra, vista de espalda lisa de la prenda sola',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-bomber-jacket-sherpa-collar',
+    nombre: 'Bomber Jacket with Sherpa Collar',
+    marca: 'Karl Lagerfeld',
+    categoria: 'hombre',
+    tipo: 'chaqueta',
+    precio: 415000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: talla !== 'XS' })),
+    descripcion:
+      'Chaqueta bomber acolchada Karl Lagerfeld en negro, cuello alto forrado en sherpa, cremallera doble, bolsillos laterales, puños y bajo en rib y placa con el logo en la manga.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-bomber-jacket-sherpa-collar-negro-frente.jpg',
+            alt: 'Chaqueta bomber Karl Lagerfeld negra, vista frontal de la prenda sola acolchada, con cuello de sherpa negro y cremallera plateada',
+          },
+          {
+            archivo: 'karl-lagerfeld-bomber-jacket-sherpa-collar-negro-detalle.jpg',
+            alt: 'Chaqueta bomber Karl Lagerfeld negra puesta, detalle del cuello de sherpa y la placa con el logo en la manga',
+          },
+          {
+            archivo: 'karl-lagerfeld-bomber-jacket-sherpa-collar-negro-modelo-espalda.jpg',
+            alt: 'Chaqueta bomber Karl Lagerfeld negra puesta, vista de espalda de cuerpo entero de un modelo con jean negro y botas',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-adele-small-bucket-handbag',
+    nombre: 'Adele Small Bucket Handbag',
+    marca: 'Karl Lagerfeld',
+    categoria: 'accesorios',
+    tambienEn: ['mujer'],
+    tipo: 'bolso',
+    precio: 470000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Bolso tipo bucket Karl Lagerfeld en negro, cierre de cordón, asa corta y correa larga ajustable con el logo Karl Lagerfeld Paris, apliques metálicos de corazones, flores y la firma Karl, y forro estampado con bolsillo interior.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-adele-small-bucket-handbag-negro-frente.jpg',
+            alt: 'Bolso bucket Karl Lagerfeld negro, vista frontal con cierre de cordón, apliques plateados de corazones y la firma Karl y correa con el logo en blanco y negro',
+          },
+          {
+            archivo: 'karl-lagerfeld-adele-small-bucket-handbag-negro-modelo.jpg',
+            alt: 'Modelo de cuerpo entero con el bolso Karl Lagerfeld negro cruzado con la correa del logo, top y pantalón blancos',
+          },
+          {
+            archivo: 'karl-lagerfeld-adele-small-bucket-handbag-negro-interior.jpg',
+            alt: 'Bolso Karl Lagerfeld negro abierto visto desde arriba, con el forro gris estampado con la silueta de Karl y un bolsillo para tarjetas',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-maybelle-crossbody',
+    nombre: 'Maybelle Crossbody',
+    marca: 'Karl Lagerfeld',
+    categoria: 'accesorios',
+    tambienEn: ['mujer'],
+    tipo: 'bolso',
+    precio: 370000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Bolso cruzado Karl Lagerfeld en negro, cubierto de pedrería con la firma Karl en cristales blancos, dos compartimentos con cremallera, forro estampado y correa ajustable con el logo Karl Lagerfeld Paris.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-maybelle-crossbody-negro-frente.jpg',
+            alt: 'Bolso cruzado Karl Lagerfeld negro, vista frontal cubierta de pedrería con la firma Karl en cristales blancos y el logo arriba',
+          },
+          {
+            archivo: 'karl-lagerfeld-maybelle-crossbody-negro-interior.jpg',
+            alt: 'Bolso Karl Lagerfeld negro abierto visto desde arriba, con dos compartimentos con cremallera, forro estampado y la correa con el logo',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-maybelle-small-crossbody-handbag',
+    nombre: 'Maybelle Small Crossbody Handbag',
+    marca: 'Karl Lagerfeld',
+    categoria: 'accesorios',
+    tambienEn: ['mujer'],
+    tipo: 'bolso',
+    precio: 400000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Bolso cruzado pequeño Karl Lagerfeld en negro, con las caras de Karl y su gata Choupette bordadas en pedrería, logo Karl Lagerfeld Paris metálico, dos compartimentos con cremallera, forro estampado y correa ajustable.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-maybelle-small-crossbody-handbag-negro-frente.jpg',
+            alt: 'Bolso cruzado Karl Lagerfeld negro, vista frontal con las caras de Karl y Choupette en pedrería y el logo metálico arriba',
+          },
+          {
+            archivo: 'karl-lagerfeld-maybelle-small-crossbody-handbag-negro-interior.jpg',
+            alt: 'Bolso Karl Lagerfeld negro abierto visto desde arriba, con dos compartimentos de cremallera plateada y forro estampado',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-khloe-logo-backpack',
+    nombre: 'Khloe Logo Backpack',
+    marca: 'Karl Lagerfeld',
+    categoria: 'accesorios',
+    tambienEn: ['mujer'],
+    tipo: 'morral',
+    precio: 575000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Morral Karl Lagerfeld en negro con acabado granulado, herrajes dorados, bolsillo frontal con el nombre Karl Lagerfeld en relieve y apliques de Karl, Choupette y la torre Eiffel, asa superior y tiras ajustables con el logo tejido.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-khloe-logo-backpack-negro-frente.jpg',
+            alt: 'Morral Karl Lagerfeld negro, vista frontal con el logo dorado arriba y el bolsillo con Karl Lagerfeld en relieve y los apliques de Karl y Choupette',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-logo-backpack-negro-lado.jpg',
+            alt: 'Morral Karl Lagerfeld negro, vista de tres cuartos con las cremalleras doradas y una tira con el logo tejido',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-logo-backpack-negro-espalda.jpg',
+            alt: 'Morral Karl Lagerfeld negro, vista de espalda con las dos tiras ajustables tejidas con el logo Karl Lagerfeld Paris y hebillas doradas',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-logo-backpack-negro-interior.jpg',
+            alt: 'Morral Karl Lagerfeld negro abierto visto desde arriba, con forro negro, bolsillo interior con cremallera y etiqueta de la marca',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-khloe-monogram-backpack',
+    nombre: 'Khloe Monogram Backpack',
+    marca: 'Karl Lagerfeld',
+    categoria: 'accesorios',
+    tambienEn: ['mujer'],
+    tipo: 'morral',
+    precio: 575000,
+    tallas: [TALLA_UNICA],
+    descripcion:
+      'Morral Karl Lagerfeld con el monograma de la L en gris y negro, ribetes negros, herrajes plateados, bolsillo frontal con los apliques de Karl y Choupette, asa superior y tiras ajustables con el logo tejido.',
+    variantes: [
+      {
+        color: 'Gris',
+        slug: 'gris',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-khloe-monogram-backpack-gris-frente.jpg',
+            alt: 'Morral Karl Lagerfeld con monograma gris y negro, vista frontal con el logo plateado arriba y los apliques de Karl y Choupette en el bolsillo',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-monogram-backpack-gris-lado.jpg',
+            alt: 'Morral Karl Lagerfeld con monograma gris y negro, vista de tres cuartos con las cremalleras y una tira con el logo tejido',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-monogram-backpack-gris-espalda.jpg',
+            alt: 'Morral Karl Lagerfeld con monograma gris y negro, vista de espalda con las tiras ajustables tejidas con el logo y hebillas plateadas',
+          },
+          {
+            archivo: 'karl-lagerfeld-khloe-monogram-backpack-gris-interior.jpg',
+            alt: 'Morral Karl Lagerfeld con monograma abierto visto desde arriba, con forro negro, bolsillos interiores y etiqueta de la marca',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-logo-zip-up-polo-top',
+    nombre: 'Logo Zip Up Polo Top',
+    marca: 'Karl Lagerfeld',
+    categoria: 'mujer',
+    tipo: 'polo',
+    precio: 270000,
+    tallas: TALLAS_MUJER.map((talla) => ({ talla, disponible: talla !== 'XXL' })),
+    descripcion:
+      'Polo Karl Lagerfeld de mujer en punto acanalado blanco, cuello camisero con cremallera hasta el pecho, logo Karl Lagerfeld Paris bordado en negro y franjas laterales a rayas con el nombre Karl.',
+    variantes: [
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-logo-zip-up-polo-top-blanco-frente.jpg',
+            alt: 'Polo Karl Lagerfeld blanco, vista frontal de la prenda sola con cremallera negra hasta el pecho, logo bordado y franjas laterales a rayas',
+          },
+          {
+            archivo: 'karl-lagerfeld-logo-zip-up-polo-top-blanco-espalda.jpg',
+            alt: 'Polo Karl Lagerfeld blanco, vista de espalda lisa con las franjas laterales a rayas y el nombre Karl',
+          },
+          {
+            archivo: 'karl-lagerfeld-logo-zip-up-polo-top-blanco-modelo.jpg',
+            alt: 'Polo Karl Lagerfeld blanco puesto, plano medio de una modelo que lo lleva con pantalón negro',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-choupette-crewneck-sweatshirt',
+    nombre: 'Choupette Crewneck Sweatshirt',
+    marca: 'Karl Lagerfeld',
+    categoria: 'mujer',
+    tipo: 'buzo',
+    precio: 330000,
+    // Una sola pieza: la ficha la avisa como ultima talla.
+    tallas: ['XS'],
+    descripcion:
+      'Buzo Karl Lagerfeld de mujer en felpa de algodón, corte amplio con hombros caídos, cuello redondo acanalado con pico y Choupette con gafas oscuras estampada en grande sobre el logo Karl Lagerfeld Paris.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-choupette-crewneck-sweatshirt-negro-frente.jpg',
+            alt: 'Buzo Karl Lagerfeld negro, vista frontal de la prenda sola con Choupette con gafas oscuras estampada en el pecho y el logo Karl Lagerfeld Paris',
+          },
+          {
+            archivo: 'karl-lagerfeld-choupette-crewneck-sweatshirt-negro-espalda.jpg',
+            alt: 'Buzo Karl Lagerfeld negro, vista de espalda lisa de la prenda sola',
+          },
+          {
+            archivo: 'karl-lagerfeld-choupette-crewneck-sweatshirt-negro-modelo.jpg',
+            alt: 'Buzo Karl Lagerfeld negro con Choupette puesto, plano medio de una modelo que lo lleva con jean azul',
           },
         ],
         disponible: true,

@@ -1,33 +1,47 @@
 /**
- * La foto de la tarjeta de cada ficha, en /tarjeta/<slug>/<color>.jpg.
+ * La tarjeta que se pinta al compartir una ficha: la foto de portada entera,
+ * centrada sobre un fondo de su propio color, en 1200x630.
  *
- * Se genera en el build, una por color, desde la foto ORIGINAL de
- * src/assets y no desde la copia optimizada: esa es WebP y viene recortada
- * al ancho de la ficha. La composicion vive en tarjeta-compartir.ts, que es
- * donde esta probada.
+ * Es la proporcion que recortan WhatsApp, Instagram y X. Con la foto
+ * vertical recortada a ella se veia una franja del pecho de la prenda, sin
+ * cuello ni bajo. Entera y con el hueco relleno del color que domina la foto
+ * -- el gris claro del estudio en la mayoria --, la tarjeta se lee como una
+ * sola imagen y no como una foto con bandas.
+ *
+ * Se genera en el build, una por color, y sale como un .jpg mas de dist/.
  */
-import path from 'node:path'
-import type { APIRoute } from 'astro'
+import type { APIRoute, GetStaticPaths } from 'astro'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import sharp from 'sharp'
 import { productos } from '../../../data/productos'
-import { componerTarjeta } from '../../../lib/tarjeta-compartir'
+import type { Producto, Variante } from '../../../data/schema'
 
-export function getStaticPaths() {
-  return productos.flatMap((producto) =>
+export const getStaticPaths = (() =>
+  productos.flatMap((producto) =>
     producto.variantes.map((variante) => ({
       params: { slug: producto.slug, color: variante.slug },
-      // La misma foto que abre la ficha y la rejilla: hay prendas que se
-      // venden por la espalda.
-      props: {
-        archivo: (variante.imagenes.find((foto) => foto.portada) ?? variante.imagenes[0]!).archivo,
-      },
+      props: { producto, variante },
     }))
-  )
-}
+  )) satisfies GetStaticPaths
+
+const ANCHO = 1200
+const ALTO = 630
 
 export const GET: APIRoute = async ({ props }) => {
-  // El build corre desde la raiz del proyecto; import.meta.url no sirve aqui
-  // porque tras empaquetar ya no apunta a src/.
-  const original = path.join(process.cwd(), 'src', 'assets', 'productos', props.archivo as string)
-  const jpeg = await componerTarjeta(original)
-  return new Response(new Uint8Array(jpeg), { headers: { 'Content-Type': 'image/jpeg' } })
+  const { variante } = props as { producto: Producto; variante: Variante }
+  // La misma foto que abre la prenda en la rejilla.
+  const portada =
+    variante.imagenes.find((foto) => foto.portada) ?? variante.imagenes[0]!
+  // Desde la raiz del proyecto y no relativo a este archivo: en el build el
+  // modulo se ejecuta desde dist/, donde las fotos originales no estan.
+  const original = await readFile(join(process.cwd(), 'src/assets/productos', portada.archivo))
+
+  const { dominant } = await sharp(original).stats()
+  const tarjeta = await sharp(original)
+    .resize(ANCHO, ALTO, { fit: 'contain', background: dominant })
+    .jpeg({ quality: 82, mozjpeg: true })
+    .toBuffer()
+
+  return new Response(new Uint8Array(tarjeta), { headers: { 'Content-Type': 'image/jpeg' } })
 }

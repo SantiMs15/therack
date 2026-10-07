@@ -1,9 +1,8 @@
 import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'astro/config'
 import sitemap from '@astrojs/sitemap'
-import { productos } from './src/data/productos.ts'
-import { enSale } from './src/data/schema.ts'
-import { archivoDeMarcas, marcaIndexable } from './src/lib/archivo-marcas.ts'
 
 /**
  * Fecha del ultimo commit que toco un archivo.
@@ -29,75 +28,51 @@ function ultimoCambio(archivo) {
   }
 }
 
+/**
+ * Las paginas que piden `noindex` (una marca sin ficha ni piezas, el sale sin
+ * rebajas) no van al sitemap: un sitemap que pide rastrear lo que la propia
+ * pagina pide no indexar es una contradiccion que Search Console marca como
+ * error. La decision vive en cada pagina (prop `sinIndexar` del layout); aqui
+ * solo se lee el HTML ya generado, asi que no hay una segunda lista que
+ * mantener.
+ */
+let carpetaSalida
+const recordarSalida = {
+  name: 'recordar-carpeta-salida',
+  hooks: {
+    'astro:config:done': ({ config }) => {
+      carpetaSalida = config.outDir
+    },
+  },
+}
+function pideNoIndexar(url) {
+  if (!carpetaSalida) return false
+  const ruta = new URL(`.${new URL(url).pathname}index.html`, carpetaSalida)
+  try {
+    return /<meta name="robots" content="[^"]*noindex/.test(readFileSync(fileURLToPath(ruta), 'utf8'))
+  } catch {
+    return false
+  }
+}
+
 // Todo el catalogo -- portada, categorias y fichas -- se pinta desde este
 // archivo, asi que su fecha es la fecha en que cambio lo que se ve.
 const CATALOGO = ultimoCambio('src/data/productos.ts')
 // /tienda no muestra prendas: envios, pagos y cambios salen de la config.
 const TIENDA = ultimoCambio('src/config.ts')
-// Las paginas de marca se pintan desde las fichas, asi que su fecha es la
-// fecha en que cambio lo que se lee en ellas. La foto de campana no cuenta:
-// cambiarla no cambia lo que la pagina dice.
-const ARCHIVO = ultimoCambio('src/data/fichas-marca.ts')
-
-// /sale/ se publica siempre, pero sin rebajas lleva noindex: meterla en el
-// sitemap seria pedirle a Google que indexe una pagina que le dice que no.
-// La misma regla que `saleDe`, desde la misma funcion.
-const HAY_SALE = productos.some(enSale)
-
-// Lo mismo con las marcas sin ficha ni piezas: se publican con noindex para
-// que el menu no lleve a un 404, y por eso no van al sitemap.
-const MARCAS_SIN_INDEXAR = new Set(
-  archivoDeMarcas()
-    .filter((e) => !marcaIndexable(e.slug))
-    .map((e) => `/marca/${e.slug}/`)
-)
-
-/**
- * En desarrollo, las fotos se sirven por /_image con la ruta del archivo en
- * la URL y un Cache-Control de un ano. Como las fotos se reemplazan con el
- * mismo nombre, el navegador seguia pintando la version vieja aunque el
- * servidor ya tuviera la nueva. Solo afecta a `astro dev`: el build pone un
- * hash del contenido en cada nombre, asi que alli la cache larga es correcta.
- */
-const fotosSinCacheEnDev = {
-  name: 'fotos-sin-cache-en-dev',
-  configureServer(server) {
-    server.middlewares.use((req, res, next) => {
-      if (req.url?.startsWith('/_image')) {
-        const setHeader = res.setHeader.bind(res)
-        res.setHeader = (nombre, valor) =>
-          nombre.toLowerCase() === 'cache-control'
-            ? setHeader(nombre, 'no-store')
-            : setHeader(nombre, valor)
-      }
-      next()
-    })
-  },
-}
 
 export default defineConfig({
   site: 'https://therackstore.shop',
   build: { format: 'directory' },
-  vite: { plugins: [fotosSinCacheEnDev] },
   // El sitemap se genera solo a partir de las rutas del build y del `site` de
   // arriba. Hay que regenerarlo con cada despliegue, que es lo que ya pasa:
   // sale de `npm run build` como un archivo mas de dist/.
   integrations: [
+    recordarSalida,
     sitemap({
-      filter: (url) => {
-        const ruta = new URL(url).pathname
-        if (ruta === '/sale/') return HAY_SALE
-        return !MARCAS_SIN_INDEXAR.has(ruta)
-      },
+      filter: (pagina) => !pideNoIndexar(pagina),
       serialize(entrada) {
-        // Se compara el pathname y no el final de la URL entera: con tres
-        // ramas, mirar sufijos es facil de romper.
-        const ruta = new URL(entrada.url).pathname
-        const fecha = ruta === '/tienda/'
-          ? TIENDA
-          : ruta.startsWith('/marca/')
-            ? ARCHIVO
-            : CATALOGO
+        const fecha = entrada.url.endsWith('/tienda/') ? TIENDA : CATALOGO
         return fecha ? { ...entrada, lastmod: fecha } : entrada
       },
     }),

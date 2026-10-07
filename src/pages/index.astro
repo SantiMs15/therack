@@ -3,43 +3,32 @@ import Layout from '../layouts/Layout.astro'
 import RejillaProductos from '../components/RejillaProductos.astro'
 import { productos } from '../data/productos'
 import { fichaSitio, fichaTienda, serializar } from '../lib/datos-estructurados'
-import { exclusivesDe, marcasPorPeso, marcasQueQuepan } from '../lib/catalogo'
-import { VENTA } from '../config'
+import { marcasParaTexto } from '../lib/catalogo'
+import { MARCAS_PRIMERO, VENTA } from '../config'
 
 // Nombra las marcas que hay de verdad y las condiciones de venta, en vez de
-// la generica de 24 caracteres que compartia con media web. Las que caben,
-// empezando por las que mas prendas tienen.
+// la generica de 24 caracteres que compartia con media web. Con ocho marcas
+// ya no caben todas: van las cinco que mas traen a la gente y "y más".
 //
-// Abre con la busqueda que eligio el dueno, "tienda de ropa original", y
-// cierra con el envio a toda Colombia. "original" va aqui y no en el
-// titulo, que es donde lo pide docs/keywords-decisiones.md. Sin la ciudad:
-// "<marca> bogota" es la busqueda de quien quiere una tienda fisica, y esta
-// no la tiene.
-const descripcion = marcasQueQuepan(
-  marcasPorPeso(productos),
-  (lista) =>
-    `Tienda de ropa original: ${lista}. ` +
-    `Envío gratis a toda Colombia y cambios hasta ${VENTA.cambios.dias} días.`
-)
+// "Colombia" y no la ciudad: la tienda es online y envia a todo el pais, y
+// "ropa de marca en Bogotá" dejaba fuera a quien busca desde Medellin.
+const descripcion =
+  `Tienda de ropa original: ${marcasParaTexto(productos, MARCAS_PRIMERO, 5)}. ` +
+  `Envío gratis a toda Colombia y cambios hasta ${VENTA.cambios.dias} días.`
 
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
 }
 // Solo en la portada: es la ficha del negocio entero, y repetirla en cada
 // pagina no la refuerza, solo la duplica.
+const sitioJson = serializar(fichaSitio({ url: Astro.site.href }))
 const tiendaJson = serializar(
   fichaTienda({
     url: Astro.site.href,
     logo: new URL('/og.png', Astro.site).href,
   })
 )
-// El nombre que Google pone encima del resultado. Sin esto lo deduce, y
-// puede acabar poniendo el dominio o el titulo de una pagina.
-const sitioJson = serializar(fichaSitio({ url: Astro.site.href }))
 ---
-{/* "Inicio" no lo busca nadie, y es la pagina con mas autoridad del sitio.
-    Sin "importada": en Colombia "ropa importada" trae mayoristas y China, y
-    "original" va en la descripcion, no aqui (docs/keywords-decisiones.md). */}
 <Layout titulo="Ropa de marca en Colombia" descripcion={descripcion}>
   <script type="application/ld+json" is:inline set:html={sitioJson}></script>
   <script type="application/ld+json" is:inline set:html={tiendaJson}></script>
@@ -54,9 +43,7 @@ const sitioJson = serializar(fichaSitio({ url: Astro.site.href }))
         entera por un problema que es de jerarquia, no de composicion. Un
         lector de pantalla y un buscador si lo reciben. */}
     <h1 class="visualmente-oculto">Ropa de marca en Colombia</h1>
-    {/* La portada es Exclusives: la coleccion a precio completo. Lo rebajado
-        vive en /sale/ y no se repite aqui. */}
-    <RejillaProductos productos={exclusivesDe(productos)} ordenable />
+    <RejillaProductos productos={productos} ordenable />
   </div>
 </Layout>
 

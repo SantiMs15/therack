@@ -1,7 +1,7 @@
 ---
 import { productos as CATALOGO } from '../data/productos'
+import { marcas as ARCHIVO } from '../data/marcas'
 import type { Genero, Producto } from '../data/schema'
-import { marcasTodas } from '../data/marcas'
 import { generosDe, marcasDe, tarjetasEnOrden, tiposDe } from '../lib/catalogo'
 import FiltrosProductos from './FiltrosProductos.astro'
 import TarjetaProducto from './TarjetaProducto.astro'
@@ -12,26 +12,10 @@ interface Props {
   ordenable?: boolean
   /** Genero de la pagina, o null en la portada. Lo marca el desplegable. */
   generoActivo?: Genero | null
-  /**
-   * El slug de la marca de la pagina, cuando la rejilla vive dentro de una.
-   * Se lo pasa a cada tarjeta para que una colaboracion se presente por la
-   * marca que el visitante vino a ver.
-   */
-  marcaContexto?: string | null
-  /**
-   * Ofrecer el desplegable de genero. Ese desplegable navega a
-   * /catalogo/<genero>/, que muestra TODO lo de ese genero: desde Sale
-   * sacaria al cliente de la seccion sin avisar, asi que ahi se apaga.
-   */
-  conGeneros?: boolean
+  /** En la pagina de una marca: la firma con que se lee cada tarjeta. */
+  marcaPagina?: string
 }
-const {
-  productos,
-  ordenable = false,
-  generoActivo = null,
-  marcaContexto = null,
-  conGeneros = true,
-} = Astro.props
+const { productos, ordenable = false, generoActivo = null, marcaPagina } = Astro.props
 
 // Se ordena en el build, no en el navegador: el HTML sale ya en el orden que
 // se ve al entrar, y las cuatro primeras fotos pueden marcarse como
@@ -49,17 +33,12 @@ const ordenadas = tarjetasEnOrden(productos)
         hay columna -- los filtros se abren a pantalla completa desde un boton
         -- asi que esto es una sola columna y el orden del DOM manda. */}
     <div class:list={['catalogo', { 'catalogo--con-filtros': ordenable }]}>
-      {/* Dos listas de marcas, dos trabajos. `marcas` es lo que el desplegable
-          ofrece: las que tienen prenda en esta pagina, porque una entrada que
-          deja la rejilla vacia solo puede decepcionar. `marcasValidas` es lo
-          que la URL admite: todas las de la tienda, para que un enlace a una
-          marca sin stock llegue y lo diga. */}
       {ordenable && (
         <FiltrosProductos
-          generos={conGeneros ? generosDe(CATALOGO) : []}
+          generos={generosDe(CATALOGO)}
           tipos={tiposDe(productos)}
           marcas={marcasDe(productos)}
-          marcasValidas={marcasTodas()}
+          marcasValidas={ARCHIVO.map((marca) => marca.slug)}
           generoActivo={generoActivo}
         />
       )}
@@ -98,10 +77,6 @@ const ordenadas = tarjetasEnOrden(productos)
             data-destacado={destacado ? '1' : '0'}
             data-genero={genero ?? undefined}
             data-tipo={tipo}
-            {/* Separadas por espacio, que es como el script las parte. Una
-                colaboracion lleva las dos, y asi pasa el filtro de cualquiera
-                de ellas sin que el navegador tenga que saber que es una
-                colaboracion. */}
             data-marca={marcas.length ? marcas.join(' ') : undefined}
           >
             <TarjetaProducto
@@ -109,7 +84,7 @@ const ordenadas = tarjetasEnOrden(productos)
               variante={variante}
               prioridad={i < 4}
               principal={i === 0}
-              marcaContexto={marcaContexto}
+              marcaVisible={marcaPagina}
             />
           </li>
         ))}
@@ -145,13 +120,10 @@ const ordenadas = tarjetasEnOrden(productos)
   @media (min-width: 768px) {
     .rejilla {
       grid-template-columns: repeat(3, 1fr);
-      /* 4.5rem: por encima del token mas grande (--espacio-4, 4rem), que es
-         lo que mantiene la prenda leyendose aislada en vez de en bloque.
-         Estuvo en 6rem y la foto salia perdiendo: el hueco es lo unico de lo
-         que puede crecer la tarjeta -- el contenedor y el numero de columnas
-         no se tocan -- y a 4.5rem cada celda gana un 7% de ancho sin que la
-         rejilla se lea como un bloque. La foto sigue en 3:4, que es el ratio
-         exacto de los archivos, asi que crece entera y no se recorta nada. */
+      /* 4.5rem: por encima del token mas grande (--espacio-4, 4rem). A cuatro
+         columnas es lo que hace que cada prenda se lea aislada en vez de en
+         bloque. Con 6rem las fotos quedaban demasiado pequenas al lado del
+         nombre y el precio. */
       gap: 4.5rem;
     }
   }

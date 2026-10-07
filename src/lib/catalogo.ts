@@ -11,8 +11,12 @@ import {
   ETIQUETAS_TIPO,
   GENEROS,
   TIPOS,
-  enSale,
   generoDe,
+  generosDeProducto,
+  marcasDeProducto,
+  precioAnteriorDe,
+  precioDe,
+  type Categoria,
   type Genero,
   type Producto,
   type Tipo,
@@ -20,7 +24,6 @@ import {
 } from '../data/schema'
 import { ORDEN_POR_DEFECTO, ordenar, turnos } from './orden'
 import { slugMarca, type Opcion } from './filtros'
-import { MARCAS_MAS_BUSCADAS } from '../data/marcas'
 
 /** Una tarjeta de la rejilla: una prenda en UN color. */
 export interface Tarjeta {
@@ -31,7 +34,9 @@ export interface Tarjeta {
   destacado: boolean
   genero: Genero | null
   tipo: Tipo
-  /** Los slugs de sus marcas. Vacia si la prenda no es de marca conocida. */
+  /** La primera marca, que es con la que la prenda entra en el reparto. */
+  marca: string | null
+  /** Todas, en slug: una colaboracion sale al filtrar por cualquiera. */
   marcas: string[]
   turno: number
 }
@@ -59,39 +64,19 @@ export function tarjetasEnOrden(productos: readonly Producto[]): Tarjeta[] {
     .map((tarjeta, indice) => ({
       ...tarjeta,
       indice,
-      precio: tarjeta.producto.precio,
+      precio: precioDe(tarjeta.producto, tarjeta.variante),
       destacado: tarjeta.producto.destacado,
-      genero: generoDe(tarjeta.producto.categorias[0]!),
+      genero: generoDe(tarjeta.producto.categoria),
       tipo: tarjeta.producto.tipo,
-      marcas: tarjeta.producto.marcas.map(slugMarca),
+      marcas: marcasDeProducto(tarjeta.producto).map(slugMarca),
     }))
+    .map((tarjeta) => ({ ...tarjeta, marca: tarjeta.marcas[0] ?? null }))
 
-  /* El reparto por marcas solo entiende de una: es una cola por marca, y una
-     prenda no puede estar en dos colas sin salir dos veces en la rejilla. Se
-     reparte por la PRIMERA, que es la que la prenda lleva delante. */
-  const puestos = turnos(
-    base.map((tarjeta) => ({ marca: tarjeta.marcas[0] ?? null, destacado: tarjeta.destacado }))
-  )
+  const puestos = turnos(base)
   return ordenar(
     base.map((tarjeta, i) => ({ ...tarjeta, turno: puestos[i]! })),
     ORDEN_POR_DEFECTO
   )
-}
-
-/**
- * Las dos secciones del catalogo. Cada prenda esta en UNA: Exclusives es la
- * coleccion a precio completo y Sale la rebajada, sin repetir fotos entre
- * las dos. Lo decide `precioAntes` y nada mas.
- *
- * Las paginas de genero y de marca no pasan por aqui: muestran todo lo suyo,
- * y la prenda rebajada se reconoce alli por su precio tachado.
- */
-export function exclusivesDe(productos: readonly Producto[]): Producto[] {
-  return productos.filter((producto) => !enSale(producto))
-}
-
-export function saleDe(productos: readonly Producto[]): Producto[] {
-  return productos.filter(enSale)
 }
 
 /**
@@ -103,9 +88,7 @@ export function saleDe(productos: readonly Producto[]): Producto[] {
 export function marcasDe(productos: readonly Producto[]): Opcion[] {
   const porSlug = new Map<string, string>()
   for (const producto of productos) {
-    // Todas las suyas: una colaboracion tiene que salir en el desplegable de
-    // las dos marcas, no solo en el de la que lleva delante.
-    for (const marca of producto.marcas) porSlug.set(slugMarca(marca), marca)
+    for (const marca of marcasDeProducto(producto)) porSlug.set(slugMarca(marca), marca)
   }
   return [...porSlug]
     .map(([valor, etiqueta]) => ({ valor, etiqueta }))
@@ -127,10 +110,8 @@ export function marcasDe(productos: readonly Producto[]): Opcion[] {
 export function generosDe(productos: readonly Producto[]): Opcion[] {
   const presentes = new Set<Genero>()
   for (const producto of productos) {
-    for (const categoria of producto.categorias) {
-      const genero = generoDe(categoria)
-      if (genero) presentes.add(genero)
-    }
+    const genero = generoDe(producto.categoria)
+    if (genero) presentes.add(genero)
   }
   // Se recorre GENEROS y no el Set para que el orden sea siempre el declarado
   // en el schema, no el de aparicion en el catalogo.
@@ -159,6 +140,71 @@ export function enumerar(items: readonly string[]): string {
 }
 
 /**
+ * Las prendas de un genero: las de su categoria y las que se declaran
+ * `tambienEn` el. Es lo que llena /catalogo/<genero>.
+ */
+export function deGenero(productos: readonly Producto[], genero: Genero): Producto[] {
+  return productos.filter((producto) => generosDeProducto(producto).includes(genero))
+}
+
+/**
+ * Las prendas de una categoria. En las de genero entran tambien las que se
+ * declaran `tambienEn` el: una prenda sin genero sale en los dos catalogos.
+ */
+export function prendasDeCategoria(productos: readonly Producto[], categoria: Categoria): Producto[] {
+  const genero = generoDe(categoria)
+  return genero
+    ? deGenero(productos, genero)
+    : productos.filter((producto) => producto.categoria === categoria)
+}
+
+/** Las prendas de una marca, contando las colaboraciones en las que entra. */
+export function deMarca(productos: readonly Producto[], slug: string): Producto[] {
+  return productos.filter((producto) => marcasDeProducto(producto).map(slugMarca).includes(slug))
+}
+
+/**
+ * Las prendas rebajadas, cada una solo con sus colores rebajados: un color
+ * puede estar en rebaja mientras el otro sigue a precio normal, y en /sale
+ * solo entra el que de verdad esta rebajado.
+ */
+export function enRebaja(productos: readonly Producto[]): Producto[] {
+  return productos
+    .map((producto) => ({
+      ...producto,
+      variantes: producto.variantes.filter((v) => precioAnteriorDe(producto, v) !== undefined),
+    }))
+    .filter((producto) => producto.variantes.length > 0)
+}
+
+/**
+ * Las marcas de un catalogo para nombrarlas en un texto: primero las que la
+ * tienda quiere que se lean (`primero`, en su orden) y despues el resto por
+ * orden alfabetico.
+ *
+ * Con el orden alfabetico a secas la descripcion de /catalogo/hombre abria
+ * con la marca que empieza por A, que no es la que mas se busca ni la que
+ * trae a la gente. Con mas de `maximo` se cortan y se cierra con "y más": la
+ * meta description no da para nombrar ocho marcas.
+ */
+export function marcasParaTexto(
+  productos: readonly Producto[],
+  primero: readonly string[],
+  maximo: number
+): string {
+  const presentes = marcasDe(productos).map((m) => m.etiqueta)
+  const puesto = (marca: string) => {
+    const i = primero.indexOf(marca)
+    return i === -1 ? primero.length : i
+  }
+  const ordenadas = [...presentes].sort(
+    (a, b) => puesto(a) - puesto(b) || a.localeCompare(b, 'es')
+  )
+  const nombradas = ordenadas.slice(0, maximo)
+  return enumerar(ordenadas.length > maximo ? [...nombradas, 'más'] : nombradas)
+}
+
+/**
  * La meta description de una pagina de catalogo.
  *
  * Cinco paginas compartian "Tienda de ropa en Bogota", 24 caracteres de los
@@ -169,171 +215,38 @@ export function enumerar(items: readonly string[]): string {
  * `cierre` es la frase de condiciones de venta, que la pagina pasa desde la
  * configuracion: este modulo no tiene por que saber cuanto cuesta el envio.
  */
+/** Lo que muestra un resultado de busqueda antes de cortar. */
+const LIMITE_DESCRIPCION = 155
+
 export function descripcionDeCategoria(
   productos: readonly Producto[],
   quienes: string,
-  cierre: string
-): string {
-  const marcas = marcasPorPeso(productos)
-  const tipos = tiposDe(productos).map((t) => t.etiqueta.toLowerCase())
-  const resto = `${tipos.length ? ` ${capitalizar(enumerar(tipos))}.` : ''} ${cierre}`
-
-  if (!marcas.length) return `Ropa de ${quienes}.${resto}`
-  return marcasQueQuepan(marcas, (lista) => `Ropa de ${quienes} de ${lista}.${resto}`)
-}
-
-/**
- * Las marcas de un catalogo, en el orden en que las nombra una descripcion.
- *
- * Primero las de `prioridad` -- las que mas se buscan -- si hay prendas de
- * ellas; luego el resto, de la que mas prendas tiene a la que menos. Para
- * las descripciones, no para el menu: cuando no caben todas, las que se
- * nombran tienen que ser las que el que llega busca y va a encontrar de
- * verdad. A igualdad, alfabetico, para que el orden no dependa del de la
- * lista.
- */
-export function marcasPorPeso(
-  productos: readonly Producto[],
-  prioridad: readonly string[] = MARCAS_MAS_BUSCADAS
-): string[] {
-  const cuenta = new Map<string, number>()
-  for (const producto of productos) {
-    for (const marca of producto.marcas) cuenta.set(marca, (cuenta.get(marca) ?? 0) + 1)
-  }
-  const puesto = (marca: string) => {
-    const i = prioridad.indexOf(marca)
-    return i === -1 ? prioridad.length : i
-  }
-  return [...cuenta]
-    .sort(([a, na], [b, nb]) => puesto(a) - puesto(b) || nb - na || a.localeCompare(b, 'es'))
-    .map(([marca]) => marca)
-}
-
-/**
- * Compone un texto con tantas marcas como quepan en `maximo` caracteres.
- *
- * Con todas si caben. Si no, va soltando las ultimas y cierra con "y más":
- * enumerar las siete marcas de la tienda dejaba la portada en 174 caracteres
- * y a Google cortando el envio, que es lo que hace clicar. Nunca baja de una.
- */
-export function marcasQueQuepan(
-  marcas: readonly string[],
-  componer: (lista: string) => string,
-  maximo = 160
-): string {
-  for (let n = marcas.length; n >= 1; n--) {
-    const lista = n === marcas.length ? enumerar(marcas) : `${marcas.slice(0, n).join(', ')} y más`
-    const texto = componer(lista)
-    if (texto.length <= maximo || n === 1) return texto
-  }
-  return componer('')
-}
-
-/**
- * La meta description de una pagina de marca.
- *
- * Todas compartian "X en The Rack store: las piezas de la marca disponibles
- * en Colombia", y la de la marca con ficha era solo su propuesta, sin el
- * nombre ni el pais: justo las dos palabras con las que se busca ("lacoste
- * colombia"). Ahora abre con las dos, sigue con la propuesta si la hay y
- * nombra los tipos de prenda que hay de verdad.
- *
- * Si no cabe en los ~160 caracteres de un resultado, se prueba el cierre
- * corto, y si tampoco cabe sobra el cierre: las condiciones de venta se
- * repiten en todo el sitio, la propuesta no.
- *
- * Sin piezas y sin ficha no se anuncia envio de nada: se dice lo unico que
- * es cierto.
- */
-export function descripcionDeMarca(
-  nombre: string,
-  propuesta: string | undefined,
-  productos: readonly Producto[],
   cierre: string,
-  /** Version corta del cierre, para cuando el largo no cabe en 160. */
-  cierreCorto?: string
+  primero: readonly string[] = [],
+  /** Version corta de `cierre`, para cuando la larga no cabe con los tipos. */
+  cierreCorto: string = cierre
 ): string {
-  if (!productos.length && !propuesta) {
-    return `${nombre} en el archivo de marcas de The Rack store.`
-  }
+  const marcas = marcasParaTexto(productos, primero, 3)
   const tipos = tiposDe(productos).map((t) => t.etiqueta.toLowerCase())
 
-  const partes = [`${nombre} en Colombia.`]
-  if (propuesta) partes.push(propuesta)
-  if (tipos.length) partes.push(`${capitalizar(enumerar(tipos))}.`)
-
-  for (const c of [cierre, cierreCorto]) {
-    if (!c) continue
-    const conCierre = [...partes, c].join(' ')
-    if (conCierre.length <= 160) return conCierre
-  }
-  // Sin cierre y aun largo: sobran los tipos de prenda antes que la
-  // propuesta, que es lo unico que no se repite en otras paginas.
-  const sinCierre = partes.join(' ')
-  if (sinCierre.length > 160 && tipos.length) return partes.slice(0, -1).join(' ')
-  return sinCierre
+  // "Ropa de hombre", pero "Accesorios de Nike": calzado y accesorios ya
+  // nombran lo que se vende, y "ropa de accesorios" no lo dice nadie.
+  const inicio =
+    ((GENEROS as readonly string[]).includes(quienes) ? `Ropa de ${quienes}` : capitalizar(quienes)) +
+    (marcas ? ` de ${marcas}` : '') +
+    '.'
+  const tiposTexto = tipos.length ? ` ${capitalizar(enumerar(tipos))}.` : ''
+  // Con muchos tipos de prenda se pasaba de lo que muestra el buscador y se
+  // cortaba el envio, que es lo que mas convence. Primero se acorta el envio;
+  // si aun no cabe sobran los tipos, que la pagina enumera en el filtro.
+  const opciones = [
+    `${inicio}${tiposTexto} ${cierre}`,
+    `${inicio}${tiposTexto} ${cierreCorto}`,
+    `${inicio} ${cierre}`,
+  ]
+  return opciones.find((o) => o.length <= LIMITE_DESCRIPCION) ?? opciones[opciones.length - 1]!
 }
 
-function capitalizar(texto: string): string {
+export function capitalizar(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1)
-}
-
-/** Una foto de la galeria de una marca: archivo de src/assets/productos y su alt. */
-export interface FotoDePieza {
-  archivo: string
-  alt: string
-}
-
-/**
- * La galeria de respaldo de una pagina de marca: fotos de sus piezas.
- *
- * La galeria de verdad es la de la ficha, con fotos de campana. Casi ninguna
- * marca la tiene todavia, y sin ella la pagina se quedaba en un texto solo;
- * con esto toda marca con piezas tiene galeria desde el primer dia, y el dia
- * que llegan las fotos de campana la sustituyen sin tocar nada mas.
- *
- * Una foto por prenda antes de repetir prenda, para que la galeria ensene la
- * marca y no un solo buzo desde cinco angulos. De cada prenda van primero las
- * fotos con modelo -- una prenda puesta se parece mas a una campana que una
- * prenda sola sobre blanco --, luego la de portada y luego el resto.
- *
- * De `minimo` a `maximo`: con una sola no hay acordeon que abrir, asi que
- * por debajo del minimo devuelve la lista vacia. Quien va a completar la
- * galeria con relleno (ver `completarGaleria`) pide minimo 0.
- */
-export function galeriaDePiezas(
-  tarjetas: readonly { producto: Producto; variante: Variante }[],
-  maximo = 5,
-  minimo = 2
-): FotoDePieza[] {
-  const colas = tarjetas.map(({ producto, variante }) => {
-    const alternativo = [producto.marcas.join(' × '), producto.nombre, variante.color]
-      .filter(Boolean)
-      .join(' ')
-    const peso = (foto: Variante['imagenes'][number]) =>
-      foto.archivo.includes('-modelo') ? 0 : foto.portada ? 1 : 2
-    return [...variante.imagenes]
-      .sort((a, b) => peso(a) - peso(b))
-      .map((foto) => ({ archivo: foto.archivo, alt: foto.alt ?? alternativo }))
-  })
-
-  const fotos: FotoDePieza[] = []
-  for (let vuelta = 0; fotos.length < maximo; vuelta++) {
-    const deEstaVuelta = colas.map((cola) => cola[vuelta]).filter((f) => f !== undefined)
-    if (!deEstaVuelta.length) break
-    fotos.push(...deEstaVuelta.slice(0, maximo - fotos.length))
-  }
-  return fotos.length >= minimo ? fotos : []
-}
-
-/**
- * Lleva una galeria hasta `total` fotos repitiendo `relleno` al final.
- *
- * Para las marcas con ficha: su pagina ensena siempre el acordeon completo,
- * aunque todavia no haya fotos de campana ni stock. El relleno es un
- * placeholder, y cada foto real que llegue desplaza a uno. Si ya hay
- * `total` o mas, recorta.
- */
-export function completarGaleria<T>(fotos: readonly T[], relleno: T, total = 5): T[] {
-  return [...fotos.slice(0, total), ...Array(Math.max(0, total - fotos.length)).fill(relleno)]
 }

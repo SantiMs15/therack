@@ -5,15 +5,27 @@ import BotonWhatsApp from '../../../components/BotonWhatsApp.astro'
 import Migas from '../../../components/Migas.astro'
 import Precio from '../../../components/Precio.astro'
 import { productos } from '../../../data/productos'
-import { ETIQUETAS_CATEGORIA, ETIQUETAS_TIPO_UNA, tallasDe, ultimaTalla } from '../../../data/schema'
-import { fichaGrupo, fichaMigas, fichaProducto, serializar, type Miga } from '../../../lib/datos-estructurados'
-import { resolverImagen } from '../../../lib/imagenes-productos'
-import { resumir, tituloDeFicha } from '../../../lib/formato'
-import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
-import { hrefDeMarca, nombreDeMarcas } from '../../../lib/archivo-marcas'
+import {
+  ETIQUETAS_CATEGORIA,
+  ETIQUETAS_TIPO_UNA,
+  marcasDeProducto,
+  nombreMarca,
+  precioDe,
+  tallasDe,
+  ultimaTalla,
+} from '../../../data/schema'
+import {
+  fichaGrupo,
+  fichaMigas,
+  fichaProducto,
+  serializar,
+  type Miga,
+} from '../../../lib/datos-estructurados'
 import { slugMarca } from '../../../lib/filtros'
-import { descripcionTarjeta, TARJETA } from '../../../lib/tarjeta-compartir'
-import { CONFIG, INSTAGRAM_URL, VENTA } from '../../../config'
+import { resolverImagen } from '../../../lib/imagenes-productos'
+import { resumir } from '../../../lib/formato'
+import { construirEnlaceWhatsApp } from '../../../lib/whatsapp'
+import { CONFIG, INSTAGRAM_URL } from '../../../config'
 
 export function getStaticPaths() {
   // Una pagina por cada color. Asi el enlace que viaja en el mensaje de
@@ -34,35 +46,43 @@ const { producto, variante } = Astro.props
 const titulo = `${producto.nombre} - ${variante.color}`
 
 /**
- * Quien esta mirando la prenda es justo quien mas necesita saber quien es la
- * marca, asi que el nombre lleva a su pagina del archivo. Todas la tienen: la
- * que aun no tiene ficha escrita presenta alli su nombre y sus piezas.
- *
- * Una colaboracion lleva dos, y cada una enlaza a la suya: quien llego
- * desde New Balance tiene aqui su camino de vuelta, y quien no conocia a
- * Aimé Leon Dore tiene por donde ir a averiguarlo.
- */
-const marcasEnlazadas = producto.marcas.map((nombre) => ({
-  nombre,
-  href: hrefDeMarca(slugMarca(nombre)),
-}))
-
-/**
  * El titulo del navegador y del resultado de busqueda, que NO es el <h1>.
  *
- * Abre con la palabra con la que se busca -- "chaqueta tommy hilfiger" -- y
- * detras, si cabe, el nombre oficial del modelo, que es lo que busca quien
- * ya sabe que quiere comprar. `tituloDeFicha` decide que entra sin pasar de
- * donde Google corta; la regla y sus casos estan en formato.ts.
+ * En la pagina manda el nombre oficial del fabricante, que es lo que el
+ * cliente reconoce con la prenda delante. En un resultado manda la palabra
+ * con la que se busca: "chaqueta tommy hilfiger", no "Mixed-Media Puffer
+ * Jacket". El nombre oficial sigue estando en el h1, en la descripcion y en
+ * la ficha estructurada, asi que quien busque el modelo exacto lo encuentra.
+ *
+ * Lleva el modelo cuando cabe: "Hoodie Essentials Fleece Hoodie II · Negro"
+ * distingue la prenda de los otros hoodies de la marca, y es lo que escribe
+ * quien ya la vio en otro sitio. Si con el modelo se pasa de los 60
+ * caracteres en que Google corta, se queda en tipo, marca y color, que es lo
+ * que no puede faltar. El nombre de la tienda lo anade el layout si cabe.
  */
-const { titulo: tituloBuscador, conTienda } = tituloDeFicha({
-  base: [ETIQUETAS_TIPO_UNA[producto.tipo], nombreDeMarcas(producto.marcas)]
-    .filter(Boolean)
-    .join(' '),
-  modelo: producto.nombre,
-  color: variante.color,
-  tienda: ` | ${CONFIG.nombre}`,
-})
+const marca = nombreMarca(producto)
+const MAXIMO_TITULO = 60
+// El tipo ya abre el titulo: si el nombre del fabricante lo repite ("Fleece
+// Hoodie") se quita del nombre, que "Hoodie Essentials Fleece Hoodie" gasta
+// caracteres y se lee como un error.
+const tipoUna = ETIQUETAS_TIPO_UNA[producto.tipo]
+const nombreSinTipo = producto.nombre
+  .split(' ')
+  .filter((palabra) => palabra.toLowerCase() !== tipoUna.toLowerCase())
+  .join(' ')
+const componer = (modelo: string) =>
+  [tipoUna, marca, modelo].filter(Boolean).join(' ') + ` · ${variante.color}`
+// Si no cabe, el modelo se recorta por el final palabra a palabra antes de
+// perderlo entero: "Bolso Karl Lagerfeld Maybelle Small · Negro" distingue la
+// pieza de los otros bolsos negros de la marca; "Bolso Karl Lagerfeld · Negro"
+// no. Una palabra de enlace suelta al final ("with", "de") se quita tambien.
+const ENLACES = new Set(['with', 'and', 'de', 'del', 'y', 'con', '&', '-'])
+let palabras = (nombreSinTipo || producto.nombre).split(' ')
+while (palabras.length && componer(palabras.join(' ')).length > MAXIMO_TITULO) {
+  palabras = palabras.slice(0, -1)
+  while (palabras.length && ENLACES.has(palabras.at(-1)!.toLowerCase())) palabras = palabras.slice(0, -1)
+}
+const tituloBuscador = componer(palabras.join(' '))
 
 /**
  * La descripcion para el buscador, que no es la que se lee en la ficha.
@@ -77,7 +97,7 @@ const descripcionBuscador =
   (producto.variantes.length > 1 ? ` Color ${variante.color.toLowerCase()}.` : '')
 // El alt describe cada foto por separado. Donde la variante no lo declara se
 // compone con marca y color, que es lo que distingue una ficha de otra.
-const alternativoPorDefecto = [producto.marca, producto.nombre, variante.color]
+const alternativoPorDefecto = [marca, producto.nombre, variante.color]
   .filter(Boolean)
   .join(' ')
 const imagenes = variante.imagenes.map((foto) => {
@@ -96,6 +116,7 @@ if (!Astro.site) {
 // Solo se anuncia sobre una variante que se puede pedir: si el color esta
 // agotado la ficha no llega a pintar las tallas.
 const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
+const tallas = tallasDe(producto, variante)
 // Con barra final: el build usa `format: 'directory'`, asi que esa es la forma
 // canonica. Sin ella el servidor redirige, y ademas el enlace no coincidiria
 // con el canonical ni con el `offers.url` del schema.
@@ -117,8 +138,8 @@ const enlaceInicial = construirEnlaceWhatsApp({
 })
 
 /**
- * Las fotos con URL absoluta, que es lo que pide el schema. La tarjeta de
- * compartir no las usa: lleva su propia foto, compuesta en /tarjeta/.
+ * Las fotos con URL absoluta, que es lo que piden tanto el schema como la
+ * tarjeta de compartir.
  *
  * Se piden por getImage y no usando el `src` del import: asi el archivo que
  * se nombra es uno que el build emite seguro, en vez de una ruta del original
@@ -130,19 +151,37 @@ const optimizadas = await Promise.all(
 const absolutas = optimizadas.map((foto) => new URL(foto.src, Astro.site).href)
 
 // La misma foto que abre la prenda en la rejilla: hay prendas que se venden
-// por la espalda. Aqui solo da el alt de la tarjeta; la foto la elige con
-// la misma regla /tarjeta/[slug]/[color].jpg.
+// por la espalda, y el enlace pegado en un chat tiene que enseñar eso.
 const iPortada = Math.max(0, variante.imagenes.findIndex((foto) => foto.portada))
 
 // Ficha estructurada para el buscador. La arma datos-estructurados.ts, que
 // esta cubierto por tests: son datos que no se ven en la pagina, asi que un
 // error ahi no lo nota nadie hasta que Google rechaza la ficha.
-// Con mas de un color va como grupo, para que Google lea una prenda en
-// varios colores y no varias prendas sueltas.
+//
+// Con mas de un color va como grupo, para que Google no vea dos prendas
+// casi iguales compitiendo entre si.
 const datosFicha = { producto, variante, url, imagenes: absolutas }
 const fichaJson = serializar(
-  producto.variantes.length > 1 ? fichaGrupo(datosFicha) : fichaProducto(datosFicha)
+  producto.variantes.length > 1
+    ? fichaGrupo({
+        ...datosFicha,
+        urlDe: (v) => new URL(`/producto/${producto.slug}/${v.slug}/`, Astro.site).href,
+      })
+    : fichaProducto(datosFicha)
 )
+
+/**
+ * La tarjeta para compartir la genera /tarjeta/<slug>/<color>.jpg: la foto
+ * de portada entera sobre un fondo de su propio color, en 1200x630. La foto
+ * vertical recortada a esa proporcion se quedaba en una franja del pecho.
+ */
+const tarjeta = new URL(`/tarjeta/${producto.slug}/${variante.slug}.jpg`, Astro.site).href
+
+// Las marcas de la prenda, cada una con su pagina.
+const marcasConPagina = marcasDeProducto(producto).map((nombre) => ({
+  nombre,
+  ruta: `/marca/${slugMarca(nombre)}/`,
+}))
 
 /**
  * El camino hasta esta ficha.
@@ -150,60 +189,34 @@ const fichaJson = serializar(
  * La categoria de una prenda siempre tiene pagina: /catalogo/<categoria> se
  * genera para las categorias con prendas, y esta prenda es una de ellas.
  *
- * La marca es el tercer escalon, y esta aqui porque a esta ficha se llega por
- * dos sitios. Quien viene del catalogo sube por la categoria; quien viene del
- * archivo -- que es quien acaba de leer QUIEN es la marca y ha bajado a ver
- * sus piezas -- no tenia por donde volver: el rastro decia Inicio > Hombre >
- * prenda y el archivo no aparecia. El nombre de la marca junto al titulo si
- * lleva a su pagina, pero eso es un enlace para ir, no para volver, y nadie
- * busca ahi el camino de vuelta.
- *
- * Un solo rastro para los dos caminos, y no uno segun de donde se venga: la
- * pagina se genera en el build, es la misma para todos, y el BreadcrumbList
- * tiene que decir lo mismo que se ve.
- *
- * La prenda sin marca -- las hay -- se queda con el rastro de siempre.
+ * Entre la categoria y la prenda va la marca, con enlace a su pagina: es el
+ * otro camino para subir, y en una colaboracion se pintan las dos.
  *
  * El ultimo escalon es el nombre del fabricante a secas, sin el color: el
  * rastro dice donde cae la pagina, y el color ya lo dicen el h1 y el
  * selector de mas abajo.
  */
+const [primeraMarca, ...otrasMarcas] = marcasConPagina
 const migas: Miga[] = [
   { nombre: 'Inicio', ruta: '/' },
   {
-    nombre: ETIQUETAS_CATEGORIA[producto.categorias[0]!],
-    ruta: `/catalogo/${producto.categorias[0]}/`,
+    nombre: ETIQUETAS_CATEGORIA[producto.categoria],
+    ruta: `/catalogo/${producto.categoria}/`,
   },
-  ...(marcasEnlazadas.length
-    ? [
-        {
-          nombre: marcasEnlazadas[0]!.nombre,
-          ruta: marcasEnlazadas[0]!.href,
-          /* Con una sola marca no hay nada que repartir y el escalon se pinta
-             como siempre. Con dos, las dos se ven y las dos vuelven: quien
-             bajo desde New Balance no tiene por que salir por Aimé Leon
-             Dore. */
-          ...(marcasEnlazadas.length > 1
-            ? { partes: marcasEnlazadas.map(({ nombre, href }) => ({ nombre, ruta: href })) }
-            : {}),
-        },
-      ]
-    : []),
+  ...(primeraMarca ? [{ ...primeraMarca, junto: otrasMarcas }] : []),
   { nombre: producto.nombre },
 ]
 const migasJson = serializar(fichaMigas(migas, Astro.site))
 ---
 <Layout
   titulo={tituloBuscador}
-  sinNombreTienda={!conTienda}
   descripcion={descripcionBuscador}
   tipo="product"
-  descripcionTarjeta={descripcionTarjeta(producto, descripcionBuscador)}
-  precio={{ monto: producto.precio, moneda: VENTA.moneda }}
-  imagen={new URL(`/tarjeta/${producto.slug}/${variante.slug}.jpg`, Astro.site).href}
+  precio={precioDe(producto, variante)}
+  imagen={tarjeta}
   imagenAlt={imagenes[iPortada]!.alt}
-  imagenAncho={TARJETA.ancho}
-  imagenAlto={TARJETA.alto}
+  imagenAncho={1200}
+  imagenAlto={630}
 >
   <script type="application/ld+json" is:inline set:html={fichaJson}></script>
   <script type="application/ld+json" is:inline set:html={migasJson}></script>
@@ -269,14 +282,12 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
     <div class="columna">
       <header class="encabezado">
         <h1>{titulo}</h1>
-        {marcasEnlazadas.length > 0 && (
+        {marcasConPagina.length > 0 && (
           <p class="marca">
-            {marcasEnlazadas.map(({ nombre, href }, i) => (
+            {marcasConPagina.map((m, i) => (
               <>
-                {/* La cruz separa, no se lee: un lector de pantalla ya anuncia
-                    dos enlaces distintos, y "por" entre medias solo estorba. */}
                 {i > 0 && <span aria-hidden="true"> × </span>}
-                <a href={href}>{nombre}</a>
+                <a href={m.ruta}>{m.nombre}</a>
               </>
             ))}
           </p>
@@ -284,7 +295,7 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
       </header>
 
       <div class="detalle">
-      <Precio class="precio" producto={producto} />
+      <Precio producto={producto} variante={variante} />
       <p class="descripcion">{producto.descripcion}</p>
 
       {variante.disponible ? (
@@ -312,7 +323,7 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
               {/* Nace vacio: el estado contesta a una eleccion, no la adelanta. */}
               <span class="tallas__estado" data-talla-estado aria-live="polite"></span>
             </legend>
-            {tallasDe(producto, variante).map(({ talla, disponible }) => (
+            {tallas.map(({ talla, disponible }) => (
               <label>
                 {/* Deshabilitada: la agotada no se puede elegir. El clic sobre
                     la etiqueta si llega al script, que es lo que permite
@@ -604,13 +615,13 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
   @media (max-width: 899px) {
     .marca { font-size: 1.125rem; }
   }
-  /* Subrayado fino y del color del texto: es un enlace, pero no compite con
-     el nombre de la prenda que tiene encima. */
+  /* La marca lleva a su pagina en el archivo. Subrayada fino para que se
+     note que es un enlace sin que pese mas que el nombre de la prenda. */
   .marca a {
     color: inherit;
     text-decoration: underline;
-    text-decoration-thickness: 1px;
     text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
   }
   /* El doble que en la tarjeta del catalogo, y por encima del nombre de la
      prenda: en la ficha el precio es el dato que decide la compra. */
@@ -725,13 +736,9 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
     color: var(--texto-suave);
   }
 
-  /* La descripcion es texto corrido: en typewriter cansaba leerla, asi que
-     va en la sans limpia que ya usa la marca. */
-  .descripcion {
-    font-family: var(--fuente-marca);
-    color: var(--texto-suave);
-    max-width: 55ch;
-  }
+  /* En la sans de la marca, como el texto de las fichas del archivo: la
+     typewriter se cansa a partir de la segunda linea. */
+  .descripcion { font-family: var(--fuente-marca); color: var(--texto-suave); max-width: 55ch; }
   .colores { margin-block: var(--espacio-3) var(--espacio-2); }
   .etiqueta {
     display: block;

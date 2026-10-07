@@ -2,39 +2,23 @@
 import Layout from '../../layouts/Layout.astro'
 import RejillaProductos from '../../components/RejillaProductos.astro'
 import { productos } from '../../data/productos'
-import { descuento } from '../../data/schema'
-import { marcasQueQuepan, marcasPorPeso, saleDe, tarjetasEnOrden } from '../../lib/catalogo'
-import {
-  fichaCategoria,
-  fichaMigas,
-  serializar,
-  type Miga,
-} from '../../lib/datos-estructurados'
-import { VENTA } from '../../config'
+import { enRebaja, marcasParaTexto, tarjetasEnOrden } from '../../lib/catalogo'
+import { fichaCategoria, fichaMigas, serializar, type Miga } from '../../lib/datos-estructurados'
+import { CONFIG, MARCAS_PRIMERO, VENTA } from '../../config'
 
 /**
- * /sale/: las prendas rebajadas, las que tienen `precioAntes`.
+ * Las prendas rebajadas: las que declaran `precioAnterior` en productos.ts.
  *
- * Se publica SIEMPRE, haya rebajas o no: Sale es una seccion de la tienda y
- * la cabecera la enlaza desde todas las paginas. Sin rebajas se queda con un
- * aviso y con noindex: un buscador no tiene nada que ensenar de ella, y una
- * pagina vacia indexada resta al sitio entero. Tampoco entra en el sitemap
- * (ver astro.config.mjs). El dia que se rebaje algo vuelve a ser indexable
- * sola.
+ * La pagina existe siempre, haya rebajas o no: Sale esta fijo en la
+ * cabecera, y un enlace de la cabecera que unas semanas lleva a un 404 es
+ * peor que una pagina que dice que hoy no hay nada.
  */
-const rebajadas = saleDe(productos)
-const hayRebajas = rebajadas.length > 0
+const rebajadas = enRebaja(productos)
 
-// "hasta −40 %" y no un porcentaje por prenda: en una linea de resultado de
-// busqueda cabe un dato, y el que hace clicar es el mayor.
-const cierre = `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
-const descripcion = hayRebajas
-  ? marcasQueQuepan(
-      marcasPorPeso(rebajadas),
-      (lista) =>
-        `Sale: ${lista} con hasta ${Math.max(...rebajadas.map((p) => descuento(p)!))} % de descuento. ${cierre}`
-    )
-  : 'Sale de The Rack store: ropa de marca con descuento. Ahora mismo no hay rebajas.'
+const descripcion = rebajadas.length
+  ? `Sale de ${CONFIG.nombre}: ${marcasParaTexto(rebajadas, MARCAS_PRIMERO, 3)} con descuento. ` +
+    `Envío gratis a toda Colombia en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días.`
+  : `Sale de ${CONFIG.nombre}: ropa de marca con descuento. Ahora mismo no hay rebajas.`
 
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')
@@ -42,10 +26,8 @@ if (!Astro.site) {
 const migas: Miga[] = [{ nombre: 'Inicio', ruta: '/' }, { nombre: 'Sale' }]
 const migasJson = serializar(fichaMigas(migas, Astro.site))
 
-// Mismo listado que las categorias, desde la misma funcion que ordena la
-// rejilla: lo que se declara es lo que se ve, en su orden. Vacia no se
-// declara: un listado sin elementos no dice nada.
-const listadoJson = hayRebajas
+// Sin rebajas no hay listado que declarar: un ItemList vacio no lista nada.
+const listadoJson = rebajadas.length
   ? serializar(
       fichaCategoria({
         nombre: 'Sale',
@@ -59,18 +41,20 @@ const listadoJson = hayRebajas
     )
   : null
 ---
-<Layout titulo="Sale: ropa de marca con descuento" descripcion={descripcion} indexable={hayRebajas}>
+<Layout
+  titulo="Sale: ropa de marca con descuento"
+  descripcion={descripcion}
+  sinIndexar={rebajadas.length === 0}
+>
   <script type="application/ld+json" is:inline set:html={migasJson}></script>
   {listadoJson && <script type="application/ld+json" is:inline set:html={listadoJson}></script>}
 
   <div class="contenedor catalogo-pagina">
-    {/* Oculto a la vista por lo mismo que en la portada y las categorias: es
-        la misma rejilla con otras prendas, y un titular que las otras no
-        tienen haria saltar la composicion. La seccion ya se ve marcada en la
-        cabecera. */}
+    {/* Oculto a la vista, como el de las paginas de catalogo: es la misma
+        rejilla con otras prendas. */}
     <h1 class="visualmente-oculto">Sale</h1>
-    {hayRebajas ? (
-      <RejillaProductos productos={rebajadas} ordenable conGeneros={false} />
+    {rebajadas.length ? (
+      <RejillaProductos productos={rebajadas} ordenable />
     ) : (
       <p class="vacio">
         Ahora mismo no hay prendas en rebaja. <a href="/">Mira las Exclusives</a>.
@@ -80,10 +64,14 @@ const listadoJson = hayRebajas
 </Layout>
 
 <style>
+  /* El mismo aire que las paginas de catalogo. */
   .catalogo-pagina { padding-block: var(--espacio-2) var(--espacio-4); }
   .vacio {
     color: var(--texto-suave);
     padding-block: var(--espacio-4);
   }
-  .vacio a { color: var(--texto); text-underline-offset: 0.35em; }
+  .vacio a {
+    color: var(--texto);
+    text-underline-offset: 0.35em;
+  }
 </style>

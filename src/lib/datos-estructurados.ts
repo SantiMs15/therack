@@ -9,7 +9,14 @@
  * Solo se declara lo que se sostiene. Un dato inventado en una ficha
  * estructurada es peor que la ausencia del dato.
  */
-import { tallasDisponibles, type Producto, type Variante } from '../data/schema'
+import {
+  marcasDeProducto,
+  precioDe,
+  tallasDisponibles,
+  type FichaMarca,
+  type Producto,
+  type Variante,
+} from '../data/schema'
 import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
 
 export interface DatosFicha {
@@ -21,14 +28,46 @@ export interface DatosFicha {
   imagenes: string[]
 }
 
-export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha) {
+/**
+ * La politica de cambios, igual en cada ficha y en la de la tienda.
+ *
+ * Google la lee de las dos: en la tienda vale para todo el sitio, y en cada
+ * oferta es lo que deja que el resultado diga "Cambios en 30 dias" junto al
+ * precio. Escrita dos veces acabaria diciendo dos plazos distintos.
+ */
+export function politicaCambios() {
+  return {
+    '@type': 'MerchantReturnPolicy',
+    applicableCountry: VENTA.pais,
+    returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+    merchantReturnDays: VENTA.cambios.dias,
+    // Sin estos dos, Search Console marca la politica como incompleta. Es lo
+    // que se hace hoy: la prenda vuelve por mensajeria y ese envio lo paga
+    // el cliente, que es lo que dice /tienda.
+    returnMethod: 'https://schema.org/ReturnByMail',
+    returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
+    // Cambio, no devolucion del dinero: es lo que ofrece la tienda.
+    refundType: 'https://schema.org/ExchangeRefund',
+  }
+}
+
+/**
+ * La marca para el schema. En una colaboracion va solo la primera: Brand
+ * admite un nombre, y la que firma primero es la que vende la prenda.
+ */
+function marcaSchema(producto: Producto) {
+  const [primera] = marcasDeProducto(producto)
+  return primera ? { brand: { '@type': 'Brand', name: primera } } : {}
+}
+
+/** Un color de una prenda, sin @context: va suelto o dentro de un grupo. */
+function productoVariante({ producto, variante, url, imagenes }: DatosFicha) {
   // Agotado es tanto la variante marcada como tal como la que se quedo sin
   // ninguna talla pedible: por fuera es lo mismo, no se puede comprar.
   const tallas = tallasDisponibles(producto, variante)
   const hayStock = variante.disponible && tallas.length > 0
 
   return {
-    '@context': 'https://schema.org',
     '@type': 'Product',
     name: `${producto.nombre} - ${variante.color}`,
     description: producto.descripcion,
@@ -39,29 +78,12 @@ export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha)
     // internos, asi que sirve el par slug+color: identifica una pieza
     // concreta, es unico por construccion y no cambia con el tiempo.
     sku: `${producto.slug}-${variante.slug}`,
-    // Sin marca no se declara `brand`: uno vacio es peor que ninguno. Con
-    // una o con dos -- una colaboracion -- va solo la principal, la primera
-    // escrita: Google marca una lista de Brand como campo duplicado.
-    ...(producto.marcas.length
-      ? { brand: { '@type': 'Brand', name: producto.marcas[0] } }
-      : {}),
+    ...marcaSchema(producto),
     offers: {
       '@type': 'Offer',
       url,
       priceCurrency: VENTA.moneda,
-      price: producto.precio,
-      // Rebajada, el precio de antes va como tachado: es lo que deja que el
-      // resultado de busqueda ensene la rebaja y no solo el precio final.
-      ...(producto.precioAntes
-        ? {
-            priceSpecification: {
-              '@type': 'UnitPriceSpecification',
-              priceType: 'https://schema.org/StrikethroughPrice',
-              price: producto.precioAntes,
-              priceCurrency: VENTA.moneda,
-            },
-          }
-        : {}),
+      price: precioDe(producto, variante),
       availability: hayStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: VENTA.condicion,
       seller: { '@type': 'Organization', name: CONFIG.nombre },
@@ -95,46 +117,26 @@ export function fichaProducto({ producto, variante, url, imagenes }: DatosFicha)
   }
 }
 
-/**
- * La politica de cambios, una sola para la oferta y para la tienda.
- *
- * Va en los dos sitios porque Google la lee en los dos: en la oferta manda
- * para esa prenda, en la tienda es la que aplica cuando una oferta no dice
- * nada. Armarla en una funcion es lo que impide que las dos copias se
- * separen.
- */
-function politicaCambios() {
-  return {
-    '@type': 'MerchantReturnPolicy',
-    applicableCountry: VENTA.pais,
-    returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
-    merchantReturnDays: VENTA.cambios.dias,
-    returnMethod: VENTA.cambios.metodo,
-    returnFees: VENTA.cambios.costo,
-    // Cambio, no devolucion del dinero: es lo que ofrece la tienda.
-    refundType: 'https://schema.org/ExchangeRefund',
-  }
+export function fichaProducto(datos: DatosFicha) {
+  return { '@context': 'https://schema.org', ...productoVariante(datos) }
 }
 
 /**
- * La ficha de una prenda que viene en varios colores.
+ * La ficha de una prenda con varios colores.
  *
- * Sin esto cada color es para Google un producto suelto, sin relacion con
- * los otros: tres fichas que compiten entre si en vez de una prenda en tres
- * colores. El ProductGroup las junta bajo un mismo `productGroupID` y dice
- * que lo unico que cambia entre ellas es el color.
- *
- * Es el formato que Google documenta cuando cada variante tiene su propia
- * URL: la variante de ESTA pagina va completa, con su oferta; las demas van
- * solo con su URL, porque sus datos ya estan en su pagina y dos copias
- * acaban discrepando.
- *
- * Con un solo color no hay grupo: un ProductGroup de una variante no agrupa
- * nada. Quien pinta la pagina decide, y en ese caso usa `fichaProducto`.
+ * Con un Product suelto por pagina, Google veia dos prendas casi iguales
+ * compitiendo entre si. El grupo le dice que son colores de la misma: el
+ * color de esta pagina va completo, y los otros solo con su URL, que es como
+ * Google documenta los grupos repartidos en varias paginas -- cada una
+ * declara entera su variante y enlaza las demas.
  */
-export function fichaGrupo(datos: DatosFicha) {
-  const { producto, variante, url } = datos
-  const { '@context': _, ...pieza } = fichaProducto(datos)
+export function fichaGrupo(
+  datos: DatosFicha & {
+    /** URL absoluta de cada color, en el orden del catalogo. */
+    urlDe: (variante: Variante) => string
+  }
+) {
+  const { producto, variante, urlDe } = datos
   return {
     '@context': 'https://schema.org',
     '@type': 'ProductGroup',
@@ -142,15 +144,11 @@ export function fichaGrupo(datos: DatosFicha) {
     description: producto.descripcion,
     productGroupID: producto.slug,
     variesBy: ['https://schema.org/color'],
-    ...('brand' in pieza ? { brand: pieza.brand } : {}),
+    ...marcaSchema(producto),
     hasVariant: producto.variantes.map((v) =>
       v.slug === variante.slug
-        ? { ...pieza, inProductGroupWithID: producto.slug }
-        : {
-            '@type': 'Product',
-            // Absoluta contra la de esta pagina: mismo sitio, otra ruta.
-            url: new URL(`/producto/${producto.slug}/${v.slug}/`, url).href,
-          }
+        ? { ...productoVariante(datos), inProductGroupWithID: producto.slug }
+        : { '@type': 'Product', url: urlDe(v) }
     ),
   }
 }
@@ -164,26 +162,6 @@ export function fichaGrupo(datos: DatosFicha) {
  */
 export function serializar(ficha: unknown): string {
   return JSON.stringify(ficha).replace(/</g, '\\u003c')
-}
-
-/**
- * Un elemento de un listado: solo su URL.
- *
- * Es el formato que Google pide cuando cada elemento tiene pagina propia, y
- * es el que ya usaba `fichaCategoria`. Se saca aparte porque ahora lo arman
- * tres funciones y repetir el `.map` en las tres es repetir tambien el dia
- * que cambie.
- */
-function listaDeUrls(urls: readonly string[]) {
-  return {
-    '@type': 'ItemList',
-    numberOfItems: urls.length,
-    itemListElement: urls.map((u, i) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      url: u,
-    })),
-  }
 }
 
 /**
@@ -222,92 +200,15 @@ export function fichaCategoria({
     name: nombre,
     description: descripcion,
     url,
-    mainEntity: listaDeUrls(urls),
-  }
-}
-
-/**
- * La ficha de una pagina de marca.
- *
- * Es una CollectionPage cuyo `about` es la marca: la pagina no ES la marca,
- * HABLA de la marca y ademas lista sus piezas. Declararla como Brand a secas
- * dejaria sin sitio a la lista de productos.
- *
- * `foundingDate` va como cadena porque schema.org espera una fecha, y un
- * numero suelto no lo es. El ano solo es una fecha valida.
- *
- * Sin piezas no se emite `mainEntity`. Un ItemList de cero elementos no dice
- * "no hay nada", dice "esto es un listado" -- y una marca que todavia no ha
- * llegado a la tienda no lo es.
- */
-export function fichaMarca({
-  nombre,
-  propuesta,
-  url,
-  pais,
-  ciudad,
-  anio,
-  fundador,
-  imagen,
-  urls,
-}: {
-  nombre: string
-  /** La linea de propuesta: es la descripcion de la pagina y de la marca. */
-  propuesta: string
-  /** Canonica de la pagina de marca, absoluta. */
-  url: string
-  pais: string
-  /** Si se sabe, el Place dice "ciudad, pais". */
-  ciudad?: string
-  anio: number
-  /** Una Person por nombre: con uno solo va el objeto, con varios la lista. */
-  fundador: string | readonly string[]
-  /** Foto de campana, absoluta. */
-  imagen: string
-  /** Fichas que lista, absolutas y en el orden en que se ven. */
-  urls: readonly string[]
-}) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: nombre,
-    description: propuesta,
-    url,
-    about: {
-      '@type': 'Brand',
-      name: nombre,
-      description: propuesta,
-      foundingDate: String(anio),
-      founder:
-        typeof fundador === 'string'
-          ? persona(fundador)
-          : fundador.map(persona),
-      foundingLocation: { '@type': 'Place', name: ciudad ? `${ciudad}, ${pais}` : pais },
-      image: imagen,
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: urls.length,
+      itemListElement: urls.map((u, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        url: u,
+      })),
     },
-    ...(urls.length > 0 ? { mainEntity: listaDeUrls(urls) } : {}),
-  }
-}
-
-function persona(name: string) {
-  return { '@type': 'Person', name }
-}
-
-/**
- * La ficha del indice del archivo: un listado de paginas de marca.
- *
- * Cada entrada es solo su URL, por lo mismo que en las otras dos: los datos
- * de la marca ya estan en su pagina, y dos copias acaban discrepando.
- */
-export function fichaArchivo({ url, urls }: { url: string; urls: readonly string[] }) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: 'Archivo de marcas',
-    description:
-      'Las marcas que trae The Rack store al mercado colombiano, con su origen y su propuesta.',
-    url,
-    mainEntity: listaDeUrls(urls),
   }
 }
 
@@ -315,23 +216,18 @@ export function fichaArchivo({ url, urls }: { url: string; urls: readonly string
 export interface Miga {
   nombre: string
   /**
-   * Cuando el escalon lleva a mas de un sitio: una prenda de dos marcas se
-   * alcanza desde las dos, y quien vino de cualquiera de ellas tiene que
-   * poder volver por donde entro.
-   *
-   * Solo cambia lo que se VE. Al schema va `nombre` + `ruta`, uno solo: un
-   * BreadcrumbList es un camino, y dos destinos en la misma posicion serian
-   * dos caminos. Por eso el escalon sigue declarando los suyos aunque traiga
-   * `partes`, y quien lo escribe pone ahi el primero.
-   */
-  partes?: { nombre: string; ruta: string }[]
-  /**
    * Ruta del sitio, con barra final. RELATIVA a proposito: es lo que va en el
    * href que se pinta, y una absoluta ahi mandaria al dominio de produccion
    * desde el servidor de desarrollo. La absoluta que pide el schema la arma
    * `fichaMigas`, que es quien sabe cual es el sitio.
    */
   ruta?: string
+  /**
+   * Hermanos del escalon, que se pintan a su lado: las otras marcas de una
+   * colaboracion. Solo se ven -- el JSON-LD es una cadena y lleva solo el
+   * primero --, pero sin ellos la segunda marca no tendria enlace en la ficha.
+   */
+  junto?: { nombre: string; ruta: string }[]
 }
 
 /**
@@ -362,24 +258,6 @@ export function fichaMigas(migas: readonly Miga[], sitio: string | URL) {
 }
 
 /**
- * El sitio, para la portada: es de donde Google saca el nombre que pone
- * encima de cada resultado. Sin el lo adivina, y puede quedarse con el
- * dominio pelado o con el titulo de alguna pagina.
- *
- * `alternateName` recoge como se la nombra de palabra, que es tambien como
- * la escribe quien la busca.
- */
-export function fichaSitio({ url }: { url: string }) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: CONFIG.nombre,
-    alternateName: ['The Rack', 'therackstore'],
-    url,
-  }
-}
-
-/**
  * La ficha de la tienda, para la portada.
  *
  * `OnlineStore` y no `LocalBusiness`: no hay local, y declarar un negocio
@@ -399,8 +277,6 @@ export function fichaTienda({ url, logo }: { url: string; logo: string }) {
     // actividad de la tienda: es lo que deja a un buscador entender que son
     // el mismo negocio.
     sameAs: [INSTAGRAM_URL],
-    // La politica para toda la tienda: Google la usa en las fichas de
-    // comercio de cualquier prenda cuya oferta no declare la suya.
     hasMerchantReturnPolicy: politicaCambios(),
     areaServed: { '@type': 'Country', name: 'Colombia' },
     paymentAccepted: VENTA.pago.texto,
@@ -410,5 +286,76 @@ export function fichaTienda({ url, logo }: { url: string; logo: string }) {
       telephone: CONFIG.telefono,
       availableLanguage: 'Spanish',
     },
+  }
+}
+
+/**
+ * El sitio, para la portada.
+ *
+ * Es de donde Google saca el nombre que pinta encima de cada resultado. Sin
+ * el, adivinaba a partir del dominio y salia "therackstore". Los
+ * `alternateName` son las formas en que la gente escribe la tienda.
+ */
+export function fichaSitio({ url }: { url: string }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: CONFIG.nombre,
+    alternateName: ['The Rack', 'therackstore'],
+    url,
+  }
+}
+
+/**
+ * La ficha de la pagina de una marca: un listado (CollectionPage) que trata
+ * SOBRE una marca (about: Brand).
+ *
+ * El Brand lleva lo que la ficha cuenta en la pagina -- fundacion,
+ * fundadores, origen --, salido de los mismos datos que pintan el texto. Las
+ * prendas van como en las paginas de catalogo: solo sus URLs, en el orden en
+ * que se ven. Sin prendas no hay ItemList: un listado vacio no lista nada.
+ */
+export function fichaMarca({
+  nombre,
+  ficha,
+  url,
+  imagen,
+  lugar,
+  urls,
+}: {
+  nombre: string
+  ficha: FichaMarca
+  url: string
+  /** Foto de portada, absoluta. */
+  imagen: string
+  /** "Elche, España": el mismo texto que se lee en la pagina. */
+  lugar: string
+  urls: readonly string[]
+}) {
+  const fundadores = ficha.fundadores.map((n) => ({ '@type': 'Person', name: n }))
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: nombre,
+    description: ficha.propuesta,
+    url,
+    about: {
+      '@type': 'Brand',
+      name: nombre,
+      description: ficha.propuesta,
+      foundingDate: String(ficha.fundacion),
+      founder: fundadores.length === 1 ? fundadores[0] : fundadores,
+      foundingLocation: { '@type': 'Place', name: lugar },
+      image: imagen,
+    },
+    ...(urls.length
+      ? {
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: urls.length,
+            itemListElement: urls.map((u, i) => ({ '@type': 'ListItem', position: i + 1, url: u })),
+          },
+        }
+      : {}),
   }
 }

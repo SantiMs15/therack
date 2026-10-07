@@ -2,13 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { validarCatalogo, type Producto, type Variante } from '../data/schema'
 import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
 import {
-  fichaArchivo,
   fichaCategoria,
-  fichaGrupo,
-  fichaMarca,
   fichaMigas,
   fichaProducto,
-  fichaSitio,
   fichaTienda,
   serializar,
 } from './datos-estructurados'
@@ -76,18 +72,6 @@ describe('fichaProducto', () => {
       .toEqual({ '@type': 'Brand', name: 'Tommy Hilfiger' })
   })
 
-  it('una colaboracion declara solo la marca principal, la primera escrita', () => {
-    const f = ficha(catalogo({ marca: ['Aimé Leon Dore', 'New Balance'] })) as any
-    expect(f.brand).toEqual({ '@type': 'Brand', name: 'Aimé Leon Dore' })
-  })
-
-  it('brand es siempre un objeto, nunca una lista', () => {
-    // Una lista de dos Brand es lo que Google marca como campo duplicado.
-    expect(Array.isArray((ficha(catalogo()) as any).brand)).toBe(false)
-    const colab = ficha(catalogo({ marca: ['Aimé Leon Dore', 'New Balance'] })) as any
-    expect(Array.isArray(colab.brand)).toBe(false)
-  })
-
   it('omite brand del todo cuando la prenda no tiene marca', () => {
     // `marca` es opcional en el catalogo. Un brand vacio o nulo es peor que
     // ninguno: Google lo lee como campo mal declarado.
@@ -130,21 +114,6 @@ describe('fichaProducto', () => {
       expect(o().url).toBe(URL_FICHA)
     })
 
-    it('una prenda rebajada declara el precio de antes como tachado', () => {
-      const oferta = (ficha(catalogo({ precio: 195_000, precioAntes: 390_000 })) as any).offers
-      expect(oferta.price).toBe(195_000)
-      expect(oferta.priceSpecification).toEqual({
-        '@type': 'UnitPriceSpecification',
-        priceType: 'https://schema.org/StrikethroughPrice',
-        price: 390_000,
-        priceCurrency: 'COP',
-      })
-    })
-
-    it('una prenda a precio completo no declara precio tachado', () => {
-      expect(o()).not.toHaveProperty('priceSpecification')
-    })
-
     it('declara la ropa como nueva', () => {
       expect(o().itemCondition).toBe('https://schema.org/NewCondition')
     })
@@ -162,12 +131,6 @@ describe('fichaProducto', () => {
         .toBe('https://schema.org/MerchantReturnFiniteReturnWindow')
       expect(d.refundType).toBe('https://schema.org/ExchangeRefund')
       expect(d.applicableCountry).toBe('CO')
-    })
-
-    it('el cambio va por mensajeria y el envio lo paga el cliente', () => {
-      const d = o().hasMerchantReturnPolicy
-      expect(d.returnMethod).toBe('https://schema.org/ReturnByMail')
-      expect(d.returnFees).toBe('https://schema.org/ReturnFeesCustomerResponsibility')
     })
 
     it('declara el plazo de entrega completo en transitTime', () => {
@@ -200,67 +163,6 @@ describe('fichaProducto', () => {
       }
     }
     recorrer(f)
-  })
-})
-
-describe('fichaGrupo', () => {
-  const p = () =>
-    catalogo({
-      variantes: [
-        { color: 'Negro', slug: 'negro', imagenes: ['a.jpg'], disponible: true },
-        { color: 'Verde', slug: 'verde', imagenes: ['b.jpg'], disponible: true },
-      ],
-    })
-  const grupo = (i = 0) => {
-    const prod = p()
-    return fichaGrupo({
-      producto: prod,
-      variante: prod.variantes[i]!,
-      url: `https://therackstore.shop/producto/chaqueta-puffer/${prod.variantes[i]!.slug}/`,
-      imagenes: FOTOS,
-    }) as any
-  }
-
-  it('declara un ProductGroup que varia por color', () => {
-    const g = grupo()
-    expect(g['@context']).toBe('https://schema.org')
-    expect(g['@type']).toBe('ProductGroup')
-    expect(g.name).toBe('Puffer Jacket')
-    expect(g.productGroupID).toBe('chaqueta-puffer')
-    expect(g.variesBy).toEqual(['https://schema.org/color'])
-    expect(g.brand).toEqual({ '@type': 'Brand', name: 'Tommy Hilfiger' })
-  })
-
-  it('lista todos los colores, en el orden del catalogo', () => {
-    expect(grupo().hasVariant).toHaveLength(2)
-  })
-
-  it('la variante de la pagina va completa y apunta al grupo', () => {
-    const v = grupo(1).hasVariant[1]
-    expect(v['@type']).toBe('Product')
-    expect(v.sku).toBe('chaqueta-puffer-verde')
-    expect(v.inProductGroupWithID).toBe('chaqueta-puffer')
-    expect(v.offers.url).toBe('https://therackstore.shop/producto/chaqueta-puffer/verde/')
-    expect('@context' in v).toBe(false)
-  })
-
-  it('las otras variantes van solo con su URL absoluta', () => {
-    expect(grupo(1).hasVariant[0]).toEqual({
-      '@type': 'Product',
-      url: 'https://therackstore.shop/producto/chaqueta-puffer/negro/',
-    })
-  })
-
-  it('sin marca, el grupo tampoco declara brand', () => {
-    const prod = catalogo({
-      marca: undefined,
-      variantes: [
-        { color: 'Negro', slug: 'negro', imagenes: ['a.jpg'], disponible: true },
-        { color: 'Verde', slug: 'verde', imagenes: ['b.jpg'], disponible: true },
-      ],
-    })
-    const g = fichaGrupo({ producto: prod, variante: prod.variantes[0]!, url: URL_FICHA, imagenes: FOTOS })
-    expect('brand' in g).toBe(false)
   })
 })
 
@@ -306,12 +208,6 @@ describe('fichaTienda', () => {
     expect(t().paymentAccepted).toBe(VENTA.pago.texto)
   })
 
-  it('declara la misma politica de cambios que las fichas', () => {
-    const d = t().hasMerchantReturnPolicy
-    expect(d).toEqual((ficha(catalogo()) as any).offers.hasMerchantReturnPolicy)
-    expect(d.merchantReturnDays).toBe(VENTA.cambios.dias)
-  })
-
   it('da el telefono como punto de contacto', () => {
     expect(t().contactPoint.telephone).toBe(CONFIG.telefono)
   })
@@ -325,28 +221,6 @@ describe('fichaMigas', () => {
     { nombre: 'Puffer Jacket' },
   ]
   const migas = (camino = CAMINO) => fichaMigas(camino, SITIO) as any
-
-  it('un escalon de varias marcas viaja al schema con UNA sola, la primera', () => {
-    // El rastro que se ve puede ofrecer dos caminos de vuelta; un
-    // BreadcrumbList no: cada posicion es un sitio, y declarar dos seria
-    // decir que la prenda cuelga de los dos a la vez.
-    const f = migas([
-      { nombre: 'Inicio', ruta: '/' },
-      {
-        nombre: 'Aimé Leon Dore',
-        ruta: '/marca/aime-leon-dore/',
-        partes: [
-          { nombre: 'Aimé Leon Dore', ruta: '/marca/aime-leon-dore/' },
-          { nombre: 'New Balance', ruta: '/marca/new-balance/' },
-        ],
-      },
-      { nombre: 'Geo Print Crewneck' },
-    ])
-    expect(f.itemListElement).toHaveLength(3)
-    expect(f.itemListElement[1].name).toBe('Aimé Leon Dore')
-    expect(f.itemListElement[1].item).toBe('https://therackstore.shop/marca/aime-leon-dore/')
-    expect('partes' in f.itemListElement[1]).toBe(false)
-  })
 
   it('declara un BreadcrumbList con un escalon por miga', () => {
     const f = migas()
@@ -423,81 +297,5 @@ describe('fichaCategoria', () => {
     const f = cat([])
     expect(f.mainEntity.numberOfItems).toBe(0)
     expect(f.mainEntity.itemListElement).toEqual([])
-  })
-})
-
-describe('fichaMarca', () => {
-  const base = {
-    nombre: 'Aimé Leon Dore',
-    propuesta: 'El Nueva York de los noventa hecho ropa de todos los días.',
-    url: 'https://therackstore.shop/marca/aime-leon-dore/',
-    pais: 'Estados Unidos',
-    anio: 2014,
-    fundador: 'Teddy Santis',
-    imagen: 'https://therackstore.shop/_astro/ald.jpg',
-  }
-
-  it('declara la marca como Brand dentro de la pagina', () => {
-    const ficha = fichaMarca({ ...base, urls: [] }) as any
-    expect(ficha['@type']).toBe('CollectionPage')
-    expect(ficha.about['@type']).toBe('Brand')
-    expect(ficha.about.name).toBe('Aimé Leon Dore')
-  })
-
-  it('el ano de fundacion viaja como cadena, que es lo que pide schema.org', () => {
-    const ficha = fichaMarca({ ...base, urls: [] }) as any
-    expect(ficha.about.foundingDate).toBe('2014')
-  })
-
-  it('el fundador es una Person y el pais un Place', () => {
-    const ficha = fichaMarca({ ...base, urls: [] }) as any
-    expect(ficha.about.founder).toEqual({ '@type': 'Person', name: 'Teddy Santis' })
-    expect(ficha.about.foundingLocation).toEqual({ '@type': 'Place', name: 'Estados Unidos' })
-  })
-
-  it('con varios fundadores declara una Person por cada uno', () => {
-    const ficha = fichaMarca({ ...base, fundador: ['Conra Martínez', 'Gabriel Morón'], urls: [] }) as any
-    expect(ficha.about.founder).toEqual([
-      { '@type': 'Person', name: 'Conra Martínez' },
-      { '@type': 'Person', name: 'Gabriel Morón' },
-    ])
-  })
-
-  it('con ciudad el Place dice ciudad y pais', () => {
-    const ficha = fichaMarca({ ...base, ciudad: 'Queens', urls: [] }) as any
-    expect(ficha.about.foundingLocation.name).toBe('Queens, Estados Unidos')
-  })
-
-  it('lista las piezas en el orden en que se ven', () => {
-    const urls = ['https://therackstore.shop/a/', 'https://therackstore.shop/b/']
-    const ficha = fichaMarca({ ...base, urls }) as any
-    expect(ficha.mainEntity.numberOfItems).toBe(2)
-    expect(ficha.mainEntity.itemListElement.map((i: any) => i.url)).toEqual(urls)
-    expect(ficha.mainEntity.itemListElement[0].position).toBe(1)
-  })
-
-  it('sin piezas no emite ItemList: una lista vacia declara un listado que no hay', () => {
-    const ficha = fichaMarca({ ...base, urls: [] }) as any
-    expect(ficha.mainEntity).toBeUndefined()
-  })
-})
-
-describe('fichaArchivo', () => {
-  it('lista las paginas de marca', () => {
-    const urls = ['https://therackstore.shop/marca/represent/']
-    const ficha = fichaArchivo({ url: 'https://therackstore.shop/marca/', urls }) as any
-    expect(ficha['@type']).toBe('CollectionPage')
-    expect(ficha.mainEntity.numberOfItems).toBe(1)
-    expect(ficha.mainEntity.itemListElement[0].url).toBe(urls[0])
-  })
-})
-
-describe('fichaSitio', () => {
-  it('declara el WebSite con el nombre de la tienda y la URL de la portada', () => {
-    const f = fichaSitio({ url: 'https://therackstore.shop/' }) as any
-    expect(f['@type']).toBe('WebSite')
-    expect(f.name).toBe(CONFIG.nombre)
-    expect(f.url).toBe('https://therackstore.shop/')
-    expect(f.alternateName).toContain('The Rack')
   })
 })
