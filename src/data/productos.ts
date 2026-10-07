@@ -29,7 +29,7 @@ const catalogo: unknown[] = [
     marca: 'Lacoste',
     categoria: 'hombre',
     tipo: 'buzo',
-    precio: 385000,
+    precio: 483000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Buzo Lacoste en lana, cuello redondo acanalado, mangas raglán y el nombre Lacoste Paris tejido en intarsia sobre el pecho.',
@@ -617,7 +617,7 @@ const catalogo: unknown[] = [
     // Corte sin genero: tambien sale en el catalogo de mujer.
     tambienEn: ['mujer'],
     tipo: 'buzo',
-    precio: 440000,
+    precio: 441000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Buzo Eme Studios de punto grueso a rayas finas blancas sobre azul marino, cuello redondo acanalado, hombro caído y corte amplio. Lleva EME en granate aplicado sobre el pecho. Unisex.',
@@ -1068,7 +1068,7 @@ const catalogo: unknown[] = [
     tambienEn: ['mujer'],
     tipo: 'bolso',
     // En Sale: el precio de la hoja es el rebajado.
-    precio: 446000,
+    precio: 447000,
     precioAnterior: 760000,
     tallas: [TALLA_UNICA],
     descripcion:
@@ -1277,7 +1277,7 @@ const catalogo: unknown[] = [
     marca: 'Karl Lagerfeld',
     categoria: 'mujer',
     tipo: 'buzo',
-    precio: 330000,
+    precio: 319000,
     // Una sola pieza: la ficha la avisa como ultima talla.
     tallas: ['XS'],
     descripcion:
