@@ -39,6 +39,10 @@
   RewriteRule ^producto/astronaut-tee(/.*)?$ /producto/kidsuper-studios-astronaut-tee$1 [R=301,L]
   RewriteRule ^producto/twitch-studded-crewneck-t-shirt(/.*)?$ /producto/pleasures-twitch-studded-crewneck-t-shirt$1 [R=301,L]
   RewriteRule ^producto/pinstripe-night-sky-knit-sweater(/.*)?$ /producto/eme-studios-pinstripe-night-sky-knit-sweater$1 [R=301,L]
+
+  # Prendas retiradas: su enlace sigue en chats, asi que lleva a la marca en
+  # vez de a un 404. La tarjeta de compartir (/tarjeta/...) tambien.
+  RewriteRule ^(producto|tarjeta)/diesel-oval-d-sleeve-sweatshirt(/.*)?$ /marca/diesel/ [R=301,L]
 </IfModule>
 
 # Sirve la pagina 404 propia (con logo y salida al catalogo) en vez de la

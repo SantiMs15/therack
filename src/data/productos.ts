@@ -59,7 +59,7 @@ const catalogo: unknown[] = [
     marca: 'Lacoste',
     categoria: 'hombre',
     tipo: 'hoodie',
-    precio: 295000,
+    precio: 405000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Hoodie Lacoste en tejido fleece, capucha ajustable, bolsillo canguro y estampado Jeu Set et Match en pecho y espalda.',
@@ -136,7 +136,8 @@ const catalogo: unknown[] = [
     marca: 'Lacoste',
     categoria: 'hombre',
     tipo: 'buzo',
-    precio: 290000,
+    precio: 353000,
+    // Toda la escala: la del verde. El negro declara las suyas abajo.
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Buzo Lacoste Classic Printed Crew Neck original en algodón, corte clásico y estampado Classic Logo al frente.',
@@ -154,6 +155,9 @@ const catalogo: unknown[] = [
             alt: 'Buzo Lacoste Classic Printed Crew Neck negro, vista de espalda lisa sin estampado',
           },
         ],
+        // De la M a la XXL: sin XS ni S, y sin tacharlas, que daria a
+        // entender que vuelven.
+        tallas: ['M', 'L', 'XL', 'XXL'],
         disponible: true,
       },
       {
@@ -181,7 +185,7 @@ const catalogo: unknown[] = [
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
     tipo: 'buzo',
-    precio: 290000,
+    precio: 345000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Buzo Tommy Hilfiger de algodón, cuello alto acanalado con cremallera hasta el pecho y bandera bordada en el costado.',
@@ -208,9 +212,7 @@ const catalogo: unknown[] = [
       {
         color: 'Borgoña',
         slug: 'borgona',
-        // Rebajado solo este color: el beige sigue a precio normal y no entra en /sale.
-        precio: 248000,
-        precioAnterior: 290000,
+        // Mismo precio que el beige: lo hereda de la prenda.
         tallas: ['M'],
         imagenes: [
           {
@@ -303,7 +305,7 @@ const catalogo: unknown[] = [
     marca: 'Essentials',
     categoria: 'hombre',
     tipo: 'hoodie',
-    precio: 320000,
+    precio: 428000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Hoodie Essentials de Fear of God en tejido fleece de algodón, corte oversize, capucha forrada y el logo Essentials Fear of God en el pecho y en la espalda.',
@@ -343,8 +345,10 @@ const catalogo: unknown[] = [
     // de esta chaqueta no hay mas que esta pieza, y un rango tachado da a
     // entender que las otras tallas pueden volver.
     tallas: ['S'],
+    // Comun a los dos colores: el negro es liso y brillante, el azul marino
+    // lleva el monograma TH en jacquard. La ficha de cada uno ya dice su color.
     descripcion:
-      'Chaqueta acolchada Tommy Hilfiger en negro, de tejido mixto: hombros y cuello en mate, cuerpo en nylon brillante. Cuello alto, cremallera completa con tirador de cinta bandera, dos bolsillos con cremallera y puños ajustables con velcro.',
+      'Chaqueta acolchada Tommy Hilfiger de tejido mixto: hombros y cuello en nylon mate, cuerpo acolchado. Cuello alto, cremallera completa con tirador de cinta bandera, dos bolsillos con cremallera y puños ajustables con velcro. En negro brillante o en azul marino con el monograma TH en jacquard.',
     variantes: [
       {
         color: 'Negro',
@@ -355,6 +359,29 @@ const catalogo: unknown[] = [
             alt: 'Chaqueta acolchada Tommy Hilfiger Mixed-Media negra, vista frontal con el cuello alto levantado, la cremallera cerrada y la bandera Tommy bordada en el pecho',
           },
         ],
+        disponible: true,
+      },
+      {
+        color: 'Print Navy Jacquard',
+        slug: 'print-navy-jacquard',
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-mixed-media-puffer-jacket-print-navy-jacquard-frente.jpg',
+            alt: 'Chaqueta acolchada Tommy Hilfiger azul marino, vista frontal de la prenda sola con el canesú liso, el cuerpo y las mangas con el monograma TH en jacquard, la bandera en el pecho y el parche en la manga',
+          },
+          {
+            archivo: 'tommy-hilfiger-mixed-media-puffer-jacket-print-navy-jacquard-modelo.jpg',
+            alt: 'Chaqueta acolchada Tommy Hilfiger azul marino puesta, plano medio de un modelo con las manos en los bolsillos, camiseta blanca debajo y jeans claros',
+          },
+          {
+            archivo: 'tommy-hilfiger-mixed-media-puffer-jacket-print-navy-jacquard-espalda.jpg',
+            alt: 'Chaqueta acolchada Tommy Hilfiger azul marino, vista de espalda de la prenda sola con el canesú liso y el monograma TH en jacquard en el cuerpo y las mangas',
+          },
+        ],
+        // Solo este color va a Sale: rebajado desde el precio del negro, que
+        // sigue completo. Tambien una sola S.
+        precio: 390000,
+        precioAnterior: 515000,
         disponible: true,
       },
     ],
@@ -397,7 +424,7 @@ const catalogo: unknown[] = [
     marca: 'Aimé Leon Dore',
     categoria: 'hombre',
     tipo: 'camiseta',
-    precio: 390000,
+    precio: 382000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Camiseta Aimé Leon Dore en algodón color crudo, cuello redondo acanalado y corte recto. Lleva el escudo Unisphere de Queens estampado en verde: pequeño sobre el pecho y en grande en la espalda, con la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough.',
@@ -523,7 +550,7 @@ const catalogo: unknown[] = [
     marca: 'KidSuper Studios',
     categoria: 'hombre',
     tipo: 'camiseta',
-    precio: 220000,
+    precio: 217000,
     tallas: ['M'],
     descripcion:
       'Camiseta KidSuper Studios en algodón color crudo, cuello redondo acanalado y corte holgado de hombro caído. Lleva al frente un astronauta pintado a mano en acuarela, flotando con un libro abierto, y la firma de la marca con la leyenda A discovery tour of our universe.',
@@ -549,7 +576,7 @@ const catalogo: unknown[] = [
     marca: 'Pleasures',
     categoria: 'hombre',
     tipo: 'camiseta',
-    precio: 220000,
+    precio: 217000,
     tallas: ['M', 'L'],
     descripcion:
       'Camiseta Pleasures en algodón, cuello redondo acanalado y corte holgado. Cruza el pecho el logo Pleasures en letra gótica arqueada, aplicado en cuero sintético negro y tachonado con remaches plateados. En negro con lavado desgastado o en blanco.',
@@ -590,7 +617,7 @@ const catalogo: unknown[] = [
     // Corte sin genero: tambien sale en el catalogo de mujer.
     tambienEn: ['mujer'],
     tipo: 'buzo',
-    precio: 420000,
+    precio: 440000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Buzo Eme Studios de punto grueso a rayas finas blancas sobre azul marino, cuello redondo acanalado, hombro caído y corte amplio. Lleva EME en granate aplicado sobre el pecho. Unisex.',
@@ -650,9 +677,8 @@ const catalogo: unknown[] = [
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
     tipo: 'buzo',
-    precio: 260000,
-    precioAnterior: 450000,
-    tallas: ['L'],
+    precio: 365000,
+    tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Buzo Tommy Hilfiger de punto trenzado en algodón, cuello alto con cremallera hasta el pecho, cinta tricolor en el cuello y bandera bordada en el costado.',
     variantes: [
@@ -685,7 +711,7 @@ const catalogo: unknown[] = [
     marca: 'Ralph Lauren',
     categoria: 'hombre',
     tipo: 'hoodie',
-    precio: 390000,
+    precio: 312000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Hoodie Polo Ralph Lauren en felpa loopback de algodón, capucha con cordones, bolsillo canguro y el jugador de polo bordado tono sobre tono en el pecho.',
@@ -701,40 +727,6 @@ const catalogo: unknown[] = [
           {
             archivo: 'ralph-lauren-loopback-fleece-hoodie-crema-modelo.jpg',
             alt: 'Hoodie Polo Ralph Lauren crema puesto, plano medio de un modelo que lo lleva con camiseta blanca debajo, gorra beige y pantalón caqui',
-          },
-        ],
-        disponible: true,
-      },
-    ],
-    destacado: true,
-  },
-
-  {
-    slug: 'diesel-oval-d-sleeve-sweatshirt',
-    nombre: 'Oval D Sleeve Sweatshirt',
-    marca: 'Diesel',
-    categoria: 'hombre',
-    tipo: 'buzo',
-    precio: 446000,
-    tallas: ['L'],
-    descripcion:
-      'Buzo Diesel en felpa de algodón, corte amplio con hombros caídos, cuello redondo acanalado, etiqueta roja de la marca y logo Oval D metálico en la manga.',
-    variantes: [
-      {
-        color: 'Negro',
-        slug: 'negro',
-        imagenes: [
-          {
-            archivo: 'diesel-oval-d-sleeve-sweatshirt-negro-frente.jpg',
-            alt: 'Buzo Diesel negro, vista frontal de la prenda sola con cuello redondo, etiqueta roja en el cuello y el logo Oval D metálico en la manga',
-          },
-          {
-            archivo: 'diesel-oval-d-sleeve-sweatshirt-negro-detalle.jpg',
-            alt: 'Buzo Diesel negro puesto, detalle de perfil del hombro con el logo Oval D metálico en la manga',
-          },
-          {
-            archivo: 'diesel-oval-d-sleeve-sweatshirt-negro-modelo.jpg',
-            alt: 'Buzo Diesel negro puesto, plano medio de un modelo que lo lleva con pantalón negro de costuras blancas',
           },
         ],
         disponible: true,
@@ -849,7 +841,7 @@ const catalogo: unknown[] = [
     categoria: 'mujer',
     tambienEn: ['hombre'],
     tipo: 'pantalon',
-    precio: 185000,
+    precio: 161000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Pantalón Adidas en french terry de algodón, corte holgado, cintura elástica con cordón, puños elásticos en el tobillo y el logo Adidas tono sobre tono en la pierna.',
@@ -950,7 +942,7 @@ const catalogo: unknown[] = [
     categoria: 'accesorios',
     tambienEn: ['mujer', 'hombre'],
     tipo: 'gafas',
-    precio: 335000,
+    precio: 315000,
     tallas: [TALLA_UNICA],
     descripcion:
       'Gafas de sol deportivas Nike de media montura blanca, lente envolvente espejada Nike Max Optics en rojo y violeta y patillas azul marino con agarre.',
@@ -1075,7 +1067,9 @@ const catalogo: unknown[] = [
     categoria: 'accesorios',
     tambienEn: ['mujer'],
     tipo: 'bolso',
-    precio: 470000,
+    // En Sale: el precio de la hoja es el rebajado.
+    precio: 446000,
+    precioAnterior: 760000,
     tallas: [TALLA_UNICA],
     descripcion:
       'Bolso tipo bucket Karl Lagerfeld en negro, cierre de cordón, asa corta y correa larga ajustable con el logo Karl Lagerfeld Paris, apliques metálicos de corazones, flores y la firma Karl, y forro estampado con bolsillo interior.',
@@ -1172,7 +1166,7 @@ const catalogo: unknown[] = [
     categoria: 'accesorios',
     tambienEn: ['mujer'],
     tipo: 'morral',
-    precio: 575000,
+    precio: 554000,
     tallas: [TALLA_UNICA],
     descripcion:
       'Morral Karl Lagerfeld en negro con acabado granulado, herrajes dorados, bolsillo frontal con el nombre Karl Lagerfeld en relieve y apliques de Karl, Choupette y la torre Eiffel, asa superior y tiras ajustables con el logo tejido.',
@@ -1211,7 +1205,7 @@ const catalogo: unknown[] = [
     categoria: 'accesorios',
     tambienEn: ['mujer'],
     tipo: 'morral',
-    precio: 575000,
+    precio: 554000,
     tallas: [TALLA_UNICA],
     descripcion:
       'Morral Karl Lagerfeld con el monograma de la L en gris y negro, ribetes negros, herrajes plateados, bolsillo frontal con los apliques de Karl y Choupette, asa superior y tiras ajustables con el logo tejido.',
