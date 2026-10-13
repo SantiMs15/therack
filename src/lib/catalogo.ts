@@ -32,6 +32,7 @@ export interface Tarjeta {
   indice: number
   precio: number
   destacado: boolean
+  arriba: boolean
   genero: Genero | null
   tipo: Tipo
   /** La primera marca, que es con la que la prenda entra en el reparto. */
@@ -66,6 +67,7 @@ export function tarjetasEnOrden(productos: readonly Producto[]): Tarjeta[] {
       indice,
       precio: precioDe(tarjeta.producto, tarjeta.variante),
       destacado: tarjeta.producto.destacado,
+      arriba: tarjeta.producto.arriba ?? false,
       genero: generoDe(tarjeta.producto.categoria),
       tipo: tarjeta.producto.tipo,
       marcas: marcasDeProducto(tarjeta.producto).map(slugMarca),

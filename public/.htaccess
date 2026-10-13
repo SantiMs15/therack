@@ -43,6 +43,9 @@
   # Prendas retiradas: su enlace sigue en chats, asi que lleva a la marca en
   # vez de a un 404. La tarjeta de compartir (/tarjeta/...) tambien.
   RewriteRule ^(producto|tarjeta)/diesel-oval-d-sleeve-sweatshirt(/.*)?$ /marca/diesel/ [R=301,L]
+  RewriteRule ^(producto|tarjeta)/ralph-lauren-loopback-fleece-hoodie(/.*)?$ /marca/ralph-lauren/ [R=301,L]
+  RewriteRule ^(producto|tarjeta)/diesel-ginn-crewneck-sweatshirt(/.*)?$ /marca/diesel/ [R=301,L]
+  RewriteRule ^(producto|tarjeta)/tommy-hilfiger-mixed-media-puffer-jacket(/.*)?$ /marca/tommy-hilfiger/ [R=301,L]
 </IfModule>
 
 # Sirve la pagina 404 propia (con logo y salida al catalogo) en vez de la

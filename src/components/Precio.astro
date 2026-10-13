@@ -54,6 +54,22 @@ const descuento = antes ? Math.floor((1 - precio / antes) * 100) : 0
     color: var(--texto-suave);
     font-size: 0.75em;
   }
+  /* Una raya propia en vez del line-through: la de la fuente cae justo en el
+     borde de arriba del bucle del 6, se funde con el trazo y el 760.000 ya no
+     se lee. Mas abajo, fina y medio transparente, cruza los bucles por el
+     centro y deja ver cada cifra. */
+  .antes s {
+    position: relative;
+    text-decoration: none;
+  }
+  .antes s::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 0.62em;
+    height: 1px;
+    background: color-mix(in srgb, currentColor 60%, transparent);
+  }
   .precio--sale .actual { color: var(--burdeos); }
   /* La etiqueta de la tarjeta, en la sans de la marca y con el mismo
      tracking que el aviso de ultima talla: son de la misma familia. */

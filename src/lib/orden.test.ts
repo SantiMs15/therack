@@ -134,4 +134,42 @@ describe('turnos', () => {
   it('aguanta una rejilla vacia', () => {
     expect(turnos([])).toEqual([])
   })
+
+  it('la primera fila no repite tipo de prenda', () => {
+    // Como el catalogo real: cada marca abre con un sweater.
+    const tarjetas = [
+      { marca: 'lacoste', destacado: true, tipo: 'sweater' },
+      { marca: 'lacoste', destacado: true, tipo: 'hoodie' },
+      { marca: 'tommy-hilfiger', destacado: true, tipo: 'sweater' },
+      { marca: 'tommy-hilfiger', destacado: true, tipo: 'chaqueta' },
+      { marca: 'essentials', destacado: true, tipo: 'hoodie' },
+      { marca: 'kidsuper', destacado: true, tipo: 'camiseta' },
+    ]
+    const puestos = turnos(tarjetas)
+    const fila = [0, 1, 2, 3].map((puesto) => tarjetas[puestos.indexOf(puesto)]!)
+    expect(new Set(fila.map((t) => t.tipo)).size).toBe(4)
+    expect(new Set(fila.map((t) => t.marca)).size).toBe(4)
+  })
+
+  it('las de arriba abren la rejilla, sin ir seguidas si son de la misma marca', () => {
+    const tarjetas = [
+      ...['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((marca) => ({ marca, destacado: true })),
+      { marca: 'karl', destacado: true, tipo: 'bolso', arriba: true },
+      { marca: 'karl', destacado: true, tipo: 'chaqueta', arriba: true },
+      { marca: 'karl', destacado: true, tipo: 'camiseta', arriba: true },
+    ]
+    const puestos = turnos(tarjetas)
+    expect(puestos.slice(-3)).toEqual([0, 3, 6])
+  })
+
+  it('si no queda otro tipo, repite tipo antes que marca', () => {
+    const tarjetas = [
+      { marca: 'a', destacado: true, tipo: 'hoodie' },
+      { marca: 'b', destacado: true, tipo: 'hoodie' },
+      { marca: 'a', destacado: true, tipo: 'camiseta' },
+    ]
+    // Tras el hoodie de a, el de b (otra marca, mismo tipo) antes que la
+    // camiseta de a.
+    expect(turnos(tarjetas)).toEqual([0, 1, 2])
+  })
 })

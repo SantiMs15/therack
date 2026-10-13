@@ -49,7 +49,7 @@ const enlace = `/producto/${producto.slug}/${variante.slug}/`
 const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
 ---
 <article class="tarjeta">
-  <div class="marco" data-galeria data-indice={indiceInicial}>
+  <div class="marco" data-galeria data-indice={indiceInicial} data-inicial={indiceInicial}>
     {fotos.map((foto, i) => (
       <Image
         class:list={['foto', { activa: i === indiceInicial }]}
@@ -66,28 +66,11 @@ const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
 
     {!variante.disponible && <span class="agotado">Agotado</span>}
 
-    {fotos.length > 1 && (
-      <>
-        <button type="button" class="flecha flecha--atras" data-galeria-paso="-1">
-          <span class="visualmente-oculto">Foto anterior de {producto.nombre} {variante.color}</span>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
-            <path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
-          </svg>
-        </button>
-        <button type="button" class="flecha flecha--adelante" data-galeria-paso="1">
-          <span class="visualmente-oculto">Foto siguiente de {producto.nombre} {variante.color}</span>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
-            <path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
-          </svg>
-        </button>
-      </>
-    )}
   </div>
 
   <h3 class="nombre">
     {/* El enlace envuelve solo el titulo, pero su ::after cubre la tarjeta
-        entera: asi toda la pieza es clicable sin meter los botones dentro de
-        un <a>, que ni es HTML valido ni dejaria pulsar las flechas. */}
+        entera: asi toda la pieza es clicable. */}
     <a class="enlace" href={enlace}>{producto.nombre} - {variante.color}</a>
   </h3>
   {(marcaVisible ?? marca) && <p class="marca">{marcaVisible ?? marca}</p>}
@@ -116,15 +99,17 @@ const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    transition: opacity 300ms ease, transform 400ms ease;
+    /* Lento a proposito: al pasar el raton la foto se funde en la siguiente,
+       sin saltar. */
+    transition: opacity 600ms ease, transform 600ms ease;
   }
   .marco :global(.foto.activa) { opacity: 1; }
   .tarjeta:hover .marco :global(.foto) { transform: scale(1.03); }
 
   /* El unico color de la paleta, gastado donde tiene que frenar al que
      recorre la rejilla. Etiqueta pequena y arriba a la izquierda: no tapa la
-     prenda, no choca con el aviso de agotado (abajo) ni con las flechas de la
-     galeria (a media altura), y aun asi se ve antes que el precio. */
+     prenda, no choca con el aviso de agotado (abajo), y aun asi se ve antes que el
+     precio. */
   .ultima-talla {
     position: absolute;
     z-index: 2;
@@ -157,40 +142,6 @@ const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
     letter-spacing: 0.04em;
     text-transform: uppercase;
     padding-block: var(--espacio-1);
-  }
-
-  /* --- Flechas --- */
-  /* z-index 3: por encima del ::after del enlace (1) y del aviso de agotado
-     (2), o el clic caeria en la ficha en vez de rotar la foto. */
-  .flecha {
-    position: absolute;
-    z-index: 3;
-    inset-block-start: 50%;
-    translate: 0 -50%;
-    display: grid;
-    place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    padding: 0;
-    border: 0;
-    background: color-mix(in srgb, var(--fondo) 88%, transparent);
-    color: var(--texto);
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 200ms ease;
-  }
-  .flecha--atras { inset-inline-start: var(--espacio-1); }
-  .flecha--adelante { inset-inline-end: var(--espacio-1); }
-
-  .tarjeta:hover .flecha,
-  .flecha:focus-visible { opacity: 1; }
-  .flecha:hover { background: var(--fondo); }
-  .flecha:focus-visible { outline: 2px solid var(--texto); outline-offset: 2px; }
-
-  /* En tactil no hay flechas: la foto se cambia arrastrando el dedo, que es
-     el gesto que ya se espera sobre una foto en el movil. */
-  @media (hover: none) {
-    .flecha { display: none; }
   }
 
   /* Nombre, marca y precio centrados bajo la foto. */
@@ -233,33 +184,50 @@ const ultima = variante.disponible ? ultimaTalla(producto, variante) : null
   const UMBRAL = 40
 
   function rotar(marco: HTMLElement, paso: number) {
-    const fotos = marco.querySelectorAll<HTMLImageElement>('.foto')
-    if (fotos.length < 2) return
-
+    const total = marco.querySelectorAll('.foto').length
     const actual = Number(marco.dataset.indice ?? 0)
     // Modulo con correccion de signo: en JS -1 % 3 es -1, no 2.
-    const siguiente = (((actual + paso) % fotos.length) + fotos.length) % fotos.length
-
-    fotos[actual]?.classList.remove('activa')
-    fotos[siguiente]?.classList.add('activa')
-    marco.dataset.indice = String(siguiente)
+    mostrar(marco, (((actual + paso) % total) + total) % total)
   }
 
-  // Delegacion en el documento: una sola escucha para todas las tarjetas de la
-  // rejilla, en vez de un par de listeners por tarjeta.
-  document.addEventListener('click', (evento) => {
-    const boton = (evento.target as HTMLElement).closest<HTMLButtonElement>('[data-galeria-paso]')
-    if (!boton) return
+  function mostrar(marco: HTMLElement, indice: number) {
+    const fotos = marco.querySelectorAll<HTMLImageElement>('.foto')
+    const actual = Number(marco.dataset.indice ?? 0)
+    if (fotos.length < 2 || indice === actual) return
 
-    const marco = boton.closest<HTMLElement>('[data-galeria]')
+    fotos[actual]?.classList.remove('activa')
+    fotos[indice]?.classList.add('activa')
+    marco.dataset.indice = String(indice)
+  }
+
+  // --- Pasar el raton ---
+  // Al entrar en la tarjeta se funde en la foto siguiente a la de portada; al
+  // salir vuelve a la portada. Solo con raton: en tactil el toque emula un
+  // pointerover y cambiaria la foto justo antes de abrir la ficha.
+  // Delegacion en el documento: una sola escucha para todas las tarjetas.
+  function marcoDe(evento: PointerEvent): HTMLElement | null {
+    if (evento.pointerType !== 'mouse') return null
+    const tarjeta = (evento.target as HTMLElement).closest<HTMLElement>('.tarjeta')
+    // Moverse entre hijos de la misma tarjeta tambien dispara over/out.
+    if (!tarjeta || tarjeta.contains(evento.relatedTarget as Node | null)) return null
+    return tarjeta.querySelector<HTMLElement>('[data-galeria]')
+  }
+
+  document.addEventListener('pointerover', (evento) => {
+    const marco = marcoDe(evento)
     if (!marco) return
+    const fotos = marco.querySelectorAll('.foto').length
+    mostrar(marco, (Number(marco.dataset.inicial ?? 0) + 1) % fotos)
+  })
 
-    rotar(marco, Number(boton.dataset.galeriaPaso))
+  document.addEventListener('pointerout', (evento) => {
+    const marco = marcoDe(evento)
+    if (marco) mostrar(marco, Number(marco.dataset.inicial ?? 0))
   })
 
   // --- Deslizar con el dedo ---
-  // Sustituye a las flechas, que en tactil ya no se pintan. El raton se queda
-  // fuera a proposito: para eso tiene las flechas al pasar por encima.
+  // El equivalente tactil de pasar el raton. El raton se queda fuera a
+  // proposito: a el le basta con entrar en la tarjeta.
   let marcoActivo: HTMLElement | null = null
   let inicioX = 0
   let inicioY = 0

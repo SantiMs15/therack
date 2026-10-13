@@ -218,6 +218,12 @@ export const ProductoSchema = z.strictObject({
   descripcion: z.string().min(1, 'descripcion: no puede estar vacia'),
   variantes: z.array(VarianteSchema).min(1, 'variantes: al menos un color'),
   destacado: z.boolean(),
+  /**
+   * Va en las dos primeras filas de "Destacados", por delante del reparto.
+   * Sin repetir marca seguida: tres de la misma marca salen en los puestos
+   * 1, 4 y 7.
+   */
+  arriba: z.boolean().optional(),
 })
 
 export type Producto = z.infer<typeof ProductoSchema>

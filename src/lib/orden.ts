@@ -70,27 +70,56 @@ export function esOrden(valor: unknown): valor is Orden {
 }
 
 /**
- * Lo que hace falta para repartir por marcas.
+ * Lo que hace falta para repartir por marcas y por tipo de prenda.
  *
  * `marca` es el slug, o null si la prenda no es de marca conocida: todas las
  * que no tienen marca cuentan como un grupo mas, no como una cada una.
+ * `tipo` es opcional: sin el, el reparto es solo por marcas.
  */
 export interface Repartible {
   marca: string | null
   destacado: boolean
+  tipo?: string
+  /** Se adelanta al reparto: ver `arriba` en el esquema del producto. */
+  arriba?: boolean
 }
 
 /**
- * Reparte las tarjetas entre las marcas, una de cada por ronda, y devuelve el
+ * Cuantas prendas atras se mira para no repetir tipo y marca, de mas a menos
+ * exigente. Tres atras es una fila de cuatro sin repetir. Cuando ninguna
+ * prenda que queda cumple, se afloja primero el tipo y despues la marca: la
+ * marca ya se repartia antes y es lo que mas se nota si se repite seguida.
+ */
+const VENTANAS: ReadonlyArray<readonly [tipo: number, marca: number]> = [
+  [3, 3], [2, 3], [1, 3], [0, 3],
+  [2, 2], [1, 2], [0, 2],
+  [1, 1], [0, 1],
+  [0, 0],
+]
+
+/**
+ * Lo mas cerca que pueden ir dos prendas de `arriba` de la misma marca:
+ * con dos de por medio caben tres en las dos primeras filas sin tocarse.
+ */
+const MARCA_ARRIBA = 2
+
+/**
+ * Reparte las tarjetas entre las marcas y los tipos de prenda, y devuelve el
  * puesto que le toca a cada una. Es lo que ordena "Destacados".
  *
  * Sin esto la rejilla abria con cinco Lacoste seguidos, que es como estan
- * escritas en el catalogo: quien entra a la tienda veia una sola marca sin
- * bajar. Repartiendo, la primera fila lleva una prenda de cada.
+ * escritas en el catalogo, y luego con una fila entera de sweaters: quien
+ * entra a la tienda veia una sola marca, o un solo tipo, sin bajar.
  *
- * Con tres marcas y cuatro columnas la cuarta casilla repite marca a la
- * fuerza. Empieza la marca que aparece primero en el catalogo, asi que la
- * prenda que abria la rejilla la sigue abriendo.
+ * Primero se reparte por marcas, una de cada por ronda, empezando por la que
+ * aparece primero en el catalogo. Sobre ese orden se va eligiendo la primera
+ * prenda que no repita tipo ni marca con las tres anteriores; si no queda
+ * ninguna asi, se afloja segun VENTANAS. Como siempre se coge la primera que
+ * cumple, dentro de una marca se respeta el orden de catalogo.
+ *
+ * Las de `arriba` van por delante: en cada ventana se prueban antes que el
+ * resto, con la marca aflojada a MARCA_ARRIBA para que no esperen tres
+ * puestos detras de otra de su misma marca.
  *
  * Destacadas y no destacadas se reparten por separado: `destacado` pesa mas
  * que el reparto en el comparador, asi que mezclarlas daria turnos que nadie
@@ -118,11 +147,42 @@ export function turnos(tarjetas: readonly Repartible[]): number[] {
     const grupos = [...colas.values()]
     const masLarga = Math.max(0, ...grupos.map((grupo) => grupo.length))
 
+    // El reparto por marcas, una de cada por ronda.
+    const pendientes: number[] = []
     for (let ronda = 0; ronda < masLarga; ronda++) {
       for (const grupo of grupos) {
         const indice = grupo[ronda]
-        if (indice !== undefined) puestos[indice] = siguiente++
+        if (indice !== undefined) pendientes.push(indice)
       }
+    }
+
+    // Y sobre el, que no se repita tipo ni marca con las anteriores.
+    const colocadas: Repartible[] = []
+    const choca = (tarjeta: Repartible, atras: number, campo: 'tipo' | 'marca') =>
+      atras > 0 &&
+      tarjeta[campo] !== undefined &&
+      colocadas.slice(-atras).some((previa) => previa[campo] === tarjeta[campo])
+
+    const busca = (tipo: number, marca: number, soloArriba: boolean) =>
+      pendientes.findIndex((indice) => {
+        const tarjeta = tarjetas[indice]!
+        if (soloArriba && !tarjeta.arriba) return false
+        return !choca(tarjeta, tipo, 'tipo') && !choca(tarjeta, marca, 'marca')
+      })
+
+    while (pendientes.length > 0) {
+      let elegida = 0
+      for (const [tipo, marca] of VENTANAS) {
+        let cumple = busca(tipo, Math.min(marca, MARCA_ARRIBA), true)
+        if (cumple === -1) cumple = busca(tipo, marca, false)
+        if (cumple !== -1) {
+          elegida = cumple
+          break
+        }
+      }
+      const [indice] = pendientes.splice(elegida, 1)
+      colocadas.push(tarjetas[indice!]!)
+      puestos[indice!] = siguiente++
     }
   }
 

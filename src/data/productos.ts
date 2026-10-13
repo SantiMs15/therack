@@ -80,6 +80,25 @@ const catalogo: unknown[] = [
             portada: true,
           },
         ],
+        // Del negro quedan la L y la XL; el blanco tiene todas.
+        tallas: ['L', 'XL'],
+        disponible: true,
+      },
+      {
+        color: 'Blanco',
+        slug: 'blanco',
+        imagenes: [
+          {
+            archivo: 'lacoste-multi-print-fleece-hoodie-blanco-frente.jpg',
+            alt: 'Hoodie Lacoste Multi Print Fleece blanco, vista frontal con capucha de cordones, bolsillo canguro y Jeu Set et Match con el cocodrilo verde en el pecho',
+          },
+          {
+            archivo: 'lacoste-multi-print-fleece-hoodie-blanco-espalda.jpg',
+            alt: 'Hoodie Lacoste Multi Print Fleece blanco, vista de espalda con el estampado grande Lacoste Jeu Set et Match y el cocodrilo en negro',
+            // Igual que en el negro: la espalda es la que identifica la prenda.
+            portada: true,
+          },
+        ],
         disponible: true,
       },
     ],
@@ -136,7 +155,7 @@ const catalogo: unknown[] = [
     marca: 'Lacoste',
     categoria: 'hombre',
     tipo: 'buzo',
-    precio: 353000,
+    precio: 320000,
     // Toda la escala: la del verde. El negro declara las suyas abajo.
     tallas: [...TALLAS_HOMBRE],
     descripcion:
@@ -236,7 +255,7 @@ const catalogo: unknown[] = [
     marca: 'Tommy Hilfiger',
     categoria: 'hombre',
     tipo: 'buzo',
-    precio: 380000,
+    precio: 435000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Buzo Tommy Hilfiger de punto texturizado en algodón, cuello alto con cremallera hasta el pecho y bandera bordada en el costado.',
@@ -252,6 +271,75 @@ const catalogo: unknown[] = [
           {
             archivo: 'tommy-hilfiger-quarter-zip-sweater-azul-marino-espalda.jpg',
             alt: 'Buzo Tommy Hilfiger azul marino, vista de espalda de la prenda sola, con el punto texturizado en los hombros y las mangas',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'tommy-hilfiger-hooded-regatta-jacket',
+    nombre: 'Water-Resistant Hooded Regatta Jacket',
+    marca: 'Tommy Hilfiger',
+    categoria: 'hombre',
+    tipo: 'chaqueta',
+    // En Sale: el precio de la hoja es el rebajado.
+    precio: 435000,
+    precioAnterior: 680000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Chaqueta Tommy Hilfiger resistente al agua, cuello alto con la capucha guardada dentro, cremallera con tapeta, bolsillos laterales, bajo y puños elásticos, Hilfiger bordado en rojo en el pecho y la bandera en la manga.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-hooded-regatta-jacket-azul-marino-frente.jpg',
+            alt: 'Chaqueta Tommy Hilfiger azul marino, vista frontal de la prenda sola con el cuello alto cerrado, cremallera con tapeta, Hilfiger bordado en rojo en el pecho y la bandera en la manga',
+          },
+          {
+            archivo: 'tommy-hilfiger-hooded-regatta-jacket-azul-marino-espalda.jpg',
+            alt: 'Chaqueta Tommy Hilfiger azul marino, vista de espalda con Hilfiger bordado en rojo en el cuello alto, canesú y bajo elástico',
+            // En el catalogo va la espalda: el Hilfiger rojo del cuello es lo
+            // que la distingue de una chaqueta azul marino cualquiera.
+            portada: true,
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+    // En las dos primeras filas de Destacados.
+    arriba: true,
+  },
+
+  {
+    slug: 'tommy-hilfiger-unhooded-mix-media-puffer-jacket',
+    nombre: 'Unhooded Mix Media Puffer Jacket',
+    marca: 'Tommy Hilfiger',
+    categoria: 'hombre',
+    tipo: 'chaqueta',
+    // En Sale: el precio de la hoja es el rebajado.
+    precio: 405000,
+    precioAnterior: 880000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Chaqueta acolchada Tommy Hilfiger sin capucha, cuello alto, cremallera frontal, bolsillos laterales, puños con ajuste y bajo con cordón, la bandera bordada en el pecho y en la manga y otra pequeña en el cuello por detrás.',
+    variantes: [
+      {
+        color: 'Azul marino',
+        slug: 'azul-marino',
+        imagenes: [
+          {
+            archivo: 'tommy-hilfiger-unhooded-mix-media-puffer-jacket-azul-marino-frente.jpg',
+            alt: 'Chaqueta acolchada Tommy Hilfiger azul marino, vista frontal de la prenda sola con cuello alto, cremallera, bolsillos laterales y la bandera bordada en el pecho y en la manga',
+          },
+          {
+            archivo: 'tommy-hilfiger-unhooded-mix-media-puffer-jacket-azul-marino-espalda.jpg',
+            alt: 'Chaqueta acolchada Tommy Hilfiger azul marino, vista de espalda con el acolchado en franjas y una pequeña bandera bordada bajo el cuello',
           },
         ],
         disponible: true,
@@ -305,7 +393,7 @@ const catalogo: unknown[] = [
     marca: 'Essentials',
     categoria: 'hombre',
     tipo: 'hoodie',
-    precio: 428000,
+    precio: 458000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Hoodie Essentials de Fear of God en tejido fleece de algodón, corte oversize, capucha forrada y el logo Essentials Fear of God en el pecho y en la espalda.',
@@ -327,61 +415,6 @@ const catalogo: unknown[] = [
             portada: true,
           },
         ],
-        disponible: true,
-      },
-    ],
-    destacado: true,
-  },
-
-  {
-    slug: 'tommy-hilfiger-mixed-media-puffer-jacket',
-    nombre: 'Men\'s Mixed-Media Puffer Jacket',
-    marca: 'Tommy Hilfiger',
-    categoria: 'hombre',
-    tipo: 'chaqueta',
-    precio: 515000,
-    // Una sola talla, y es la que queda: la rejilla y la ficha lo avisan en
-    // burdeos. No se declara la escala entera con las demas tachadas porque
-    // de esta chaqueta no hay mas que esta pieza, y un rango tachado da a
-    // entender que las otras tallas pueden volver.
-    tallas: ['S'],
-    // Comun a los dos colores: el negro es liso y brillante, el azul marino
-    // lleva el monograma TH en jacquard. La ficha de cada uno ya dice su color.
-    descripcion:
-      'Chaqueta acolchada Tommy Hilfiger de tejido mixto: hombros y cuello en nylon mate, cuerpo acolchado. Cuello alto, cremallera completa con tirador de cinta bandera, dos bolsillos con cremallera y puños ajustables con velcro. En negro brillante o en azul marino con el monograma TH en jacquard.',
-    variantes: [
-      {
-        color: 'Negro',
-        slug: 'negro',
-        imagenes: [
-          {
-            archivo: 'tommy-hilfiger-mixed-media-puffer-jacket-negro-frente.jpg',
-            alt: 'Chaqueta acolchada Tommy Hilfiger Mixed-Media negra, vista frontal con el cuello alto levantado, la cremallera cerrada y la bandera Tommy bordada en el pecho',
-          },
-        ],
-        disponible: true,
-      },
-      {
-        color: 'Print Navy Jacquard',
-        slug: 'print-navy-jacquard',
-        imagenes: [
-          {
-            archivo: 'tommy-hilfiger-mixed-media-puffer-jacket-print-navy-jacquard-frente.jpg',
-            alt: 'Chaqueta acolchada Tommy Hilfiger azul marino, vista frontal de la prenda sola con el canesú liso, el cuerpo y las mangas con el monograma TH en jacquard, la bandera en el pecho y el parche en la manga',
-          },
-          {
-            archivo: 'tommy-hilfiger-mixed-media-puffer-jacket-print-navy-jacquard-modelo.jpg',
-            alt: 'Chaqueta acolchada Tommy Hilfiger azul marino puesta, plano medio de un modelo con las manos en los bolsillos, camiseta blanca debajo y jeans claros',
-          },
-          {
-            archivo: 'tommy-hilfiger-mixed-media-puffer-jacket-print-navy-jacquard-espalda.jpg',
-            alt: 'Chaqueta acolchada Tommy Hilfiger azul marino, vista de espalda de la prenda sola con el canesú liso y el monograma TH en jacquard en el cuerpo y las mangas',
-          },
-        ],
-        // Solo este color va a Sale: rebajado desde el precio del negro, que
-        // sigue completo. Tambien una sola S.
-        precio: 390000,
-        precioAnterior: 515000,
         disponible: true,
       },
     ],
@@ -457,7 +490,7 @@ const catalogo: unknown[] = [
     marca: 'Aimé Leon Dore',
     categoria: 'hombre',
     tipo: 'buzo',
-    precio: 660000,
+    precio: 645000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Buzo Aimé Leon Dore en punto waffle azul marino, cuello redondo acanalado y puños y bajo en rib. Lleva el escudo Unisphere de Queens estampado en crudo: pequeño sobre el pecho y en grande en la espalda, con la firma Aimé Leon Dore y la leyenda Queens, New York · The World’s Borough.',
@@ -663,6 +696,9 @@ const catalogo: unknown[] = [
           {
             archivo: 'tommy-hilfiger-back-flag-logo-pullover-hoodie-crema-espalda.jpg',
             alt: 'Hoodie Tommy Hilfiger crema, vista de espalda con la gran bandera azul marino y roja y el nombre Tommy Hilfiger en relieve',
+            // En el catalogo va la espalda: la bandera grande es la que da
+            // nombre a la prenda.
+            portada: true,
           },
         ],
         disponible: true,
@@ -706,42 +742,12 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'ralph-lauren-loopback-fleece-hoodie',
-    nombre: 'Loopback Fleece Hoodie',
-    marca: 'Ralph Lauren',
-    categoria: 'hombre',
-    tipo: 'hoodie',
-    precio: 312000,
-    tallas: [...TALLAS_HOMBRE],
-    descripcion:
-      'Hoodie Polo Ralph Lauren en felpa loopback de algodón, capucha con cordones, bolsillo canguro y el jugador de polo bordado tono sobre tono en el pecho.',
-    variantes: [
-      {
-        color: 'Crema',
-        slug: 'crema',
-        imagenes: [
-          {
-            archivo: 'ralph-lauren-loopback-fleece-hoodie-crema-frente.jpg',
-            alt: 'Hoodie Polo Ralph Lauren crema, vista frontal de la prenda sola con capucha de cordones, bolsillo canguro y el jugador de polo bordado a la derecha',
-          },
-          {
-            archivo: 'ralph-lauren-loopback-fleece-hoodie-crema-modelo.jpg',
-            alt: 'Hoodie Polo Ralph Lauren crema puesto, plano medio de un modelo que lo lleva con camiseta blanca debajo, gorra beige y pantalón caqui',
-          },
-        ],
-        disponible: true,
-      },
-    ],
-    destacado: true,
-  },
-
-  {
     slug: 'diesel-zip-shoulder-hoodie',
     nombre: 'Zip Shoulder Hoodie',
     marca: 'Diesel',
     categoria: 'hombre',
     tipo: 'hoodie',
-    precio: 550000,
+    precio: 580000,
     tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: ['S', 'M', 'L', 'XL'].includes(talla) })),
     descripcion:
       'Hoodie Diesel en felpa de algodón, corte amplio con mangas raglán, paneles blancos con cremalleras en los hombros, capucha con cordones, bolsillo canguro y logo Diesel en el pecho.',
@@ -766,47 +772,13 @@ const catalogo: unknown[] = [
   },
 
   {
-    slug: 'diesel-ginn-crewneck-sweatshirt',
-    nombre: 'Ginn Crewneck Sweatshirt',
-    marca: 'Diesel',
-    categoria: 'hombre',
-    tipo: 'buzo',
-    precio: 310000,
-    tallas: ['M'],
-    descripcion:
-      'Buzo Diesel en felpa de algodón, cuello redondo acanalado y estampado Diesel Industry Denim Division en el pecho.',
-    variantes: [
-      {
-        color: 'Azul marino',
-        slug: 'azul-marino',
-        imagenes: [
-          {
-            archivo: 'diesel-ginn-crewneck-sweatshirt-azul-marino-frente.jpg',
-            alt: 'Buzo Diesel azul marino, vista frontal de la prenda sola con el estampado Diesel Industry Denim Division en azul y rojo en el pecho',
-          },
-          {
-            archivo: 'diesel-ginn-crewneck-sweatshirt-azul-marino-modelo.jpg',
-            alt: 'Buzo Diesel azul marino puesto, plano medio de frente de un modelo que lo lleva con jean gris',
-          },
-          {
-            archivo: 'diesel-ginn-crewneck-sweatshirt-azul-marino-modelo-espalda.jpg',
-            alt: 'Buzo Diesel azul marino puesto, vista de espalda lisa de un modelo que lo lleva con jean gris',
-          },
-        ],
-        disponible: true,
-      },
-    ],
-    destacado: true,
-  },
-
-  {
     slug: 'diesel-successful-living-hoodie',
     nombre: 'Successful Living Hoodie',
     marca: 'Diesel',
     categoria: 'hombre',
     tipo: 'hoodie',
-    precio: 430000,
-    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: ['S', 'M', 'L'].includes(talla) })),
+    precio: 460000,
+    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: ['S', 'M'].includes(talla) })),
     descripcion:
       'Hoodie Diesel en felpa de algodón, capucha con cordones, bolsillo canguro con costuras en contraste, logo Diesel en la manga y estampado Successful Living en la espalda, ambos en rosa.',
     variantes: [
@@ -906,7 +878,7 @@ const catalogo: unknown[] = [
     marca: 'Adidas',
     categoria: 'hombre',
     tipo: 'hoodie',
-    precio: 255000,
+    precio: 266000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Hoodie Adidas Originals de corte oversize en tejido spacer, cremallera completa, capucha con cordones, bolsillos canguro, las tres rayas en las mangas y el trébol en el pecho.',
@@ -964,6 +936,136 @@ const catalogo: unknown[] = [
       },
     ],
     destacado: true,
+    // En las dos primeras filas de Destacados.
+    arriba: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-fleece-logo-zip-sweater',
+    nombre: 'Fleece Logo Zip Sweater',
+    marca: 'Karl Lagerfeld',
+    categoria: 'hombre',
+    tipo: 'buzo',
+    precio: 305000,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Buzo Karl Lagerfeld en fleece de algodón, cuello alto con media cremallera, costura horizontal en el pecho, puños y bajo acanalados y el logo Karl Lagerfeld Paris en blanco en el pecho.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-fleece-logo-zip-sweater-negro-frente.jpg',
+            alt: 'Buzo Karl Lagerfeld negro, vista frontal de la prenda sola con cuello alto, media cremallera y el logo Karl Lagerfeld Paris en blanco en el pecho',
+          },
+          {
+            archivo: 'karl-lagerfeld-fleece-logo-zip-sweater-negro-espalda.jpg',
+            alt: 'Buzo Karl Lagerfeld negro, vista de espalda de la prenda sola, lisa, con el cuello alto y los puños acanalados',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-floating-chest-karl-graphic-tee',
+    nombre: 'Floating Chest Karl Graphic Tee',
+    marca: 'Karl Lagerfeld',
+    categoria: 'hombre',
+    tipo: 'camiseta',
+    // En Sale: el precio de la hoja es el rebajado.
+    precio: 230000,
+    precioAnterior: 319900,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Camiseta Karl Lagerfeld en algodón, cuello redondo, manga corta y la figura de Karl con gafas oscuras estampada en pequeño sobre el pecho.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-floating-chest-karl-graphic-tee-negro-frente.jpg',
+            alt: 'Camiseta Karl Lagerfeld negra, vista frontal de la prenda sola con la figura de Karl con gafas oscuras estampada en el pecho',
+          },
+          {
+            archivo: 'karl-lagerfeld-floating-chest-karl-graphic-tee-negro-espalda.jpg',
+            alt: 'Camiseta Karl Lagerfeld negra, vista de espalda de la prenda sola, lisa',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+    // En las dos primeras filas de Destacados.
+    arriba: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-monogram-figure-hoodie',
+    nombre: 'Karl Monogram Figure Hoodie',
+    marca: 'Karl Lagerfeld',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    // En Sale: el precio de la hoja es el rebajado.
+    precio: 325000,
+    precioAnterior: 719900,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Hoodie Karl Lagerfeld en felpa de algodón, capucha con cordones, bolsillo canguro y la figura de Karl rellena del monograma en blanco y gris al frente, con Karl Lagerfeld Paris debajo.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-monogram-figure-hoodie-negro-frente.jpg',
+            alt: 'Hoodie Karl Lagerfeld negro, vista frontal de la prenda sola con capucha de cordones, bolsillo canguro y la figura de Karl con monograma blanco y gris en el pecho',
+          },
+          {
+            archivo: 'karl-lagerfeld-monogram-figure-hoodie-negro-modelo.jpg',
+            alt: 'Hoodie Karl Lagerfeld negro puesto, plano medio de un modelo que lo lleva con jeans azules y una mano en el bolsillo',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
+  },
+
+  {
+    slug: 'karl-lagerfeld-fleece-karl-armor-hoodie',
+    nombre: 'Fleece Karl Armor Hoodie',
+    marca: 'Karl Lagerfeld',
+    categoria: 'hombre',
+    tipo: 'hoodie',
+    // En Sale: el precio de la hoja es el rebajado.
+    precio: 315000,
+    precioAnterior: 719900,
+    tallas: [...TALLAS_HOMBRE],
+    descripcion:
+      'Hoodie Karl Lagerfeld en fleece de algodón, capucha con cordones, bolsillo canguro y Karl vestido de caballero con armadura, escudo y espada estampado en blanco al frente, con Karl Lagerfeld Paris debajo.',
+    variantes: [
+      {
+        color: 'Negro',
+        slug: 'negro',
+        imagenes: [
+          {
+            archivo: 'karl-lagerfeld-fleece-karl-armor-hoodie-negro-frente.jpg',
+            alt: 'Hoodie Karl Lagerfeld negro, vista frontal de la prenda sola con capucha de cordones, bolsillo canguro y Karl con armadura de caballero, escudo y espada estampado en blanco en el pecho',
+          },
+          {
+            archivo: 'karl-lagerfeld-fleece-karl-armor-hoodie-negro-espalda.jpg',
+            alt: 'Hoodie Karl Lagerfeld negro, vista de espalda de la prenda sola, lisa, con la capucha',
+          },
+        ],
+        disponible: true,
+      },
+    ],
+    destacado: true,
   },
 
   {
@@ -972,7 +1074,9 @@ const catalogo: unknown[] = [
     marca: 'Karl Lagerfeld',
     categoria: 'hombre',
     tipo: 'camiseta',
-    precio: 235000,
+    // En Sale: el precio de la hoja es el rebajado.
+    precio: 210000,
+    precioAnterior: 269900,
     tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: talla !== 'XS' })),
     descripcion:
       'Camiseta Karl Lagerfeld de manga corta tipo rashguard, en tejido elástico, cuello redondo acanalado y el logo Karl Lagerfeld Paris en blanco sobre el pecho.',
@@ -1002,8 +1106,10 @@ const catalogo: unknown[] = [
     marca: 'Karl Lagerfeld',
     categoria: 'hombre',
     tipo: 'camiseta',
-    precio: 270000,
-    tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: !['XS', 'XXL'].includes(talla) })),
+    // En Sale: el precio de la hoja es el rebajado.
+    precio: 230000,
+    precioAnterior: 319900,
+    tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Camiseta Karl Lagerfeld de algodón, cuello redondo acanalado y la figura de Karl con gafas oscuras y el logo Karl Lagerfeld Paris estampados en pequeño sobre el pecho.',
     variantes: [
@@ -1032,7 +1138,9 @@ const catalogo: unknown[] = [
     marca: 'Karl Lagerfeld',
     categoria: 'hombre',
     tipo: 'chaqueta',
-    precio: 415000,
+    // En Sale: el precio de la hoja es el rebajado.
+    precio: 475000,
+    precioAnterior: 875000,
     tallas: TALLAS_HOMBRE.map((talla) => ({ talla, disponible: talla !== 'XS' })),
     descripcion:
       'Chaqueta bomber acolchada Karl Lagerfeld en negro, cuello alto forrado en sherpa, cremallera doble, bolsillos laterales, puños y bajo en rib y placa con el logo en la manga.',
@@ -1058,6 +1166,8 @@ const catalogo: unknown[] = [
       },
     ],
     destacado: true,
+    // En las dos primeras filas de Destacados.
+    arriba: true,
   },
 
   {
@@ -1068,7 +1178,7 @@ const catalogo: unknown[] = [
     tambienEn: ['mujer'],
     tipo: 'bolso',
     // En Sale: el precio de la hoja es el rebajado.
-    precio: 447000,
+    precio: 350000,
     precioAnterior: 760000,
     tallas: [TALLA_UNICA],
     descripcion:
@@ -1095,6 +1205,8 @@ const catalogo: unknown[] = [
       },
     ],
     destacado: true,
+    // En las dos primeras filas de Destacados.
+    arriba: true,
   },
 
   {
@@ -1166,7 +1278,7 @@ const catalogo: unknown[] = [
     categoria: 'accesorios',
     tambienEn: ['mujer'],
     tipo: 'morral',
-    precio: 554000,
+    precio: 532000,
     tallas: [TALLA_UNICA],
     descripcion:
       'Morral Karl Lagerfeld en negro con acabado granulado, herrajes dorados, bolsillo frontal con el nombre Karl Lagerfeld en relieve y apliques de Karl, Choupette y la torre Eiffel, asa superior y tiras ajustables con el logo tejido.',
@@ -1205,7 +1317,7 @@ const catalogo: unknown[] = [
     categoria: 'accesorios',
     tambienEn: ['mujer'],
     tipo: 'morral',
-    precio: 554000,
+    precio: 532000,
     tallas: [TALLA_UNICA],
     descripcion:
       'Morral Karl Lagerfeld con el monograma de la L en gris y negro, ribetes negros, herrajes plateados, bolsillo frontal con los apliques de Karl y Choupette, asa superior y tiras ajustables con el logo tejido.',
