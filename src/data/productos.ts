@@ -1046,7 +1046,7 @@ const catalogo: unknown[] = [
     tambienEn: ['mujer'],
     tipo: 'bolso',
     // En Sale: el precio de la hoja es el rebajado.
-    precio: 350000,
+    precio: 450000,
     precioAnterior: 760000,
     tallas: [TALLA_UNICA],
     descripcion:
