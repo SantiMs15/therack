@@ -946,7 +946,9 @@ const catalogo: unknown[] = [
     marca: 'Karl Lagerfeld',
     categoria: 'hombre',
     tipo: 'buzo',
+    // En Sale: el precio de la hoja es el rebajado.
     precio: 305000,
+    precioAnterior: 750000,
     tallas: [...TALLAS_HOMBRE],
     descripcion:
       'Buzo Karl Lagerfeld en fleece de algodón, cuello alto con media cremallera, costura horizontal en el pecho, puños y bajo acanalados y el logo Karl Lagerfeld Paris en blanco en el pecho.',
