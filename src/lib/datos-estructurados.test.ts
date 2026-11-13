@@ -124,13 +124,26 @@ describe('fichaProducto', () => {
       expect(o().shippingDetails.shippingDestination.addressCountry).toBe('CO')
     })
 
-    it('declara cambios a 30 dias, no devolucion del dinero', () => {
+    it('declara devolucion del dinero a 30 dias', () => {
       const d = o().hasMerchantReturnPolicy
-      expect(d.merchantReturnDays).toBe(VENTA.cambios.dias)
+      expect(d.merchantReturnDays).toBe(VENTA.devoluciones.dias)
       expect(d.returnPolicyCategory)
         .toBe('https://schema.org/MerchantReturnFiniteReturnWindow')
-      expect(d.refundType).toBe('https://schema.org/ExchangeRefund')
+      expect(d.refundType).toBe('https://schema.org/FullRefund')
       expect(d.applicableCountry).toBe('CO')
+    })
+
+    it('enlaza la pagina de devoluciones', () => {
+      expect(o().hasMerchantReturnPolicy.merchantReturnLink)
+        .toBe('https://therackstore.shop/devoluciones/')
+    })
+
+    it('en el sale solo declara el retracto: es venta final, pero la ley sigue', () => {
+      const rebajada = catalogo({ precio: 300_000, precioAnterior: 390_000 })
+      const d = (ficha(rebajada) as any).offers.hasMerchantReturnPolicy
+      expect(d.merchantReturnDays).toBe(7)
+      expect(d.merchantReturnDays).toBeLessThan(VENTA.devoluciones.dias)
+      expect(d.refundType).toBe('https://schema.org/FullRefund')
     })
 
     it('declara el plazo de entrega completo en transitTime', () => {

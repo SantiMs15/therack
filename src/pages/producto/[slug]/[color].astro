@@ -10,6 +10,7 @@ import {
   ETIQUETAS_TIPO_UNA,
   marcasDeProducto,
   nombreMarca,
+  precioAnteriorDe,
   precioDe,
   tallasDe,
   ultimaTalla,
@@ -207,6 +208,7 @@ const migas: Miga[] = [
   { nombre: producto.nombre },
 ]
 const migasJson = serializar(fichaMigas(migas, Astro.site))
+const enRebaja = precioAnteriorDe(producto, variante) !== undefined
 ---
 <Layout
   titulo={tituloBuscador}
@@ -343,6 +345,16 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
           <p class="secundario">
             O escríbenos por <a href={INSTAGRAM_URL}>Instagram</a>
           </p>
+
+          {/* Antes de escribir, no despues de pagar: quien compra rebajado
+              tiene que saber que no hay devolucion. Solo el color rebajado,
+              que es el que entra en /sale. */}
+          {enRebaja && (
+            <p class="secundario venta-final">
+              Venta final: las prendas del sale no tienen cambio ni devolución.{' '}
+              <a href="/devoluciones/">Política de devoluciones</a>
+            </p>
+          )}
         </>
       ) : (
         <p class="agotado-aviso">Agotado</p>
@@ -813,6 +825,7 @@ const migasJson = serializar(fichaMigas(migas, Astro.site))
   .tallas input:focus-visible + span { outline: 2px solid var(--texto); outline-offset: 2px; }
   .secundario { font-size: 0.875rem; color: var(--texto-suave); margin-top: var(--espacio-2); }
   .secundario a { text-decoration: underline; }
+  .venta-final { color: var(--burdeos); }
   .agotado-aviso {
     margin-top: var(--espacio-3);
     font-size: 0.8125rem;

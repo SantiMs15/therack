@@ -20,8 +20,8 @@ const envio =
     : `${formatearPrecio(VENTA.envio.costo)} · ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días`
 ---
 <Layout
-  titulo="Quiénes somos, envíos y cambios"
-  descripcion={`Ropa de marca original, nueva y con etiquetas, traída a Colombia desde tiendas oficiales. Envío gratis en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días y cambios hasta ${VENTA.cambios.dias} días.`}
+  titulo="Quiénes somos, envíos y devoluciones"
+  descripcion={`Ropa de marca original, nueva y con etiquetas, traída a Colombia desde tiendas oficiales. Envío gratis en ${VENTA.entrega.minimo} a ${VENTA.entrega.maximo} días y devoluciones hasta ${VENTA.devoluciones.dias} días.`}
 >
   <div class="contenedor tienda">
     <h1>Quiénes somos</h1>
@@ -50,7 +50,7 @@ const envio =
       </p>
     </div>
 
-    <h2>Envíos, pagos y cambios</h2>
+    <h2>Envíos, pagos y devoluciones</h2>
     <dl>
       <dt>Originalidad</dt>
       <dd>Original, nueva y con etiquetas</dd>
@@ -58,10 +58,10 @@ const envio =
       <dd>{envio}</dd>
       <dt>Pagos</dt>
       <dd>{VENTA.pago.texto}</dd>
-      <dt>Cambios</dt>
+      <dt>Devoluciones</dt>
       <dd>
-        Hasta {VENTA.cambios.dias} días después de recibir la prenda. El envío del cambio corre por
-        tu cuenta.
+        Hasta {VENTA.devoluciones.dias} días después de recibir la prenda, con reembolso del dinero.
+        El sale es venta final. <a href="/devoluciones/">Ver la política completa</a>
       </dd>
       <dt>Atención</dt>
       <dd>{CONFIG.horarios}</dd>

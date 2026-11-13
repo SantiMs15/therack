@@ -1,0 +1,114 @@
+---
+import Layout from '../layouts/Layout.astro'
+import { CONFIG, INSTAGRAM_URL, VENTA } from '../config'
+
+/**
+ * Politica de devoluciones.
+ *
+ * Tres casos, en el orden en que se preguntan: devolver una prenda a precio
+ * normal (30 dias, con el dinero de vuelta), una del sale (venta final) y una
+ * que llego con defecto. El retracto y la garantia van aparte porque son ley
+ * (Ley 1480 de 2011, Estatuto del Consumidor) y valen tambien en el sale: la
+ * pagina no puede prometer menos que eso.
+ *
+ * Los plazos salen de VENTA, igual que en la ficha estructurada: si cambian,
+ * cambian en los dos sitios a la vez.
+ */
+const dias = VENTA.devoluciones.dias
+const retracto = VENTA.retracto.diasHabiles
+const telefono = CONFIG.telefono
+const whatsapp = `https://wa.me/${telefono.replace(/\D/g, '')}?text=${encodeURIComponent(
+  '¡Hola! Quiero hacer una devolución.'
+)}`
+---
+<Layout
+  titulo="Política de devoluciones"
+  descripcion={`Devuelve tu prenda hasta ${dias} días después de recibirla y te reintegramos el dinero. Las prendas del sale son venta final, salvo retracto y garantía.`}
+>
+  <article class="contenedor politica">
+    <h1>Política de devoluciones</h1>
+    <p class="entrada">
+      Si la prenda no es lo que esperabas, tienes {dias} días desde que la recibes para devolverla y
+      te reintegramos el dinero.
+    </p>
+
+    <h2>Prendas a precio normal</h2>
+    <ul>
+      <li>Tienes hasta <strong>{dias} días calendario</strong> desde que recibes el pedido.</li>
+      <li>Te devolvemos el valor completo de la prenda.</li>
+      <li>El envío de la devolución corre por tu cuenta.</li>
+    </ul>
+
+    <h2>Prendas del sale</h2>
+    <p>
+      Las prendas rebajadas son <strong>venta final</strong>: no tienen devolución ni cambio. Esto no
+      afecta el derecho de retracto ni la garantía, que se explican abajo.
+    </p>
+
+    <h2>Condiciones</h2>
+    <p>Para aceptar la devolución, la prenda tiene que llegar:</p>
+    <ul>
+      <li>Sin usar, sin lavar y sin olores.</li>
+      <li>Con todas sus etiquetas puestas.</li>
+      <li>En su empaque original, con lo que venía dentro.</li>
+    </ul>
+    <p>
+      Revisamos cada prenda al recibirla. Si no cumple estas condiciones, te la enviamos de vuelta.
+    </p>
+
+    <h2>Cómo devolver</h2>
+    <ol>
+      <li>
+        Escríbenos por <a href={whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a>{' '}
+        al {telefono} o por{' '}
+        <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">Instagram</a> con tu nombre,
+        la prenda y el motivo.
+      </li>
+      <li>Te confirmamos la devolución y te damos la dirección de envío.</li>
+      <li>Envía la prenda por la transportadora que prefieras y compártenos la guía.</li>
+      <li>
+        Cuando la recibamos y la revisemos, te transferimos el dinero a la cuenta que nos indiques,
+        a más tardar en 30 días calendario.
+      </li>
+    </ol>
+
+    <h2>Derecho de retracto</h2>
+    <p>
+      Como compraste a distancia, la ley te da <strong>{retracto} días hábiles</strong> desde la
+      entrega para arrepentirte de la compra, también en prendas del sale (artículo 47 de la Ley
+      1480 de 2011). Aplican las mismas condiciones de la prenda y el envío de vuelta corre por tu
+      cuenta. Te reintegramos el dinero completo, a más tardar en 30 días calendario.
+    </p>
+
+    <h2>Prendas con defecto</h2>
+    <p>
+      Si la prenda llega con un defecto de fábrica o no es la que pediste, escríbenos con fotos
+      apenas la recibas. Nosotros pagamos el envío y, según el caso, la reparamos, la cambiamos por
+      una igual o te devolvemos el dinero, como lo establece la garantía legal de la Ley 1480 de
+      2011. Esto aplica también a las prendas del sale.
+    </p>
+
+    <p class="nota">
+      ¿Dudas? Escríbenos: {CONFIG.horarios}.
+    </p>
+  </article>
+</Layout>
+
+<style>
+  .politica { padding-block: var(--espacio-3) var(--espacio-4); max-width: 60ch; }
+  .entrada { color: var(--texto-suave); margin-top: var(--espacio-2); }
+  h2 { margin-top: var(--espacio-4); }
+  p,
+  ul,
+  ol { margin-top: var(--espacio-2); }
+  ul,
+  ol { padding-left: 1.25rem; }
+  li + li { margin-top: 0.5rem; }
+  a { text-decoration: underline; }
+  .nota {
+    margin-top: var(--espacio-4);
+    padding-top: var(--espacio-3);
+    border-top: 1px solid var(--linea);
+    color: var(--texto-suave);
+  }
+</style>

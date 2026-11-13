@@ -14,7 +14,7 @@ import { MARCAS_PRIMERO, VENTA } from '../config'
 // "ropa de marca en Bogotá" dejaba fuera a quien busca desde Medellin.
 const descripcion =
   `Tienda de ropa original: ${marcasParaTexto(productos, MARCAS_PRIMERO, 5)}. ` +
-  `Envío gratis a toda Colombia y cambios hasta ${VENTA.cambios.dias} días.`
+  `Envío gratis a toda Colombia y devoluciones hasta ${VENTA.devoluciones.dias} días.`
 
 if (!Astro.site) {
   throw new Error('Astro.site no esta definido: revisa el campo `site` en astro.config.mjs')

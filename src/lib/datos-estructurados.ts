@@ -11,6 +11,7 @@
  */
 import {
   marcasDeProducto,
+  precioAnteriorDe,
   precioDe,
   tallasDisponibles,
   type FichaMarca,
@@ -29,26 +30,47 @@ export interface DatosFicha {
 }
 
 /**
- * La politica de cambios, igual en cada ficha y en la de la tienda.
+ * La politica de devoluciones, igual en cada ficha y en la de la tienda.
  *
  * Google la lee de las dos: en la tienda vale para todo el sitio, y en cada
- * oferta es lo que deja que el resultado diga "Cambios en 30 dias" junto al
- * precio. Escrita dos veces acabaria diciendo dos plazos distintos.
+ * oferta es lo que deja que el resultado diga "Devoluciones en 30 dias" junto
+ * al precio. Escrita dos veces acabaria diciendo dos plazos distintos.
+ *
+ * Una prenda del sale es venta final, pero no "sin devolucion": el retracto
+ * de la Ley 1480 sigue valiendo. Declarar MerchantReturnNotPermitted seria
+ * prometer menos de lo que la ley da, asi que va el plazo del retracto.
  */
-export function politicaCambios() {
+export function politicaDevoluciones({
+  sitio,
+  enRebaja = false,
+}: {
+  /** Cualquier URL absoluta del sitio: de ella sale el enlace a la politica. */
+  sitio: string
+  enRebaja?: boolean
+}) {
+  const dias = enRebaja ? diasCalendarioRetracto() : VENTA.devoluciones.dias
   return {
     '@type': 'MerchantReturnPolicy',
     applicableCountry: VENTA.pais,
     returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
-    merchantReturnDays: VENTA.cambios.dias,
-    // Sin estos dos, Search Console marca la politica como incompleta. Es lo
-    // que se hace hoy: la prenda vuelve por mensajeria y ese envio lo paga
-    // el cliente, que es lo que dice /tienda.
+    merchantReturnDays: dias,
+    // Sin estos dos, Search Console marca la politica como incompleta. La
+    // prenda vuelve por mensajeria y ese envio lo paga el cliente, que es lo
+    // que dice /devoluciones.
     returnMethod: 'https://schema.org/ReturnByMail',
     returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
-    // Cambio, no devolucion del dinero: es lo que ofrece la tienda.
-    refundType: 'https://schema.org/ExchangeRefund',
+    refundType: 'https://schema.org/FullRefund',
+    merchantReturnLink: new URL('/devoluciones/', sitio).href,
   }
+}
+
+/**
+ * El schema cuenta en dias calendario y el retracto en habiles. Cinco habiles
+ * nunca son menos de siete calendario (un fin de semana en medio), asi que
+ * siete es lo que se sostiene siempre sin prometer de mas.
+ */
+function diasCalendarioRetracto() {
+  return VENTA.retracto.diasHabiles + 2
 }
 
 /**
@@ -112,7 +134,10 @@ function productoVariante({ producto, variante, url, imagenes }: DatosFicha) {
           },
         },
       },
-      hasMerchantReturnPolicy: politicaCambios(),
+      hasMerchantReturnPolicy: politicaDevoluciones({
+        sitio: url,
+        enRebaja: precioAnteriorDe(producto, variante) !== undefined,
+      }),
     },
   }
 }
@@ -277,7 +302,7 @@ export function fichaTienda({ url, logo }: { url: string; logo: string }) {
     // actividad de la tienda: es lo que deja a un buscador entender que son
     // el mismo negocio.
     sameAs: [INSTAGRAM_URL],
-    hasMerchantReturnPolicy: politicaCambios(),
+    hasMerchantReturnPolicy: politicaDevoluciones({ sitio: url }),
     areaServed: { '@type': 'Country', name: 'Colombia' },
     paymentAccepted: VENTA.pago.texto,
     contactPoint: {
